@@ -1,0 +1,2 @@
+D:\dev\GoogleCode\lidgren-network\Generation3\Samples\XNA sample\XnaGameClient\XnaGameClient\Content\obj\x86\Debug\ResolveAssemblyReference.cache
+D:\dev\GoogleCode\lidgren-network\Generation3\Samples\XNA sample\XnaGameClient\Content\obj\x86\Debug\ResolveAssemblyReference.cache

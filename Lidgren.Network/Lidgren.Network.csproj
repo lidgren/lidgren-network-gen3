@@ -1,0 +1,105 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="3.5" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>9.0.21022</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{FA245447-5F23-4AA1-BD5F-8D2DDF33CFBD}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Lidgren.Network</RootNamespace>
+    <AssemblyName>Lidgren.Network</AssemblyName>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Xml.Linq">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Data.DataSetExtensions">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Documentation\Improvements.txt" />
+    <Compile Include="NetBigInteger.cs" />
+    <Compile Include="NetBitVector.cs" />
+    <Compile Include="NetConnectionStatistics.cs" />
+    <Compile Include="NetBitWriter.cs" />
+    <Compile Include="NetClient.cs" />
+    <Compile Include="NetConnection.cs" />
+    <Compile Include="NetConnection.Handshake.cs" />
+    <Compile Include="NetConnection.Latency.cs" />
+    <Compile Include="NetConnection.Reliability.cs" />
+    <Compile Include="NetConnectionStatus.cs" />
+    <Compile Include="NetConstants.cs" />
+    <Compile Include="NetException.cs" />
+    <Compile Include="NetFragmentationInfo.cs" />
+    <Compile Include="NetIncomingMessage.cs" />
+    <Compile Include="NetIncomingMessage.Peek.cs" />
+    <Compile Include="NetIncomingMessage.Read.cs" />
+    <Compile Include="NetIncomingMessage.Write.cs" />
+    <Compile Include="NetIncomingMessageType.cs" />
+    <Compile Include="NetMessageType.cs" />
+    <Compile Include="NetOutgoingMessage.cs" />
+    <Compile Include="NetOutgoingMessage.Write.cs" />
+    <Compile Include="NetPeer.ConnectionApproval.cs" />
+    <Compile Include="NetPeer.cs" />
+    <Compile Include="NetPeer.Discovery.cs" />
+    <Compile Include="NetPeer.Internal.cs" />
+    <Compile Include="NetPeer.LatencySimulation.cs" />
+    <Compile Include="NetPeer.Logging.cs" />
+    <Compile Include="NetPeer.Recycling.cs" />
+    <Compile Include="NetPeerConfiguration.cs" />
+    <Compile Include="NetPeerStatistics.cs" />
+    <Compile Include="NetPeerStatus.cs" />
+    <Compile Include="NetQueue.cs" />
+    <Compile Include="NetRandom.cs" />
+    <Compile Include="NetServer.cs" />
+    <Compile Include="NetTime.cs" />
+    <Compile Include="NetUtility.cs" />
+    <Compile Include="NetEncryption.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Documentation\ChangedFromV2.txt" />
+    <Content Include="Documentation\Discovery.html" />
+    <Content Include="Documentation\PacketLayout.txt" />
+    <Content Include="Documentation\SimulatingBadNetwork.html" />
+    <Content Include="Documentation\TODO.txt" />
+    <Content Include="Documentation\Tutorial.html" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
