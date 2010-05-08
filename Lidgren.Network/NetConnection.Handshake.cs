@@ -48,6 +48,11 @@ namespace Lidgren.Network
 				info.Write(reason);
 				m_owner.ReleaseMessage(info);
 			}
+			else
+			{
+				// app dont want those messages, update visible status immediately
+				m_visibleStatus = m_status;
+			}
 		}
 
 		private void SendConnect()

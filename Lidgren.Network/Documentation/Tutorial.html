@@ -54,7 +54,7 @@
 					Lidgren basics</h1>
 				<p>
 					Lidgren network library is all about messages. There are two types of messages:</p>
-				<li>Library messages telling you things like a peer has connected or error messages when unexpected things happen.</li>
+				<li>Library messages telling you things like a peer has connected or diagnostics messages (warnings, errors) when unexpected things happen.</li>
 				<li>Data messages which is data sent from a remote (connected or unconnected) peer.</li>
 				<p>
 					The base class for establishing connections, receiving and sending message are the NetPeer class. Using it you can make a peer-to-peer network, but if you are creating a server/client topology there are special classes called NetServer and NetClient. They inherit NetPeer but sets some defaults and includes some helper methods/properties.</p>

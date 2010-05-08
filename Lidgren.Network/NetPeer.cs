@@ -143,7 +143,16 @@ namespace Lidgren.Network
 			if (m_status == NetPeerStatus.NotRunning)
 				return null;
 
-			return m_releasedIncomingMessages.TryDequeue();
+			NetIncomingMessage retval = m_releasedIncomingMessages.TryDequeue();
+			if (retval != null)
+			{
+				if (retval.MessageType == NetIncomingMessageType.StatusChanged)
+				{
+					NetConnectionStatus status = (NetConnectionStatus)retval.PeekByte();
+					retval.SenderConnection.Status = status;
+				}
+			}
+			return retval;
 		}
 
 		public NetIncomingMessage WaitMessage(int maxMillis)

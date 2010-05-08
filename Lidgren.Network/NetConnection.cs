@@ -33,6 +33,7 @@ namespace Lidgren.Network
 		internal double m_lastHeardFrom;
 		internal NetQueue<NetOutgoingMessage> m_unsentMessages;
 		internal NetConnectionStatus m_status;
+		private NetConnectionStatus m_visibleStatus;
 		private double m_lastSentUnsentMessages;
 		private float m_throttleDebt;
 		private NetPeerConfiguration m_peerConfiguration;
@@ -62,6 +63,18 @@ namespace Lidgren.Network
 		public long RemoteUniqueIdentifier { get { return m_remoteUniqueIdentifier; } }
 
 		/// <summary>
+		/// The current status of the connection
+		/// </summary>
+		public NetConnectionStatus Status
+		{
+			get { return m_visibleStatus; }
+			internal set
+			{
+				m_visibleStatus = value;
+			}
+		}
+
+		/// <summary>
 		/// Gets the remote endpoint for the connection
 		/// </summary>
 		public IPEndPoint RemoteEndpoint { get { return m_remoteEndpoint; } }
@@ -74,6 +87,7 @@ namespace Lidgren.Network
 			m_unsentMessages = new NetQueue<NetOutgoingMessage>(16);
 			m_fragmentGroups = new Dictionary<int, NetIncomingMessage>();
 			m_status = NetConnectionStatus.None;
+			m_visibleStatus = NetConnectionStatus.None;
 
 			double now = NetTime.Now;
 			m_nextPing = now + 5.0f;
@@ -646,7 +660,7 @@ namespace Lidgren.Network
 
 		public override string ToString()
 		{
-			return "[NetConnection to " + m_remoteEndpoint + ": " + m_status + "]";
+			return "[NetConnection to " + m_remoteEndpoint + " Status: " + m_visibleStatus + "]";
 		}
 	}
 }
