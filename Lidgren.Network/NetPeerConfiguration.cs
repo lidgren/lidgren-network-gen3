@@ -269,7 +269,7 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
-		/// Gets or sets if the NetPeer should accept incoming connections
+		/// Gets or sets if the NetPeer should accept incoming connections. This is automatically set to true in NetServer and false in NetClient.
 		/// </summary>
 		public bool AcceptIncomingConnections
 		{
