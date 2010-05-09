@@ -70,6 +70,35 @@ namespace UnitTests
 
 			if (msg.LengthBits != tmp.LengthBits * 2)
 				throw new NetException("NetOutgoingMessage.Write(NetOutgoingMessage) failed!");
+
+			tmp = peer.CreateMessage();
+
+			Test test = new Test();
+			test.Number = 42;
+			test.Name = "Hallon";
+			test.Age = 8.2f;
+
+			tmp.WriteAllFields(test);
+
+			data = tmp.PeekDataBuffer();
+
+			inc = (NetIncomingMessage)Activator.CreateInstance(typeof(NetIncomingMessage), true);
+			typeof(NetIncomingMessage).GetField("m_data", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(inc, data);
+			typeof(NetIncomingMessage).GetField("m_bitLength", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(inc, tmp.LengthBits);
+
+			Test readTest = new Test();
+			inc.ReadAllFields(readTest);
+
+			NetException.Assert(readTest.Number == 42);
+			NetException.Assert(readTest.Name == "Hallon");
+			NetException.Assert(readTest.Age == 8.2f);
 		}
+	}
+
+	public class Test
+	{
+		public int Number;
+		public float Age;
+		public string Name;
 	}
 }

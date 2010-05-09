@@ -474,7 +474,7 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
-		/// Reads all public and private declared instance fields of the object in declaration order using reflection
+		/// Reads all public and private declared instance fields of the object in alphabetical order using reflection
 		/// </summary>
 		public void ReadAllFields(object target)
 		{
@@ -482,7 +482,7 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
-		/// Reads all fields with the specified binding of the object in declaration order using reflection
+		/// Reads all fields with the specified binding of the object in alphabetical order using reflection
 		/// </summary>
 		public void ReadAllFields(object target, BindingFlags flags)
 		{
@@ -491,6 +491,8 @@ namespace Lidgren.Network
 			Type tp = target.GetType();
 
 			FieldInfo[] fields = tp.GetFields(flags);
+			SortMembersList(fields);
+
 			foreach (FieldInfo fi in fields)
 			{
 				object value;
@@ -509,7 +511,7 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
-		/// Reads all public and private declared instance fields of the object in declaration order using reflection
+		/// Reads all public and private declared instance fields of the object in alphabetical order using reflection
 		/// </summary>
 		public void ReadAllProperties(object target)
 		{
@@ -517,7 +519,7 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
-		/// Reads all fields with the specified binding of the object in declaration order using reflection
+		/// Reads all fields with the specified binding of the object in alphabetical order using reflection
 		/// </summary>
 		public void ReadAllProperties(object target, BindingFlags flags)
 		{
@@ -526,6 +528,7 @@ namespace Lidgren.Network
 			Type tp = target.GetType();
 
 			PropertyInfo[] fields = tp.GetProperties(flags);
+			SortMembersList(fields);
 			foreach (PropertyInfo fi in fields)
 			{
 				object value;
@@ -543,6 +546,44 @@ namespace Lidgren.Network
 				}
 			}
 		}
+
+		// shell sort
+		internal static void SortMembersList(MemberInfo[] list)
+		{
+			int h;
+			int j;
+			MemberInfo tmp;
+
+			h = 1;
+			while (h * 3 + 1 <= list.Length)
+				h = 3 * h + 1;
+
+			while (h > 0)
+			{
+				for (int i = h - 1; i < list.Length; i++)
+				{
+					tmp = list[i];
+					j = i;
+					while (true)
+					{
+						if (j >= h)
+						{
+							if (list[j - h].Name.CompareTo(tmp.Name) > 0)
+							{
+								list[j] = list[j - h];
+								j -= h;
+							}
+							else
+								break;
+						}
+						else
+							break;
+					}
+
+					list[j] = tmp;
+				}
+				h /= 3;
+			}
+		}
 	}
 }
-
