@@ -224,6 +224,11 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Send a message to an existing connection
 		/// </summary>
+		/// <param name="msg">The NetOutgoingMessage to send</param>
+		/// <param name="recipient">The recipient connection</param>
+		/// <param name="deliveryMethod">How to deliver the message</param>
+		/// <param name="channel">Delivery channel (0-31)</param>
+		/// <returns>True if the message was queued for delivery, else false</returns>
 		public bool SendMessage(NetOutgoingMessage msg, NetConnection recipient, NetDeliveryMethod deliveryMethod, int channel)
 		{
 			if (msg.IsSent)
@@ -246,12 +251,13 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Send a message to a number of existing connections
 		/// </summary>
+		/// <param name="channel">Delivery channel (0-31)</param>
 		public bool SendMessage(NetOutgoingMessage msg, IEnumerable<NetConnection> recipients, NetDeliveryMethod deliveryMethod, int channel)
 		{
 			if (msg.IsSent)
 				throw new NetException("Message has already been sent!");
-			if (channel < 0 || channel > 63)
-				throw new NetException("Channel must be between 0 and 63");
+			if (channel < 0 || channel > NetConstants.NetChannelsPerDeliveryMethod)
+				throw new NetException("Channel must be between 0 and " + (NetConstants.NetChannelsPerDeliveryMethod - 1));
 			if (channel != 0 && (deliveryMethod == NetDeliveryMethod.Unreliable || deliveryMethod == NetDeliveryMethod.ReliableUnordered))
 				throw new NetException("Channel must be 0 for Unreliable and ReliableUnordered");
 
