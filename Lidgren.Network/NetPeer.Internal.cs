@@ -422,7 +422,7 @@ namespace Lidgren.Network
 			// Handle nat introduction
 			//
 			if (libType == NetMessageLibraryType.NatIntroduction)
-				HandleNatIntroduction(ptr, senderEndpoint);
+				HandleNatIntroduction(ptr);
 
 			//
 			// Handle Discovery

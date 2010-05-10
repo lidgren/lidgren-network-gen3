@@ -16,7 +16,7 @@ namespace MasterServer
 	{
 		static void Main(string[] args)
 		{
-			List<IPEndPoint> registeredHosts = new List<IPEndPoint>();
+			List<IPEndPoint[]> registeredHosts = new List<IPEndPoint[]>();
 
 			NetPeerConfiguration config = new NetPeerConfiguration("masterserver");
 
@@ -42,24 +42,48 @@ namespace MasterServer
 							{
 								case MasterServerMessageType.RegisterHost:
 									// It's a host wanting to register its presence
-									registeredHosts.Add(msg.SenderEndpoint);
+									IPEndPoint[] eps = new IPEndPoint[]
+									{
+										msg.ReadIPEndpoint(), // internal
+										msg.SenderEndpoint // external
+									};
+									registeredHosts.Add(eps);
 									break;
 
 								case MasterServerMessageType.RequestHostList:
 									// It's a client wanting a list of registered hosts
-									foreach (IPEndPoint ep in registeredHosts)
+									foreach (IPEndPoint[] ep in registeredHosts)
 									{
 										// send registered host to client
 										NetOutgoingMessage om = peer.CreateMessage();
-										om.Write(ep);
+										om.Write(ep[0]);
+										om.Write(ep[1]);
 										peer.SendUnconnectedMessage(om, msg.SenderEndpoint);
 									}
 
 									break;
 								case MasterServerMessageType.RequestIntroduction:
-									// It's a client wanting to connect to a specific host
-									IPEndPoint rh = msg.ReadIPEndpoint();
-									peer.Introduce(rh, msg.SenderEndpoint);
+									// It's a client wanting to connect to a specific (external) host
+									IPEndPoint clientInternal = msg.ReadIPEndpoint();
+									IPEndPoint hostExternal = msg.ReadIPEndpoint();
+									string token = msg.ReadString();
+
+									// find in list
+									foreach (IPEndPoint[] elist in registeredHosts)
+									{
+										if (elist[1].Equals(hostExternal))
+										{
+											// found in list - introduce client and host to eachother
+											peer.Introduce(
+												elist[0], // host internal
+												elist[1], // host external
+												clientInternal, // client internal
+												msg.SenderEndpoint, // client external
+												token // request token
+											);
+											break;
+										}
+									}
 									break;
 							}
 							break;

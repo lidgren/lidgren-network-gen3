@@ -48,8 +48,8 @@ namespace Lidgren.Network
 		Disconnect = 8,
 		Discovery = 9,
 		DiscoveryResponse = 10,
-		NatPunchMessage = 11,
-		NatIntroduction = 12,
+		NatPunchMessage = 11, // send between peers
+		NatIntroduction = 12, // send to master server
 	}
 
 	internal enum NetMessageType : byte
