@@ -419,6 +419,12 @@ namespace Lidgren.Network
 			int payloadLengthBytes = NetUtility.BytesToHoldBits(payloadLengthBits);
 
 			//
+			// Handle nat introduction
+			//
+			if (libType == NetMessageLibraryType.NatIntroduction)
+				HandleNatIntroduction(ptr, senderEndpoint);
+
+			//
 			// Handle Discovery
 			//
 			if (libType == NetMessageLibraryType.Discovery)

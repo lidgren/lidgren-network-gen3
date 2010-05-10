@@ -509,8 +509,7 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Writes an endpoint description
 		/// </summary>
-		/// <param name="endPoint"></param>
-		internal void Write(IPEndPoint endPoint)
+		public void Write(IPEndPoint endPoint)
 		{
 			byte[] bytes = endPoint.Address.GetAddressBytes();
 			Write((byte)bytes.Length);

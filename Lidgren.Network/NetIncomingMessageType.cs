@@ -41,5 +41,6 @@ namespace Lidgren.Network
 		DebugMessage = 1 << 8,			// Data (string)
 		WarningMessage = 1 << 9,		// Data (string)
 		ErrorMessage = 1 << 10,			// Data (string)
+		NatIntroduction = 1 << 11,		// IPEndPoint
 	}
 }
