@@ -1,17 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
-using Lidgren.Network;
 using System.Net;
+using System.Collections.Generic;
+
+using Lidgren.Network;
+
+using MSCommon;
 
 namespace MasterServer
 {
-	public enum MasterServerMessageType
-	{
-		RegisterHost,
-		RequestHostList,
-		RequestIntroduction,
-	}
-
 	public class Program
 	{
 		static void Main(string[] args)
@@ -19,6 +15,8 @@ namespace MasterServer
 			List<IPEndPoint[]> registeredHosts = new List<IPEndPoint[]>();
 
 			NetPeerConfiguration config = new NetPeerConfiguration("masterserver");
+			config.SetMessageTypeEnabled(NetIncomingMessageType.UnconnectedData, true);
+			config.Port = CommonConstants.MasterServerPort;
 
 			NetPeer peer = new NetPeer(config);
 			peer.Start();
@@ -47,11 +45,13 @@ namespace MasterServer
 										msg.ReadIPEndpoint(), // internal
 										msg.SenderEndpoint // external
 									};
+									Console.WriteLine("Registered host " + eps[1]);
 									registeredHosts.Add(eps);
 									break;
 
 								case MasterServerMessageType.RequestHostList:
 									// It's a client wanting a list of registered hosts
+									Console.WriteLine("Sending list of " + registeredHosts.Count + " hosts to client " + msg.SenderEndpoint);
 									foreach (IPEndPoint[] ep in registeredHosts)
 									{
 										// send registered host to client
@@ -67,6 +67,8 @@ namespace MasterServer
 									IPEndPoint clientInternal = msg.ReadIPEndpoint();
 									IPEndPoint hostExternal = msg.ReadIPEndpoint();
 									string token = msg.ReadString();
+
+									Console.WriteLine(msg.SenderEndpoint + " requesting introduction to " + hostExternal + " (token " + token + ")");
 
 									// find in list
 									foreach (IPEndPoint[] elist in registeredHosts)
