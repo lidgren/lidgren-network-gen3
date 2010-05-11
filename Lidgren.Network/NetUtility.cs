@@ -34,6 +34,15 @@ namespace Lidgren.Network
 		private static Regex s_regIP;
 
 		/// <summary>
+		/// Get IP endpoint from notation (xxx.xxx.xxx.xxx) or hostname and port number
+		/// </summary>
+		public static IPEndPoint Resolve(string ipOrHost, int port)
+		{
+			IPAddress adr = Resolve(ipOrHost);
+			return new IPEndPoint(adr, port);
+		}
+
+		/// <summary>
 		/// Get IP address from notation (xxx.xxx.xxx.xxx) or hostname
 		/// </summary>
 		public static IPAddress Resolve(string ipOrHost)

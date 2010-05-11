@@ -52,8 +52,11 @@ namespace MSClient
 		
 								m_hostList.Add(new IPEndPoint[] { hostInternal, hostExternal });
 
-								m_mainForm.comboBox1.Items.Add(hostExternal.ToString());
+								m_mainForm.comboBox1.Items.Add(hostExternal.Address.ToString());
 							}
+							break;
+						case NetIncomingMessageType.NatIntroductionSuccess:
+							MessageBox.Show("Nat introduction success; I just received a message from " + inc.SenderEndpoint);
 							break;
 					}
 				}
@@ -93,6 +96,7 @@ namespace MSClient
 			// write external address of host to request introduction to
 			IPEndPoint hostEp = new IPEndPoint(NetUtility.Resolve(host), CommonConstants.GameServerPort);
 			om.Write(hostEp);
+			om.Write("randomtoken");
 
 			m_client.SendUnconnectedMessage(om, m_masterServer);
 		}

@@ -45,7 +45,7 @@ namespace MasterServer
 										msg.ReadIPEndpoint(), // internal
 										msg.SenderEndpoint // external
 									};
-									Console.WriteLine("Registered host " + eps[1]);
+									Console.WriteLine("Got registration for host " + eps[1]);
 									registeredHosts.Add(eps);
 									break;
 
@@ -83,6 +83,7 @@ namespace MasterServer
 												msg.SenderEndpoint, // client external
 												token // request token
 											);
+											Console.WriteLine("Sending...");
 											break;
 										}
 									}
