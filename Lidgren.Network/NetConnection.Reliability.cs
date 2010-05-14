@@ -28,15 +28,16 @@ namespace Lidgren.Network
 		private ushort[] m_nextSendSequenceNumber;
 		private ushort[] m_lastReceivedSequenced;
 
-		internal List<NetOutgoingMessage>[] m_storedMessages; // naïve! replace by something better?
-		internal NetBitVector m_storedMessagesNotEmpty;
+		// TODO: naïve! replace by something better?
+		internal readonly List<NetOutgoingMessage>[] m_storedMessages = new List<NetOutgoingMessage>[NetConstants.NumReliableChannels];
+		internal readonly NetBitVector m_storedMessagesNotEmpty = new NetBitVector(NetConstants.NumReliableChannels);
 
-		private ushort[] m_nextExpectedReliableSequence;
-		private List<NetIncomingMessage>[] m_withheldMessages;
-		internal Queue<int> m_acknowledgesToSend;
+		private readonly ushort[] m_nextExpectedReliableSequence = new ushort[NetConstants.NumReliableChannels];
+		private readonly List<NetIncomingMessage>[] m_withheldMessages = new List<NetIncomingMessage>[NetConstants.NetChannelsPerDeliveryMethod]; // only for ReliableOrdered
+		internal readonly Queue<int> m_acknowledgesToSend = new Queue<int>();
 		internal double m_nextForceAckTime;
 
-		private NetBitVector[] m_reliableReceived;
+		private readonly NetBitVector[] m_reliableReceived = new NetBitVector[NetConstants.NumSequenceNumbers];
 
 		public int GetStoredMessagesCount()
 		{
@@ -56,14 +57,6 @@ namespace Lidgren.Network
 			m_nextSendSequenceNumber = new ushort[num];
 			m_lastReceivedSequenced = new ushort[num];
 			m_nextForceAckTime = double.MaxValue;
-
-			m_storedMessages = new List<NetOutgoingMessage>[NetConstants.NumReliableChannels];
-			m_storedMessagesNotEmpty = new NetBitVector(NetConstants.NumReliableChannels);
-
-			m_reliableReceived = new NetBitVector[NetConstants.NumSequenceNumbers];
-			m_nextExpectedReliableSequence = new ushort[NetConstants.NumReliableChannels];
-			m_withheldMessages = new List<NetIncomingMessage>[NetConstants.NetChannelsPerDeliveryMethod]; // only for ReliableOrdered
-			m_acknowledgesToSend = new Queue<int>();
 		}
 
 		internal ushort GetSendSequenceNumber(NetMessageType mtp)

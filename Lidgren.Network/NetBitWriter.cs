@@ -234,23 +234,8 @@ namespace Lidgren.Network
 			return returnValue;
 		}
 
-		[CLSCompliant(false)]
-		public static ulong ReadUInt64(byte[] fromBuffer, int numberOfBits, int readBitOffset)
-		{
-			throw new NotImplementedException("ReadUInt64 not implemented yet");
-
-#if BIGENDIAN
-			// reorder bytes
-			return ((a & 0xff00000000000000L) >> 56) |
-				((a & 0x00ff000000000000L) >> 40) |
-				((a & 0x0000ff0000000000L) >> 24) |
-				((a & 0x000000ff00000000L) >> 8) |
-				((a & 0x00000000ff000000L) << 8) |
-				((a & 0x0000000000ff0000L) << 24) |
-				((a & 0x000000000000ff00L) << 40) |
-				((a & 0x00000000000000ffL) << 56);
-#endif
-		}
+		//[CLSCompliant(false)]
+		//public static ulong ReadUInt64(byte[] fromBuffer, int numberOfBits, int readBitOffset)
 
 		[CLSCompliant(false)]
 		public static int WriteUInt32(uint source, int numberOfBits, byte[] destination, int destinationBitOffset)

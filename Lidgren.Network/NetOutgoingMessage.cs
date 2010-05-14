@@ -161,6 +161,22 @@ namespace Lidgren.Network
 			return ptr;
 		}
 
+		public void Encrypt(NetXtea tea)
+		{
+			// need blocks of 8 bytes
+			WritePadBits();
+			int blocksNeeded = (m_bitLength + 63) / 64;
+			int missingBits = (blocksNeeded * 64) - m_bitLength;
+			int missingBytes = missingBits / 8;
+			for (int i = 0; i < missingBytes; i++)
+				Write((byte)0);
+
+			Console.WriteLine("ENCRYPTING " + NetUtility.ToHexString(m_data));
+			byte[] result = new byte[m_data.Length];
+			tea.EncryptBlock(m_data, 0, result, 0);
+			m_data = result;
+		}
+
 		public override string ToString()
 		{
 			StringBuilder bdr = new StringBuilder();

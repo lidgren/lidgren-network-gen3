@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Reflection;
 using Lidgren.Network;
 
 namespace UnitTests
@@ -26,11 +24,19 @@ namespace UnitTests
 
 			BitVectorTests.Run();
 
-			EncryptionTests.Run();
+			EncryptionTests.Run(peer);
 
 			peer.Shutdown("bye");
 
 			Console.ReadKey();
+		}
+
+		public static NetIncomingMessage CreateIncomingMessage(byte[] fromData, int bitLength)
+		{
+			NetIncomingMessage inc = (NetIncomingMessage)Activator.CreateInstance(typeof(NetIncomingMessage), true);
+			typeof(NetIncomingMessage).GetField("m_data", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(inc, fromData);
+			typeof(NetIncomingMessage).GetField("m_bitLength", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(inc, bitLength);
+			return inc;
 		}
 	}
 }

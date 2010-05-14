@@ -28,7 +28,7 @@ namespace Lidgren.Network
 	{
 
 #if DEBUG
-		private List<DelayedPacket> m_delayedPackets = new List<DelayedPacket>();
+		private readonly List<DelayedPacket> m_delayedPackets = new List<DelayedPacket>();
 
 		private class DelayedPacket
 		{
@@ -117,6 +117,7 @@ namespace Lidgren.Network
 				LogError("Failed to send packet: " + ex);
 			}
 		}
+
 #else
 		//
 		// Release - just send the packet straight away

@@ -32,8 +32,8 @@ namespace Lidgren.Network
 	public static class NetTime
 	{
 #if IS_STOPWATCH_AVAILABLE
-		private static long s_timeInitialized = Stopwatch.GetTimestamp();
-		private static double s_dInvFreq = 1.0 / (double)Stopwatch.Frequency;
+		private static readonly long s_timeInitialized = Stopwatch.GetTimestamp();
+		private static readonly double s_dInvFreq = 1.0 / (double)Stopwatch.Frequency;
 
 		/// <summary>
 		/// Get number of seconds since the application started

@@ -208,36 +208,36 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Enables receiving of the specified type of message
 		/// </summary>
-		public void EnableMessageType(NetIncomingMessageType tp)
+		public void EnableMessageType(NetIncomingMessageType type)
 		{
-			m_disabledTypes &= (~tp);
+			m_disabledTypes &= (~type);
 		}
 
 		/// <summary>
 		/// Disables receiving of the specified type of message
 		/// </summary>
-		public void DisableMessageType(NetIncomingMessageType tp)
+		public void DisableMessageType(NetIncomingMessageType type)
 		{
-			m_disabledTypes |= tp;
+			m_disabledTypes |= type;
 		}
 
 		/// <summary>
 		/// Enables or disables receiving of the specified type of message
 		/// </summary>
-		public void SetMessageTypeEnabled(NetIncomingMessageType tp, bool enabled)
+		public void SetMessageTypeEnabled(NetIncomingMessageType type, bool enabled)
 		{
 			if (enabled)
-				m_disabledTypes &= (~tp);
+				m_disabledTypes &= (~type);
 			else
-				m_disabledTypes |= tp;
+				m_disabledTypes |= type;
 		}
 
 		/// <summary>
 		/// Gets if receiving of the specified type of message is enabled
 		/// </summary>
-		public bool IsMessageTypeEnabled(NetIncomingMessageType tp)
+		public bool IsMessageTypeEnabled(NetIncomingMessageType type)
 		{
-			return !((m_disabledTypes & tp) == tp);
+			return !((m_disabledTypes & type) == type);
 		}
 
 		/// <summary>

@@ -25,7 +25,7 @@ namespace Lidgren.Network
 {
 	public sealed class NetPeerStatistics
 	{
-		private NetPeer m_peer;
+		private readonly NetPeer m_peer;
 
 		internal int m_sentPackets;
 		internal int m_receivedPackets;

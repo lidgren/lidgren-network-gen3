@@ -39,7 +39,7 @@ using System.Security.Cryptography;
 
 namespace Lidgren.Network
 {
-	public class BigInteger
+	public sealed class BigInteger
 	{
 		/// <summary>
 		/// The Length of this BigInteger
@@ -1271,7 +1271,7 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Low level functions for the BigInteger
 		/// </summary>
-		private sealed class Kernel
+		private static class Kernel
 		{
 			/// <summary>
 			/// Adds two numbers with the same sign.

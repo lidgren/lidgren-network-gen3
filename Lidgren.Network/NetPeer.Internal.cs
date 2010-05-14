@@ -18,11 +18,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 */
 using System;
-using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using System.Net.NetworkInformation;
 
 namespace Lidgren.Network
 {
@@ -34,10 +32,10 @@ namespace Lidgren.Network
 		internal Socket m_socket;
 		internal byte[] m_macAddressBytes;
 		private int m_listenPort;
-		private AutoResetEvent m_messageReceivedEvent;
+		private readonly AutoResetEvent m_messageReceivedEvent = new AutoResetEvent(false);
 
-		private NetQueue<NetIncomingMessage> m_releasedIncomingMessages;
-		private NetQueue<NetOutgoingMessage> m_unsentUnconnectedMessage;
+		private readonly NetQueue<NetIncomingMessage> m_releasedIncomingMessages = new NetQueue<NetIncomingMessage>(16);
+		private readonly NetQueue<NetOutgoingMessage> m_unsentUnconnectedMessage = new NetQueue<NetOutgoingMessage>(4);
 
 		/// <summary>
 		/// Signalling event which can be waited on to determine when a message is queued for reading.
@@ -46,13 +44,6 @@ namespace Lidgren.Network
 		/// the message before the waiting thread wakes up.
 		/// </summary>
 		public AutoResetEvent MessageReceivedEvent { get { return m_messageReceivedEvent; } }
-
-		private void InternalInitialize()
-		{
-			m_releasedIncomingMessages = new NetQueue<NetIncomingMessage>(16);
-			m_unsentUnconnectedMessage = new NetQueue<NetOutgoingMessage>(4);
-			m_messageReceivedEvent = new AutoResetEvent(false);
-		}
 
 		internal void ReleaseMessage(NetIncomingMessage msg)
 		{
@@ -192,7 +183,6 @@ namespace Lidgren.Network
 				finally
 				{
 					m_socket = null;
-					m_messageReceivedEvent = null;
 					m_status = NetPeerStatus.NotRunning;
 					LogDebug("Shutdown complete");
 				}
@@ -562,7 +552,6 @@ namespace Lidgren.Network
 				m_connections.Remove(conn);
 				m_connectionLookup.Remove(conn.m_remoteEndpoint);
 			}
-			conn.Dispose();
 		}
 
 		private void HandleServerFull(IPEndPoint connecter)

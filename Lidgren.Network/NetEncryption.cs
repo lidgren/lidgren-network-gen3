@@ -1,28 +1,47 @@
-﻿using System;
-using System.Collections.Generic;
+﻿/* Copyright (c) 2010 Michael Lidgren
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+and associated documentation files (the "Software"), to deal in the Software without
+restriction, including without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom
+the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or
+substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
+using System;
 using System.Security.Cryptography;
 using System.Text;
 
 namespace Lidgren.Network
 {
-	public sealed class NetXTEA
+	public sealed class NetXtea
 	{
 		private const int m_blockSize = 8;
 		private const int m_keySize = 16;
 		private const int m_delta = unchecked((int)0x9E3779B9);
 		private const int m_dSum = unchecked((int)0xC6EF3720); // sum on decrypt
 
-		private byte[] m_keyBytes;
-		private int[] m_key;
-		private int m_rounds;
+		private readonly byte[] m_keyBytes;
+		private readonly int[] m_key;
+		private readonly int m_rounds;
 
 		public byte[] Key { get { return m_keyBytes; } }
 
 		/// <summary>
 		/// 16 byte key
 		/// </summary>
-		public NetXTEA(byte[] key, int rounds)
+		public NetXtea(byte[] key, int rounds)
 		{
+			if (key.Length < 16)
+				throw new NetException("Key too short!");
 			m_keyBytes = key;
 			m_key = new int[4];
 			m_key[0] = BitConverter.ToInt32(key, 0);
@@ -30,6 +49,14 @@ namespace Lidgren.Network
 			m_key[2] = BitConverter.ToInt32(key, 8);
 			m_key[3] = BitConverter.ToInt32(key, 12);
 			m_rounds = rounds;
+		}
+
+		/// <summary>
+		/// 16 byte key
+		/// </summary>
+		public NetXtea(byte[] key)
+			: this(key, 64)
+		{
 		}
 
 		public void EncryptBlock(
@@ -56,7 +83,7 @@ namespace Lidgren.Network
 
 			return;
 		}
-
+			
 		public void DecryptBlock(
 			byte[] inBytes,
 			int inOff,
@@ -104,7 +131,7 @@ namespace Lidgren.Network
 		}
 	}
 
-	public static class NetSHA
+	public static class NetSha
 	{
 		// TODO: switch to SHA256
 		private static SHA1 m_sha;
@@ -131,7 +158,7 @@ namespace Lidgren.Network
 			string one = NetUtility.ToHexString(N.GetBytes());
 			string two = NetUtility.ToHexString(g.GetBytes());
 			byte[] cc = NetUtility.ToByteArray(one + two.PadLeft(one.Length, '0'));
-			return BigInteger.Modulus(new BigInteger(NetSHA.Hash(cc)), N);
+			return BigInteger.Modulus(new BigInteger(NetSha.Hash(cc)), N);
 		}
 
 		/// <summary>
@@ -140,13 +167,13 @@ namespace Lidgren.Network
 		public static byte[] ComputePasswordVerifier(string username, string password, byte[] salt)
 		{
 			byte[] tmp = Encoding.ASCII.GetBytes(username + ":" + password);
-			byte[] innerHash = NetSHA.Hash(tmp);
+			byte[] innerHash = NetSha.Hash(tmp);
 
 			byte[] total = new byte[innerHash.Length + salt.Length];
 			Buffer.BlockCopy(salt, 0, total, 0, salt.Length);
 			Buffer.BlockCopy(innerHash, 0, total, salt.Length, innerHash.Length);
 
-			byte[] x = NetSHA.Hash(total);
+			byte[] x = NetSha.Hash(total);
 
 			// Verifier (v) = g^x (mod N) 
 			BigInteger xx = new BigInteger(x);
@@ -194,7 +221,7 @@ namespace Lidgren.Network
 			string two = NetUtility.ToHexString(B);
 			string compound = one + two.PadLeft(one.Length, '0');
 			byte[] cc = NetUtility.ToByteArray(compound);
-			return NetSHA.Hash(cc);
+			return NetSha.Hash(cc);
 		}
 
 		/*

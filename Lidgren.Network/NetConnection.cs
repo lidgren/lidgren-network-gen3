@@ -28,8 +28,8 @@ namespace Lidgren.Network
 	[DebuggerDisplay("RemoteEndpoint={m_remoteEndpoint} Status={m_status}")]
 	public partial class NetConnection
 	{
-		private NetPeer m_owner;
-		internal IPEndPoint m_remoteEndpoint;
+		private readonly NetPeer m_owner;
+		internal readonly IPEndPoint m_remoteEndpoint;
 		internal double m_lastHeardFrom;
 		internal NetQueue<NetOutgoingMessage> m_unsentMessages;
 		internal NetConnectionStatus m_status;
@@ -523,7 +523,8 @@ namespace Lidgren.Network
 					HandleIncomingAcks(ptr, NetUtility.BytesToHoldBits(payloadLengthBits));
 					break;
 				default:
-					throw new NotImplementedException("Unhandled library type: " + libType);
+					m_owner.LogWarning("Unhandled library type in " + this + ": " + libType);
+					break;
 			}
 
 			return;
@@ -650,12 +651,6 @@ namespace Lidgren.Network
 			}
 			m_pendingStatus = PendingConnectionStatus.Denied;
 			m_pendingDenialReason = reason;
-		}
-
-		internal void Dispose()
-		{
-			m_owner = null;
-			m_unsentMessages = null;
 		}
 
 		public override string ToString()

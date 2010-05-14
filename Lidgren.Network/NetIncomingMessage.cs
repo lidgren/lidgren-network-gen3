@@ -15,12 +15,10 @@ PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
 LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 USE OR OTHER DEALINGS IN THE SOFTWARE.
-
 */
 using System;
-using System.Collections.Generic;
-using System.Net;
 using System.Diagnostics;
+using System.Net;
 
 namespace Lidgren.Network
 {
@@ -60,6 +58,14 @@ namespace Lidgren.Network
 		public int LengthBits
 		{
 			get { return m_bitLength; }
+		}
+
+		/// <summary>
+		/// Returns the internal data buffer, don't modify
+		/// </summary>
+		public byte[] PeekDataBuffer()
+		{
+			return m_data;
 		}
 
 		/// <summary>
@@ -108,6 +114,20 @@ namespace Lidgren.Network
 			m_bitLength = 0;
 			m_readPosition = 0;
 			m_fragmentationInfo = null;
+		}
+
+		public void Decrypt(NetXtea tea)
+		{
+			// need blocks of 8 bytes
+			int blocks = m_bitLength / 64;
+			if (blocks * 64 != m_bitLength)
+				throw new NetException("Wrong message length for XTEA decrypt! Length is " + m_bitLength + " bits");
+
+			Console.WriteLine("DECRYPTING " + NetUtility.ToHexString(m_data));
+
+			byte[] result = new byte[m_data.Length];
+			tea.DecryptBlock(m_data, 0, result, 0);
+			m_data = result;
 		}
 
 		public override string ToString()

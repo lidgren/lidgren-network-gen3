@@ -2,7 +2,7 @@
 
 namespace Lidgren.Network
 {
-	public class NetFragmentationInfo
+	public sealed class NetFragmentationInfo
 	{
 		public int TotalFragmentCount;
 		public bool[] Received;

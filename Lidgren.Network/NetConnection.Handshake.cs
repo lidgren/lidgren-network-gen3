@@ -171,11 +171,11 @@ namespace Lidgren.Network
 			m_connectionInitiator = false;
 		}
 
-		private void HandleIncomingHandshake(NetMessageLibraryType ltp, int ptr, int payloadBitsLength)
+		private void HandleIncomingHandshake(NetMessageLibraryType libType, int ptr, int payloadBitsLength)
 		{
 			m_owner.VerifyNetworkThread();
 
-			switch (ltp)
+			switch (libType)
 			{
 				case NetMessageLibraryType.Connect:
 					if (m_status == NetConnectionStatus.Connecting)
@@ -219,7 +219,7 @@ namespace Lidgren.Network
 						return;
 					}
 
-					m_owner.LogWarning("NetConnection.HandleIncomingHandshake() passed " + ltp + ", but status is " + m_status);
+					m_owner.LogWarning("NetConnection.HandleIncomingHandshake() passed " + libType + ", but status is " + m_status);
 					break;
 				case NetMessageLibraryType.ConnectionEstablished:
 					if (!m_connectionInitiator && m_status == NetConnectionStatus.Connecting)
@@ -233,7 +233,7 @@ namespace Lidgren.Network
 						return;
 					}
 
-					m_owner.LogWarning("NetConnection.HandleIncomingHandshake() passed " + ltp + ", but initiator is " + m_connectionInitiator + " and status is " + m_status);
+					m_owner.LogWarning("NetConnection.HandleIncomingHandshake() passed " + libType + ", but initiator is " + m_connectionInitiator + " and status is " + m_status);
 					break;
 				case NetMessageLibraryType.Disconnect:
 					// extract bye message
@@ -244,7 +244,8 @@ namespace Lidgren.Network
 					break;
 				default:
 					// huh?
-					throw new NotImplementedException("Unhandled library type: " + ltp);
+					m_owner.LogWarning("Unhandled library type in " + this + ": " + libType);
+					break;
 			}
 		}
 	}

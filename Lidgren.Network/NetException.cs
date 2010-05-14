@@ -18,8 +18,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 */
 using System;
-using System.Runtime.Serialization;
 using System.Diagnostics;
+using System.Runtime.Serialization;
 
 namespace Lidgren.Network
 {

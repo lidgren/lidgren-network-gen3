@@ -35,16 +35,16 @@ namespace Lidgren.Network
 		internal const int kMaxPacketHeaderSize = 5;
 
 		private NetPeerStatus m_status;
-		private object m_initializeLock = new object();
+		private readonly object m_initializeLock = new object();
 		internal long m_uniqueIdentifier;
 
 		internal NetPeerConfiguration m_configuration;
-		internal NetPeerStatistics m_statistics;
+		internal readonly NetPeerStatistics m_statistics;
 		private Thread m_networkThread;
 		private string m_shutdownReason;
 
-		internal List<NetConnection> m_connections;
-		private Dictionary<IPEndPoint, NetConnection> m_connectionLookup;
+		internal readonly List<NetConnection> m_connections;
+		private readonly Dictionary<IPEndPoint, NetConnection> m_connectionLookup;
 
 		/// <summary>
 		/// Gets the status of the NetPeer
@@ -98,12 +98,10 @@ namespace Lidgren.Network
 		{
 			m_status = NetPeerStatus.NotRunning;
 			m_configuration = configuration;
-			m_connections = new List<NetConnection>();
-			m_connectionLookup = new Dictionary<IPEndPoint, NetConnection>();
+			m_connections = new List<NetConnection>(m_configuration.MaximumConnections);
+			m_connectionLookup = new Dictionary<IPEndPoint, NetConnection>(m_configuration.MaximumConnections);
 			m_senderRemote = (EndPoint)new IPEndPoint(IPAddress.Any, 0);
 			m_statistics = new NetPeerStatistics(this);
-
-			InternalInitialize();
 		}
 
 		/// <summary>

@@ -30,9 +30,7 @@ namespace UnitTests
 
 			byte[] data = msg.PeekDataBuffer();
 
-			NetIncomingMessage inc = (NetIncomingMessage)Activator.CreateInstance(typeof(NetIncomingMessage), true);
-			typeof(NetIncomingMessage).GetField("m_data", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(inc, data);
-			typeof(NetIncomingMessage).GetField("m_bitLength", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(inc, msg.LengthBits);
+			NetIncomingMessage inc = Program.CreateIncomingMessage(data, msg.LengthBits);
 
 			StringBuilder bdr = new StringBuilder();
 
@@ -82,9 +80,7 @@ namespace UnitTests
 
 			data = tmp.PeekDataBuffer();
 
-			inc = (NetIncomingMessage)Activator.CreateInstance(typeof(NetIncomingMessage), true);
-			typeof(NetIncomingMessage).GetField("m_data", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(inc, data);
-			typeof(NetIncomingMessage).GetField("m_bitLength", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(inc, tmp.LengthBits);
+			inc = Program.CreateIncomingMessage(data, tmp.LengthBits);
 
 			Test readTest = new Test();
 			inc.ReadAllFields(readTest);
