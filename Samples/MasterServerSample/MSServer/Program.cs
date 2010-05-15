@@ -32,6 +32,25 @@ namespace MSServer
 			Console.WriteLine("Sending registration to master server");
 			server.SendUnconnectedMessage(regMsg, masterServerEndpoint);
 
+			while(Console.KeyAvailable == false || Console.ReadKey().Key != ConsoleKey.Escape)
+			{
+				NetIncomingMessage inc;
+				while ((inc = server.ReadMessage()) != null)
+				{
+					switch (inc.MessageType)
+					{
+						case NetIncomingMessageType.VerboseDebugMessage:
+						case NetIncomingMessageType.DebugMessage:
+						case NetIncomingMessageType.WarningMessage:
+						case NetIncomingMessageType.ErrorMessage:
+							Console.WriteLine(inc.ReadString());
+							break;
+					}
+				}
+
+				System.Threading.Thread.Sleep(1);
+			}
+
 			Console.ReadKey();
 		}
 	}

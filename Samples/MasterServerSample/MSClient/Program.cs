@@ -26,7 +26,8 @@ namespace MSClient
 			m_hostList = new List<IPEndPoint[]>();
 
 			NetPeerConfiguration config = new NetPeerConfiguration("game");
-			config.SetMessageTypeEnabled(NetIncomingMessageType.UnconnectedData, true);
+			config.EnableMessageType(NetIncomingMessageType.UnconnectedData);
+			config.EnableMessageType(NetIncomingMessageType.NatIntroductionSuccess);
 			m_client = new NetClient(config);
 			m_client.Start();
 
@@ -43,6 +44,12 @@ namespace MSClient
 				{
 					switch (inc.MessageType)
 					{
+						case NetIncomingMessageType.VerboseDebugMessage:
+						case NetIncomingMessageType.DebugMessage:
+						case NetIncomingMessageType.WarningMessage:
+						case NetIncomingMessageType.ErrorMessage:
+							NativeMethods.AppendText(m_mainForm.richTextBox1, inc.ReadString());
+							break;
 						case NetIncomingMessageType.UnconnectedData:
 							if (inc.SenderEndpoint.Equals(m_masterServer))
 							{
@@ -56,7 +63,8 @@ namespace MSClient
 							}
 							break;
 						case NetIncomingMessageType.NatIntroductionSuccess:
-							MessageBox.Show("Nat introduction success; I just received a message from " + inc.SenderEndpoint);
+							string token = inc.ReadString();
+							MessageBox.Show("Nat introduction success to " + inc.SenderEndpoint + " token is: " + token);
 							break;
 					}
 				}
@@ -96,7 +104,7 @@ namespace MSClient
 			// write external address of host to request introduction to
 			IPEndPoint hostEp = new IPEndPoint(NetUtility.Resolve(host), CommonConstants.GameServerPort);
 			om.Write(hostEp);
-			om.Write("randomtoken");
+			om.Write("mytoken");
 
 			m_client.SendUnconnectedMessage(om, m_masterServer);
 		}

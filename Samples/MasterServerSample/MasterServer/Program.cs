@@ -76,6 +76,7 @@ namespace MasterServer
 										if (elist[1].Equals(hostExternal))
 										{
 											// found in list - introduce client and host to eachother
+											Console.WriteLine("Sending introduction...");
 											peer.Introduce(
 												elist[0], // host internal
 												elist[1], // host external
@@ -83,7 +84,6 @@ namespace MasterServer
 												msg.SenderEndpoint, // client external
 												token // request token
 											);
-											Console.WriteLine("Sending...");
 											break;
 										}
 									}
