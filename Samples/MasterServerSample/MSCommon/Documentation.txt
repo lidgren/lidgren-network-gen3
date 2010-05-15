@@ -1,0 +1,27 @@
+﻿
+C is a computer behind a NAT
+H is a computer behind a different NAT
+M is a computer not behind a NAT
+
+H wishes to host a game and C wishes to join it, but since they are both behind NAT they cannot contact eachother directly. M must help.
+
+-------
+
+1. H sends a message to M, registering itself as a game host. H is added to the host list at M. (sample code)
+
+2. C requests the host list from M. (sample code)
+
+3. C reads the host list and decides to join the game hosted by H. (sample code)
+
+3. C sends a request to M for introduction between C and H. (sample code)
+
+4. M gets the request and sends a NatIntroduction message to both C and H with their external addresses. (NetPeer.Introduce())
+
+5a. C gets the intro message and sends a NAT punch message to the external address of H (automatically by library)
+5b. H gets the intro message and sends a NAT punch message to the external address of C (automatically by library)
+
+6. If everything goes well, C will get the punch message from H and both NAT routers are now properly configured.
+
+7. C will receive a NatIntroductionSuccess message and can now call Connect() as usual (automatically by library)
+
+
