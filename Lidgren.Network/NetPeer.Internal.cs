@@ -32,7 +32,7 @@ namespace Lidgren.Network
 		internal Socket m_socket;
 		internal byte[] m_macAddressBytes;
 		private int m_listenPort;
-		private readonly AutoResetEvent m_messageReceivedEvent = new AutoResetEvent(false);
+		private AutoResetEvent m_messageReceivedEvent = new AutoResetEvent(false);
 
 		private readonly NetQueue<NetIncomingMessage> m_releasedIncomingMessages = new NetQueue<NetIncomingMessage>(16);
 		private readonly NetQueue<NetOutgoingMessage> m_unsentUnconnectedMessage = new NetQueue<NetOutgoingMessage>(4);
@@ -178,7 +178,10 @@ namespace Lidgren.Network
 						m_socket.Close(2); // 2 seconds timeout
 					}
 					if (m_messageReceivedEvent != null)
+					{
 						m_messageReceivedEvent.Close();
+						m_messageReceivedEvent = null;
+					}
 				}
 				finally
 				{
@@ -400,122 +403,114 @@ namespace Lidgren.Network
 		{
 			VerifyNetworkThread();
 
-			if (libType != NetMessageLibraryType.Connect && libType != NetMessageLibraryType.Discovery && libType != NetMessageLibraryType.DiscoveryResponse)
-			{
-				LogWarning("Received unconnected library message of type " + libType);
-				return;
-			}
-
 			int payloadLengthBytes = NetUtility.BytesToHoldBits(payloadLengthBits);
 
-			//
-			// Handle nat introduction
-			//
-			if (libType == NetMessageLibraryType.NatIntroduction)
-				HandleNatIntroduction(ptr);
-
-			//
-			// Handle Discovery
-			//
-			if (libType == NetMessageLibraryType.Discovery)
+			switch (libType)
 			{
-				if (m_configuration.IsMessageTypeEnabled(NetIncomingMessageType.DiscoveryRequest))
-				{
-					NetIncomingMessage dm = CreateIncomingMessage(NetIncomingMessageType.DiscoveryRequest, payloadLengthBytes);
-					if (payloadLengthBytes > 0)
-						Buffer.BlockCopy(m_receiveBuffer, ptr, dm.m_data, 0, payloadLengthBytes);
-					dm.m_bitLength = payloadLengthBits;
-					dm.m_senderEndpoint = senderEndpoint;
-					ReleaseMessage(dm);
-				}
-				return;
-			}
-
-			if (libType == NetMessageLibraryType.DiscoveryResponse)
-			{
-				if (m_configuration.IsMessageTypeEnabled(NetIncomingMessageType.DiscoveryResponse))
-				{
-					NetIncomingMessage dr = CreateIncomingMessage(NetIncomingMessageType.DiscoveryResponse, payloadLengthBytes);
-					if (payloadLengthBytes > 0)
-						Buffer.BlockCopy(m_receiveBuffer, ptr, dr.m_data, 0, payloadLengthBytes);
-					dr.m_bitLength = payloadLengthBits;
-					dr.m_senderEndpoint = senderEndpoint;
-					ReleaseMessage(dr);
-				}
-				return;
-			}
-			
-			//
-			// Handle NetMessageLibraryType.Connect
-			//
-
-			if (!m_configuration.m_acceptIncomingConnections)
-			{
-				LogWarning("Connect received; but we're not accepting incoming connections!");
-				return;
-			}
-
-			string appIdent;
-			long remoteUniqueIdentifier = 0;
-			NetIncomingMessage approval = null;
-			try
-			{
-				NetIncomingMessage reader = new NetIncomingMessage();
-
-				reader.m_data = GetStorage(payloadLengthBytes);
-				Buffer.BlockCopy(m_receiveBuffer, ptr, reader.m_data, 0, payloadLengthBytes);
-				ptr += payloadLengthBytes;
-				reader.m_bitLength = payloadLengthBits;
-				appIdent = reader.ReadString();
-				remoteUniqueIdentifier = reader.ReadInt64();
-
-				int approvalBitLength = (int)reader.ReadVariableUInt32();
-				if (approvalBitLength > 0)
-				{
-					int approvalByteLength = NetUtility.BytesToHoldBits(approvalBitLength);
-					if (approvalByteLength < m_configuration.MaximumTransmissionUnit)
+				case NetMessageLibraryType.NatPunchMessage:
+					HandleNatPunch(ptr, senderEndpoint);
+					break;
+				case NetMessageLibraryType.NatIntroduction:
+					HandleNatIntroduction(ptr);
+					break;
+				case NetMessageLibraryType.Discovery:
+					if (m_configuration.IsMessageTypeEnabled(NetIncomingMessageType.DiscoveryRequest))
 					{
-						approval = CreateIncomingMessage(NetIncomingMessageType.ConnectionApproval, approvalByteLength);
-						reader.ReadBits(approval.m_data, 0, approvalBitLength);
-						approval.m_bitLength = approvalBitLength;
+						NetIncomingMessage dm = CreateIncomingMessage(NetIncomingMessageType.DiscoveryRequest, payloadLengthBytes);
+						if (payloadLengthBytes > 0)
+							Buffer.BlockCopy(m_receiveBuffer, ptr, dm.m_data, 0, payloadLengthBytes);
+						dm.m_bitLength = payloadLengthBits;
+						dm.m_senderEndpoint = senderEndpoint;
+						ReleaseMessage(dm);
 					}
-				}
-			}
-			catch (Exception ex)
-			{
-				// malformed connect packet
-				LogWarning("Malformed connect packet from " + senderEndpoint + " - " + ex.ToString());
-				return;
-			}
 
-			if (appIdent.Equals(m_configuration.AppIdentifier) == false)
-			{
-				// wrong app ident
-				LogWarning("Connect received with wrong appidentifier (need '" + m_configuration.AppIdentifier + "' found '" + appIdent + "') from " + senderEndpoint);
-				return;
+					break;
+				case NetMessageLibraryType.DiscoveryResponse:
+					if (m_configuration.IsMessageTypeEnabled(NetIncomingMessageType.DiscoveryResponse))
+					{
+						NetIncomingMessage dr = CreateIncomingMessage(NetIncomingMessageType.DiscoveryResponse, payloadLengthBytes);
+						if (payloadLengthBytes > 0)
+							Buffer.BlockCopy(m_receiveBuffer, ptr, dr.m_data, 0, payloadLengthBytes);
+						dr.m_bitLength = payloadLengthBits;
+						dr.m_senderEndpoint = senderEndpoint;
+						ReleaseMessage(dr);
+					}
+					break;
+
+				case NetMessageLibraryType.Connect:
+
+
+					if (!m_configuration.m_acceptIncomingConnections)
+					{
+						LogWarning("Connect received; but we're not accepting incoming connections!");
+						break;
+					}
+
+					string appIdent;
+					long remoteUniqueIdentifier = 0;
+					NetIncomingMessage approval = null;
+					try
+					{
+						NetIncomingMessage reader = new NetIncomingMessage();
+
+						reader.m_data = GetStorage(payloadLengthBytes);
+						Buffer.BlockCopy(m_receiveBuffer, ptr, reader.m_data, 0, payloadLengthBytes);
+						ptr += payloadLengthBytes;
+						reader.m_bitLength = payloadLengthBits;
+						appIdent = reader.ReadString();
+						remoteUniqueIdentifier = reader.ReadInt64();
+
+						int approvalBitLength = (int)reader.ReadVariableUInt32();
+						if (approvalBitLength > 0)
+						{
+							int approvalByteLength = NetUtility.BytesToHoldBits(approvalBitLength);
+							if (approvalByteLength < m_configuration.MaximumTransmissionUnit)
+							{
+								approval = CreateIncomingMessage(NetIncomingMessageType.ConnectionApproval, approvalByteLength);
+								reader.ReadBits(approval.m_data, 0, approvalBitLength);
+								approval.m_bitLength = approvalBitLength;
+							}
+						}
+					}
+					catch (Exception ex)
+					{
+						// malformed connect packet
+						LogWarning("Malformed connect packet from " + senderEndpoint + " - " + ex.ToString());
+						break;
+					}
+
+					if (appIdent.Equals(m_configuration.AppIdentifier) == false)
+					{
+						// wrong app ident
+						LogWarning("Connect received with wrong appidentifier (need '" + m_configuration.AppIdentifier + "' found '" + appIdent + "') from " + senderEndpoint);
+						break;
+					}
+
+					// ok, someone wants to connect to us, and we're accepting connections!
+					if (m_connections.Count >= m_configuration.MaximumConnections)
+					{
+						HandleServerFull(senderEndpoint);
+						break;
+					}
+
+					NetConnection conn = new NetConnection(this, senderEndpoint);
+					conn.m_connectionInitiator = false;
+					conn.m_connectInitationTime = NetTime.Now;
+					conn.m_remoteUniqueIdentifier = remoteUniqueIdentifier;
+
+					if (m_configuration.IsMessageTypeEnabled(NetIncomingMessageType.ConnectionApproval))
+					{
+						// do connection approval before accepting this connection
+						AddPendingConnection(conn, approval);
+						break;
+					}
+
+					AcceptConnection(conn);
+					break;
+				default:
+					LogWarning("Received unconnected library message of type " + libType);
+					break;
 			}
-
-			// ok, someone wants to connect to us, and we're accepting connections!
-			if (m_connections.Count >= m_configuration.MaximumConnections)
-			{
-				HandleServerFull(senderEndpoint);
-				return;
-			}
-
-			NetConnection conn = new NetConnection(this, senderEndpoint);
-			conn.m_connectionInitiator = false;
-			conn.m_connectInitationTime = NetTime.Now;
-			conn.m_remoteUniqueIdentifier = remoteUniqueIdentifier;
-
-			if (m_configuration.IsMessageTypeEnabled(NetIncomingMessageType.ConnectionApproval))
-			{
-				// do connection approval before accepting this connection
-				AddPendingConnection(conn, approval);
-				return;
-			}
-
-			AcceptConnection(conn);
-			return;
 		}
 
 		private void HandleUnconnectedUserMessage(int ptr, int payloadLengthBits, IPEndPoint senderEndpoint)

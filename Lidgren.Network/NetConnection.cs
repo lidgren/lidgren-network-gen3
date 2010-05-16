@@ -79,6 +79,11 @@ namespace Lidgren.Network
 		/// </summary>
 		public IPEndPoint RemoteEndpoint { get { return m_remoteEndpoint; } }
 
+		/// <summary>
+		/// Gets the owning NetPeer instance
+		/// </summary>
+		public NetPeer Owner { get { return m_owner; } }
+
 		internal NetConnection(NetPeer owner, IPEndPoint remoteEndpoint)
 		{
 			m_owner = owner;

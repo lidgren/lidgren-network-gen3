@@ -48,6 +48,8 @@ namespace Lidgren.Network
 			string token = tmp.ReadString();
 			bool isHost = (hostByte != 0);
 
+			LogDebug("NAT introduction received; we are designated " + (isHost ? "host" : "client"));
+
 			NetOutgoingMessage punch;
 
 			if (!isHost && m_configuration.IsMessageTypeEnabled(NetIncomingMessageType.NatIntroductionSuccess) == false)
@@ -56,21 +58,13 @@ namespace Lidgren.Network
 			// send internal punch
 			punch = CreateMessage(1);
 			punch.Write(hostByte);
-			if (hostByte == 0)
-			{
-				// only client needs to send token
-				punch.Write(token);
-			}
+			punch.Write(token);
 			SendUnconnectedLibraryMessage(punch, NetMessageLibraryType.NatPunchMessage, remoteInternal);
 
 			// send external punch
 			punch = CreateMessage(1);
 			punch.Write(hostByte);
-			if (hostByte == 0)
-			{
-				// only client needs to send token
-				punch.Write(token);
-			}
+			punch.Write(token);
 			SendUnconnectedLibraryMessage(punch, NetMessageLibraryType.NatPunchMessage, remoteExternal);
 		}
 
@@ -82,10 +76,16 @@ namespace Lidgren.Network
 			NetIncomingMessage tmp = new NetIncomingMessage(m_receiveBuffer, 1000); // never mind length
 			tmp.Position = (ptr * 8);
 
-			byte hostByte = tmp.ReadByte();
-			if (hostByte != 0)
+			byte fromHostByte = tmp.ReadByte();
+			if (fromHostByte == 0)
+			{
+				// it's from client
+				LogDebug("NAT punch received from " + senderEndpoint + " we're host, so we ignore this");
 				return; // don't alert hosts about nat punch successes; only clients
+			}
 			string token = tmp.ReadString();
+
+			LogDebug("NAT punch received from " + senderEndpoint + " we're client, so we've succeeded - token is " + token);
 
 			//
 			// Release punch success to client; enabling him to Connect() to msg.SenderIPEndPoint if token is ok
