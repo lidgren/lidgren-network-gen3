@@ -78,6 +78,7 @@ namespace Lidgren.Network
 				m_data[idx] &= (uint)(~(1 << bitNr));
 		}
 
+		[System.Runtime.CompilerServices.IndexerName("Bit")]
 		public bool this [int index]
 		{
 			get { return Get(index); }

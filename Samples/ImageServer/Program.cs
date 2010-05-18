@@ -109,7 +109,7 @@ namespace ImageServer
 								}
 								*/
 
-								NetOutgoingMessage om = Server.CreateMessage(ImageData.Length);
+								NetOutgoingMessage om = Server.CreateMessage(ImageData.Length + 5);
 
 								om.Write((ushort)ImageWidth);
 								om.Write((ushort)ImageHeight);
