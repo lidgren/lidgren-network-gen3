@@ -28,8 +28,7 @@ namespace Lidgren.Network
 		private ushort[] m_nextSendSequenceNumber;
 		private ushort[] m_lastReceivedSequenced;
 
-		// TODO: naïve! replace by something better?
-		internal readonly List<NetOutgoingMessage>[] m_storedMessages = new List<NetOutgoingMessage>[NetConstants.NumReliableChannels];
+		internal readonly Dictionary<ushort, NetOutgoingMessage>[] m_storedMessages = new Dictionary<ushort, NetOutgoingMessage>[NetConstants.NumReliableChannels];
 		internal readonly NetBitVector m_storedMessagesNotEmpty = new NetBitVector(NetConstants.NumReliableChannels);
 
 		private readonly ushort[] m_nextExpectedReliableSequence = new ushort[NetConstants.NumReliableChannels];
@@ -44,7 +43,7 @@ namespace Lidgren.Network
 			int retval = 0;
 			for (int i = 0; i < m_storedMessages.Length; i++)
 			{
-				List<NetOutgoingMessage> list = m_storedMessages[i];
+				var list = m_storedMessages[i];
 				if (list != null)
 					retval += list.Count;
 			}
@@ -87,23 +86,26 @@ namespace Lidgren.Network
 			return false;
 		}
 
-		// called the FIRST time a reliable message is sent
-		private void StoreReliableMessage(double now, NetOutgoingMessage msg)
+		// called by Encode() to retrieve a sequence number and store the message for potential resending
+		internal ushort StoreReliableMessage(double now, NetOutgoingMessage msg)
 		{
 			m_owner.VerifyNetworkThread();
 
+			ushort seqNr = GetSendSequenceNumber(msg.m_type);
+
 			int reliableSlot = (int)msg.m_type - (int)NetMessageType.UserReliableUnordered;
 
-			List<NetOutgoingMessage> list = m_storedMessages[reliableSlot];
-			if (list == null)
+			Dictionary<ushort, NetOutgoingMessage> slotDict = m_storedMessages[reliableSlot];
+			if (slotDict == null)
 			{
-				list = new List<NetOutgoingMessage>();
-				m_storedMessages[reliableSlot] = list;
+				slotDict = new Dictionary<ushort, NetOutgoingMessage>();
+				m_storedMessages[reliableSlot] = slotDict;
 			}
-			Interlocked.Increment(ref msg.m_inQueueCount);
-			list.Add(msg);
 
-			if (list.Count == 1)
+			Interlocked.Increment(ref msg.m_inQueueCount);
+			slotDict.Add(seqNr, msg);
+
+			if (slotDict.Count > 0)
 				m_storedMessagesNotEmpty.Set(reliableSlot, true);
 
 			// schedule next resend
@@ -111,9 +113,11 @@ namespace Lidgren.Network
 			float[] baseTimes = m_peerConfiguration.m_resendBaseTime;
 			float[] multiplers = m_peerConfiguration.m_resendRTTMultiplier;
 			msg.m_nextResendTime = now + baseTimes[numSends] + (m_averageRoundtripTime * multiplers[numSends]);
+
+			return seqNr;
 		}
 
-		private void Resend(double now, NetOutgoingMessage msg)
+		private void Resend(double now, ushort seqNr, NetOutgoingMessage msg)
 		{
 			m_owner.VerifyNetworkThread();
 
@@ -123,8 +127,7 @@ namespace Lidgren.Network
 			{
 				// no more resends! We failed!
 				int reliableSlot = (int)msg.m_type - (int)NetMessageType.UserReliableUnordered;
-				List<NetOutgoingMessage> list = m_storedMessages[reliableSlot];
-				list.Remove(msg);
+				m_storedMessages[reliableSlot].Remove(seqNr);
 				m_owner.LogWarning("Failed to deliver reliable message " + msg);
 
 				Disconnect("Failed to deliver reliable message!");
@@ -162,30 +165,25 @@ namespace Lidgren.Network
 				// remove stored message
 				int reliableSlot = (int)tp - (int)NetMessageType.UserReliableUnordered;
 
-				List<NetOutgoingMessage> list = m_storedMessages[reliableSlot];
-				if (list == null)
+				var dict = m_storedMessages[reliableSlot];
+				if (dict == null)
 					continue;
 
 				// find message
-				for (int a = 0; a < list.Count; a++)
+				NetOutgoingMessage om;
+				if (dict.TryGetValue(seqNr, out om))
 				{
-					NetOutgoingMessage om = list[a];
-					if (om.m_sequenceNumber == seqNr)
-					{
-						// found!
-						list.RemoveAt(a);
-						Interlocked.Decrement(ref om.m_inQueueCount);
+					// found!
+					dict.Remove(seqNr);
+					Interlocked.Decrement(ref om.m_inQueueCount);
 
-						NetException.Assert(om.m_lastSentTime != 0);
+					NetException.Assert(om.m_lastSentTime != 0);
 
-						if (om.m_lastSentTime > m_lastSendRespondedTo)
-							m_lastSendRespondedTo = om.m_lastSentTime;
+					if (om.m_lastSentTime > m_lastSendRespondedTo)
+						m_lastSendRespondedTo = om.m_lastSentTime;
 
-						if (om.m_inQueueCount < 1)
-							m_owner.Recycle(om);
-
-						break;
-					}
+					if (om.m_inQueueCount < 1)
+						m_owner.Recycle(om);
 				}
 
 				// TODO: receipt handling

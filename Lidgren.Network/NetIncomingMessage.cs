@@ -113,6 +113,7 @@ namespace Lidgren.Network
 		{
 			m_bitLength = 0;
 			m_readPosition = 0;
+			m_status = NetIncomingMessageReleaseStatus.NotReleased;
 			m_fragmentationInfo = null;
 		}
 

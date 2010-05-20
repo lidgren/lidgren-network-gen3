@@ -118,7 +118,7 @@ namespace ImageServer
 								// send entire as a large message that will be automatically fragmented by the library
 								om.Write(ImageData);
 
-								Server.SendMessage(om, inc.SenderConnection, NetDeliveryMethod.ReliableUnordered, 0);
+								Server.SendMessage(om, inc.SenderConnection, NetDeliveryMethod.ReliableOrdered, 0);
 
 								// all messages will be sent before disconnect so we can call it here
 								// inc.SenderConnection.Disconnect("Bye bye now");

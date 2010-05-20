@@ -32,7 +32,6 @@ namespace Lidgren.Network
 
 		internal NetMessageType m_type;
 		internal NetMessageLibraryType m_libType;
-		internal ushort m_sequenceNumber;
 
 		internal IPEndPoint m_unconnectedRecipient;
 
@@ -99,7 +98,8 @@ namespace Lidgren.Network
 			return ptr;
 		}
 
-		internal int Encode(byte[] buffer, int ptr, NetConnection conn)
+		// encode and store for resending (if conn != null and message is reliable)
+		internal int Encode(double now, byte[] buffer, int ptr, NetConnection conn)
 		{
 			// message type
 			buffer[ptr++] = (byte)((int)m_type | (m_fragmentGroupId == -1 ? 0 : 128));
@@ -112,10 +112,15 @@ namespace Lidgren.Network
 			{
 				if (conn == null)
 					throw new NetException("Trying to encode NetMessageType " + m_type + " to unconnected endpoint!");
-				if (m_numSends == 0)
-					m_sequenceNumber = conn.GetSendSequenceNumber(m_type);
-				buffer[ptr++] = (byte)m_sequenceNumber;
-				buffer[ptr++] = (byte)(m_sequenceNumber >> 8);
+				
+				ushort seqNr;
+				if (m_type >= NetMessageType.UserReliableUnordered)
+					seqNr = conn.GetSendSequenceNumber(m_type); // "disposable" sequence number
+				else
+					seqNr = conn.StoreReliableMessage(now, this);
+
+				buffer[ptr++] = (byte)seqNr;
+				buffer[ptr++] = (byte)(seqNr >> 8);
 			}
 
 			// payload length
@@ -187,8 +192,6 @@ namespace Lidgren.Network
 				bdr.Append('|');
 				bdr.Append(m_libType.ToString());
 			}
-			bdr.Append(" #");
-			bdr.Append(m_sequenceNumber);
 			bdr.Append(" sent ");
 			bdr.Append(m_numSends);
 			bdr.Append(" times]");

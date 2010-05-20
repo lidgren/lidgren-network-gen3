@@ -148,11 +148,13 @@ namespace Lidgren.Network
 					{
 						if (m_storedMessagesNotEmpty.Get(i))
 						{
-							foreach (NetOutgoingMessage om in m_storedMessages[i])
+							Dictionary<ushort, NetOutgoingMessage> dict = m_storedMessages[i];
+							foreach (ushort seqNr in m_storedMessages[i].Keys)
 							{
+								NetOutgoingMessage om = dict[seqNr];
 								if (now >= om.m_nextResendTime)
 								{
-									Resend(now, om);
+									Resend(now, seqNr, om);
 									break; // need to break out here; collection may have been modified
 								}
 							}
@@ -216,15 +218,9 @@ namespace Lidgren.Network
 					// encode message
 					//
 
-					ptr = msg.Encode(buffer, ptr, this);
+					ptr = msg.Encode(now, buffer, ptr, this);
 					numIncludedMessages++;
-
-					if (msg.m_type >= NetMessageType.UserReliableUnordered && msg.m_numSends == 1)
-					{
-						// message is sent for the first time, and is reliable, store for resend
-						StoreReliableMessage(now, msg);
-					}
-
+					
 					// room to piggyback some acks?
 					if (m_acknowledgesToSend.Count > 0)
 					{
@@ -612,12 +608,12 @@ namespace Lidgren.Network
 			// shorten resend times
 			for (int i = 0; i < m_storedMessages.Length; i++)
 			{
-				List<NetOutgoingMessage> list = m_storedMessages[i];
-				if (list != null)
+				Dictionary<ushort, NetOutgoingMessage> dict = m_storedMessages[i];
+				if (dict != null)
 				{
 					try
 					{
-						foreach (NetOutgoingMessage om in list)
+						foreach (NetOutgoingMessage om in dict.Values)
 							om.m_nextResendTime = (om.m_nextResendTime * 0.8) - 0.05;
 					}
 					catch (InvalidOperationException)

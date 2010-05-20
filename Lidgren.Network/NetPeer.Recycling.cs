@@ -144,14 +144,11 @@ namespace Lidgren.Network
 
 					for(int i=0;i<conn.m_storedMessages.Length;i++)
 					{
-						List<NetOutgoingMessage> list = conn.m_storedMessages[i];
-						if (list != null && list.Count > 0)
+						var dict = conn.m_storedMessages[i];
+						if (dict != null)
 						{
-							foreach (NetOutgoingMessage om in conn.m_storedMessages[i])
-							{
-								if (om == msg)
-									throw new NetException("Ouch! Recycling stored message!");
-							}
+							if (dict.ContainsValue(msg))
+								throw new NetException("Ouch! Recycling stored message!");
 						}
 					}
 				}
@@ -237,7 +234,7 @@ namespace Lidgren.Network
 			else
 				retval.Reset();
 
-			NetException.Assert(retval.m_status != NetIncomingMessageReleaseStatus.ReleasedToApplication);
+			NetException.Assert(retval.m_status == NetIncomingMessageReleaseStatus.NotReleased);
 
 			retval.m_incomingType = tp;
 			retval.m_senderConnection = null;
@@ -264,6 +261,8 @@ namespace Lidgren.Network
 				retval = new NetIncomingMessage();
 			else
 				retval.Reset();
+
+			NetException.Assert(retval.m_status == NetIncomingMessageReleaseStatus.NotReleased);
 
 			retval.m_data = GetStorage(copyLength);
 			Buffer.BlockCopy(copyFrom, offset, retval.m_data, 0, copyLength);

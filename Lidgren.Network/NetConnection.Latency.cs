@@ -59,15 +59,17 @@ namespace Lidgren.Network
 
 		internal void HandleIncomingPing(byte pingNumber)
 		{
+			double now = NetTime.Now;
+
 			// send pong
 			NetOutgoingMessage pong = m_owner.CreateMessage(1);
 			pong.m_type = NetMessageType.Library;
 			pong.m_libType = NetMessageLibraryType.Pong;
 			pong.Write((byte)pingNumber);
-			pong.Write(NetTime.Now);
+			pong.Write(now);
 
 			// send immediately
-			m_owner.SendImmediately(this, pong);
+			m_owner.SendImmediately(now, this, pong);
 		}
 
 		internal void HandleIncomingPong(double receiveNow, byte pingNumber, double remoteNetTime)
@@ -146,7 +148,7 @@ namespace Lidgren.Network
 				ping.m_libType = NetMessageLibraryType.Ping;
 				ping.Write((byte)m_lastSentPingNumber);
 
-				m_owner.SendImmediately(this, ping);
+				m_owner.SendImmediately(now, this, ping);
 
 				m_lastPingSendTime = NetTime.Now; // need exact number
 				m_nextPing = now + m_owner.Configuration.m_pingFrequency;

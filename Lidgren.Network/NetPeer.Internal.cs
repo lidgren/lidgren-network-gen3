@@ -229,7 +229,7 @@ namespace Lidgren.Network
 				// TODO: use throttling here
 				//
 
-				int ptr = um.Encode(m_sendBuffer, 0, null);
+				int ptr = um.Encode(now, m_sendBuffer, 0, null);
 
 				if (recipient.Address.Equals(IPAddress.Broadcast))
 				{
@@ -577,12 +577,12 @@ namespace Lidgren.Network
 			return NetDeliveryMethod.Unreliable;
 		}
 
-		internal void SendImmediately(NetConnection conn, NetOutgoingMessage msg)
+		internal void SendImmediately(double now, NetConnection conn, NetOutgoingMessage msg)
 		{
 			NetException.Assert(msg.m_type == NetMessageType.Library, "SendImmediately can only send library (non-reliable) messages");
 
 			msg.m_inQueueCount = 1;
-			int len = msg.Encode(m_sendBuffer, 0, conn);
+			int len = msg.Encode(now, m_sendBuffer, 0, conn);
 			Interlocked.Decrement(ref msg.m_inQueueCount);
 
 			SendPacket(len, conn.m_remoteEndpoint, 1);

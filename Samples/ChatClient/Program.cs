@@ -27,7 +27,8 @@ namespace ChatClient
 			Application.SetCompatibleTextRenderingDefault(false);
 			MainForm = new Form1();
 
-			Client = new NetClient(new NetPeerConfiguration("Chat"));
+			NetPeerConfiguration config = new NetPeerConfiguration("Chat");
+			Client = new NetClient(config);
 			Client.Start();
 
 			Display("Type 'connect <host>' to connect to a server");

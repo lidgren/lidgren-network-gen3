@@ -100,9 +100,10 @@ namespace Lidgren.Network
 			}
 			m_owner.LogVerbose("Sending Connect");
 
-			m_owner.SendImmediately(this, om);
+			double now = NetTime.Now;
+			m_owner.SendImmediately(now, this, om);
 
-			m_connectInitationTime = NetTime.Now;
+			m_connectInitationTime = now;
 			SetStatus(NetConnectionStatus.Connecting, "Connecting");
 
 			return;
@@ -110,24 +111,28 @@ namespace Lidgren.Network
 
 		internal void SendConnectResponse()
 		{
+			double now = NetTime.Now;
+
 			NetOutgoingMessage reply = m_owner.CreateMessage(4);
 			reply.m_type = NetMessageType.Library;
 			reply.m_libType = NetMessageLibraryType.ConnectResponse;
-			reply.Write((float)NetTime.Now);
+			reply.Write((float)now);
 
 			m_owner.LogVerbose("Sending LibraryConnectResponse");
-			m_owner.SendImmediately(this, reply);
+			m_owner.SendImmediately(now, this, reply);
 		}
 
 		internal void SendConnectionEstablished()
 		{
+			double now = NetTime.Now;
+
 			NetOutgoingMessage ce = m_owner.CreateMessage(4);
 			ce.m_type = NetMessageType.Library;
 			ce.m_libType = NetMessageLibraryType.ConnectionEstablished;
-			ce.Write((float)NetTime.Now);
+			ce.Write((float)now);
 
 			m_owner.LogVerbose("Sending LibraryConnectionEstablished");
-			m_owner.SendImmediately(this, ce);
+			m_owner.SendImmediately(now, this, ce);
 		}
 
 		internal void ExecuteDisconnect(bool sendByeMessage)
@@ -160,9 +165,9 @@ namespace Lidgren.Network
 			// release some held memory
 			if (m_storedMessages != null)
 			{
-				foreach (List<NetOutgoingMessage> oml in m_storedMessages)
-					if (oml != null)
-						oml.Clear();
+				foreach (var dict in m_storedMessages)
+					if (dict != null)
+						dict.Clear();
 			}
 			m_acknowledgesToSend.Clear();
 
