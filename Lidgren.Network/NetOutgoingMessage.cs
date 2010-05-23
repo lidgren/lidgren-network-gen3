@@ -172,13 +172,13 @@ namespace Lidgren.Network
 			WritePadBits();
 			int blocksNeeded = (m_bitLength + 63) / 64;
 			int missingBits = (blocksNeeded * 64) - m_bitLength;
-			int missingBytes = missingBits / 8;
+			int missingBytes = NetUtility.BytesToHoldBits(missingBits);
 			for (int i = 0; i < missingBytes; i++)
 				Write((byte)0);
 
-			Console.WriteLine("ENCRYPTING " + NetUtility.ToHexString(m_data));
 			byte[] result = new byte[m_data.Length];
-			tea.EncryptBlock(m_data, 0, result, 0);
+			for(int i=0;i<blocksNeeded;i++)
+				tea.EncryptBlock(m_data, (i * 8), result, (i * 8));
 			m_data = result;
 		}
 

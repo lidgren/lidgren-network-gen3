@@ -22,7 +22,7 @@ namespace Lidgren.Network
 			MethodInfo[] methods = typeof(NetOutgoingMessage).GetMethods(BindingFlags.Instance | BindingFlags.Public);
 			foreach (MethodInfo mi in methods)
 			{
-				if (mi.Name == "Write")
+				if (mi.Name.Equals("Write", StringComparison.InvariantCulture))
 				{
 					ParameterInfo[] pis = mi.GetParameters();
 					if (pis.Length == 1)

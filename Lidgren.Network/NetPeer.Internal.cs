@@ -479,7 +479,7 @@ namespace Lidgren.Network
 						break;
 					}
 
-					if (appIdent.Equals(m_configuration.AppIdentifier) == false)
+					if (appIdent.Equals(m_configuration.AppIdentifier, StringComparison.InvariantCulture) == false)
 					{
 						// wrong app ident
 						LogWarning("Connect received with wrong appidentifier (need '" + m_configuration.AppIdentifier + "' found '" + appIdent + "') from " + senderEndpoint);

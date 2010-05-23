@@ -119,15 +119,14 @@ namespace Lidgren.Network
 
 		public void Decrypt(NetXtea tea)
 		{
-			// need blocks of 8 bytes
+			// requires blocks of 8 bytes
 			int blocks = m_bitLength / 64;
 			if (blocks * 64 != m_bitLength)
 				throw new NetException("Wrong message length for XTEA decrypt! Length is " + m_bitLength + " bits");
 
-			Console.WriteLine("DECRYPTING " + NetUtility.ToHexString(m_data));
-
 			byte[] result = new byte[m_data.Length];
-			tea.DecryptBlock(m_data, 0, result, 0);
+			for (int i = 0; i < blocks; i++)
+				tea.DecryptBlock(m_data, (i * 8), result, (i * 8));
 			m_data = result;
 		}
 

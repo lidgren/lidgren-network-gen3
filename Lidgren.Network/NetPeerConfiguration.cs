@@ -65,7 +65,7 @@ namespace Lidgren.Network
 		{
 			if (string.IsNullOrEmpty(appIdentifier))
 				throw new NetException("App identifier must be at least one character long");
-			m_appIdentifier = appIdentifier;
+			m_appIdentifier = appIdentifier.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
 			// defaults
 			m_isLocked = false;

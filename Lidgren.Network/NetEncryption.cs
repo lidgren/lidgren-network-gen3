@@ -19,6 +19,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 using System;
 using System.Security.Cryptography;
 using System.Text;
+using System.Security;
 
 namespace Lidgren.Network
 {
@@ -27,13 +28,11 @@ namespace Lidgren.Network
 		private const int m_blockSize = 8;
 		private const int m_keySize = 16;
 		private const int m_delta = unchecked((int)0x9E3779B9);
-		private const int m_dSum = unchecked((int)0xC6EF3720); // sum on decrypt
 
-		private readonly byte[] m_keyBytes;
-		private readonly int[] m_key;
-		private readonly int m_rounds;
+		private readonly int m_numRounds;
 
-		public byte[] Key { get { return m_keyBytes; } }
+		private uint[] m_sum0;
+		private uint[] m_sum1;
 
 		/// <summary>
 		/// 16 byte key
@@ -42,20 +41,34 @@ namespace Lidgren.Network
 		{
 			if (key.Length < 16)
 				throw new NetException("Key too short!");
-			m_keyBytes = key;
-			m_key = new int[4];
-			m_key[0] = BitConverter.ToInt32(key, 0);
-			m_key[1] = BitConverter.ToInt32(key, 4);
-			m_key[2] = BitConverter.ToInt32(key, 8);
-			m_key[3] = BitConverter.ToInt32(key, 12);
-			m_rounds = rounds;
+
+			m_numRounds = rounds;
+
+			m_sum0 = new uint[m_numRounds];
+			m_sum1 = new uint[m_numRounds];
+			uint[] tmp = new uint[8];
+
+			int num2;
+			int index = num2 = 0;
+			while (index < 4)
+			{
+				tmp[index] = BitConverter.ToUInt32(key, num2);
+				index++;
+				num2 += 4;
+			}
+			for (index = num2 = 0; index < 32; index++)
+			{
+				m_sum0[index] = ((uint)num2) + tmp[num2 & 3];
+				num2 += -1640531527;
+				m_sum1[index] = ((uint)num2) + tmp[(num2 >> 11) & 3];
+			}
 		}
 
 		/// <summary>
 		/// 16 byte key
 		/// </summary>
 		public NetXtea(byte[] key)
-			: this(key, 64)
+			: this(key, 32)
 		{
 		}
 
@@ -65,25 +78,21 @@ namespace Lidgren.Network
 			byte[] outBytes,
 			int outOff)
 		{
-			// Pack bytes into integers
-			int v0 = BytesToInt(inBytes, inOff);
-			int v1 = BytesToInt(inBytes, inOff + 4);
+			uint v0 = BytesToUInt(inBytes, inOff);
+			uint v1 = BytesToUInt(inBytes, inOff + 4);
 
-			int sum = 0;
-
-			for (int i = 0; i != m_rounds; i++)
+			for (int i = 0; i != m_numRounds; i++)
 			{
-				v0 += ((v1 << 4 ^ (int)((uint)v1 >> 5)) + v1) ^ (sum + m_key[sum & 3]);
-				sum += m_delta;
-				v1 += ((v0 << 4 ^ (int)((uint)v0 >> 5)) + v0) ^ (sum + m_key[(int)((uint)sum >> 11) & 3]);
+				v0 += (((v1 << 4) ^ (v1 >> 5)) + v1) ^ m_sum0[i];
+				v1 += (((v0 << 4) ^ (v0 >> 5)) + v0) ^ m_sum1[i];
 			}
 
-			UnpackInt(v0, outBytes, outOff);
-			UnpackInt(v1, outBytes, outOff + 4);
+			UIntToBytes(v0, outBytes, outOff);
+			UIntToBytes(v1, outBytes, outOff + 4);
 
 			return;
 		}
-			
+
 		public void DecryptBlock(
 			byte[] inBytes,
 			int inOff,
@@ -91,43 +100,35 @@ namespace Lidgren.Network
 			int outOff)
 		{
 			// Pack bytes into integers
-			int v0 = BytesToInt(inBytes, inOff);
-			int v1 = BytesToInt(inBytes, inOff + 4);
+			uint v0 = BytesToUInt(inBytes, inOff);
+			uint v1 = BytesToUInt(inBytes, inOff + 4);
 
-			int sum = m_dSum;
-
-			for (int i = 0; i != m_rounds; i++)
+			for (int i = m_numRounds - 1; i >= 0; i--)
 			{
-				v1 -= ((v0 << 4 ^ (int)((uint)v0 >> 5)) + v0) ^ (sum + m_key[(int)((uint)sum >> 11) & 3]);
-				sum -= m_delta;
-				v0 -= ((v1 << 4 ^ (int)((uint)v1 >> 5)) + v1) ^ (sum + m_key[sum & 3]);
+				v1 -= (((v0 << 4) ^ (v0 >> 5)) + v0) ^ m_sum1[i];
+				v0 -= (((v1 << 4) ^ (v1 >> 5)) + v1) ^ m_sum0[i];
 			}
 
-			UnpackInt(v0, outBytes, outOff);
-			UnpackInt(v1, outBytes, outOff + 4);
+			UIntToBytes(v0, outBytes, outOff);
+			UIntToBytes(v1, outBytes, outOff + 4);
 
 			return;
 		}
 
-		private static int BytesToInt(byte[] b, int inOff)
+		private static uint BytesToUInt(byte[] bytes, int offset)
 		{
-			//return BitConverter.ToInt32(b, inOff);
-			return ((b[inOff++]) << 24) |
-					((b[inOff++] & 255) << 16) |
-					((b[inOff++] & 255) << 8) |
-					((b[inOff] & 255));
+			uint retval = (uint)(bytes[offset] << 24);
+			retval |= (uint)(bytes[++offset] << 16);
+			retval |= (uint)(bytes[++offset] << 8);
+			return (retval | bytes[++offset]);
 		}
 
-		private static void UnpackInt(
-			int v,
-			byte[] b,
-			int outOff)
+		private static void UIntToBytes(uint value, byte[] destination, int destinationOffset)
 		{
-			uint uv = (uint)v;
-			b[outOff++] = (byte)(uv >> 24);
-			b[outOff++] = (byte)(uv >> 16);
-			b[outOff++] = (byte)(uv >> 8);
-			b[outOff] = (byte)uv;
+			destination[destinationOffset++] = (byte)(value >> 24);
+			destination[destinationOffset++] = (byte)(value >> 16);
+			destination[destinationOffset++] = (byte)(value >> 8);
+			destination[destinationOffset++] = (byte)value;
 		}
 	}
 
