@@ -43,7 +43,6 @@ namespace Lidgren.Network
 				throw new NetException("Key too short!");
 
 			m_numRounds = rounds;
-
 			m_sum0 = new uint[m_numRounds];
 			m_sum1 = new uint[m_numRounds];
 			uint[] tmp = new uint[8];
@@ -69,6 +68,14 @@ namespace Lidgren.Network
 		/// </summary>
 		public NetXtea(byte[] key)
 			: this(key, 32)
+		{
+		}
+
+		/// <summary>
+		/// String to hash for key
+		/// </summary>
+		public NetXtea(string key)
+			: this(NetSha.Hash(Encoding.ASCII.GetBytes(key)), 32)
 		{
 		}
 

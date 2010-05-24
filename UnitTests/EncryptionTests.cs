@@ -13,7 +13,7 @@ namespace UnitTests
 			//
 			// Test XTEA
 			//
-			NetXtea xtea = new NetXtea(NetSha.Hash(Encoding.ASCII.GetBytes("TopSecret")));
+			NetXtea xtea = new NetXtea("TopSecret");
 
 			byte[] original = new byte[16];
 			NetRandom.Instance.NextBytes(original);

@@ -114,7 +114,7 @@ namespace Lidgren.Network
 					throw new NetException("Trying to encode NetMessageType " + m_type + " to unconnected endpoint!");
 				
 				ushort seqNr;
-				if (m_type >= NetMessageType.UserReliableUnordered)
+				if (m_type < NetMessageType.UserReliableUnordered)
 					seqNr = conn.GetSendSequenceNumber(m_type); // "disposable" sequence number
 				else
 					seqNr = conn.StoreReliableMessage(now, this);
