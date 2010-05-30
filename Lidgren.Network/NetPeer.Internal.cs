@@ -438,8 +438,7 @@ namespace Lidgren.Network
 					break;
 
 				case NetMessageLibraryType.Connect:
-
-
+					
 					if (!m_configuration.m_acceptIncomingConnections)
 					{
 						LogWarning("Connect received; but we're not accepting incoming connections!");

@@ -33,6 +33,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="NetBigInteger.cs" />
@@ -51,12 +53,14 @@
     <Compile Include="NetIncomingMessage.cs" />
     <Compile Include="NetIncomingMessage.Peek.cs" />
     <Compile Include="NetIncomingMessage.Read.cs" />
+    <Compile Include="NetIncomingMessage.Read.Reflection.cs" />
     <Compile Include="NetIncomingMessage.Write.cs" />
     <Compile Include="NetIncomingMessageType.cs" />
     <Compile Include="NetMessageType.cs" />
     <Compile Include="NetNatIntroduction.cs" />
     <Compile Include="NetOutgoingMessage.cs" />
     <Compile Include="NetOutgoingMessage.Write.cs" />
+    <Compile Include="NetOutgoingMessage.Write.Reflection.cs" />
     <Compile Include="NetPeer.ConnectionApproval.cs" />
     <Compile Include="NetPeer.cs" />
     <Compile Include="NetPeer.Discovery.cs" />

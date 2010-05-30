@@ -18,10 +18,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 */
 using System;
-using System.Diagnostics;
+using System.Collections.Generic;
 using System.Net;
 using System.Reflection;
-using System.Collections.Generic;
 
 namespace Lidgren.Network
 {
@@ -471,119 +470,6 @@ namespace Lidgren.Network
 		public void SkipPadBits(int numberOfBits)
 		{
 			m_readPosition += numberOfBits;
-		}
-
-		/// <summary>
-		/// Reads all public and private declared instance fields of the object in alphabetical order using reflection
-		/// </summary>
-		public void ReadAllFields(object target)
-		{
-			ReadAllFields(target, BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-		}
-
-		/// <summary>
-		/// Reads all fields with the specified binding of the object in alphabetical order using reflection
-		/// </summary>
-		public void ReadAllFields(object target, BindingFlags flags)
-		{
-			if (target == null)
-				return;
-			Type tp = target.GetType();
-
-			FieldInfo[] fields = tp.GetFields(flags);
-			SortMembersList(fields);
-
-			foreach (FieldInfo fi in fields)
-			{
-				object value;
-
-				// find read method
-				MethodInfo readMethod;
-				if (s_readMethods.TryGetValue(fi.FieldType, out readMethod))
-				{
-					// read value
-					value = readMethod.Invoke(this, null);
-
-					// set the value
-					fi.SetValue(target, value);
-				}
-			}
-		}
-
-		/// <summary>
-		/// Reads all public and private declared instance fields of the object in alphabetical order using reflection
-		/// </summary>
-		public void ReadAllProperties(object target)
-		{
-			ReadAllProperties(target, BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-		}
-
-		/// <summary>
-		/// Reads all fields with the specified binding of the object in alphabetical order using reflection
-		/// </summary>
-		public void ReadAllProperties(object target, BindingFlags flags)
-		{
-			if (target == null)
-				return;
-			Type tp = target.GetType();
-
-			PropertyInfo[] fields = tp.GetProperties(flags);
-			SortMembersList(fields);
-			foreach (PropertyInfo fi in fields)
-			{
-				object value;
-
-				// find read method
-				MethodInfo readMethod;
-				if (s_readMethods.TryGetValue(fi.PropertyType, out readMethod))
-				{
-					// read value
-					value = readMethod.Invoke(this, null);
-
-					// set the value
-					MethodInfo setMethod = fi.GetSetMethod((flags & BindingFlags.NonPublic) == BindingFlags.NonPublic);
-					setMethod.Invoke(target, new object[] { value });
-				}
-			}
-		}
-
-		// shell sort
-		internal static void SortMembersList(MemberInfo[] list)
-		{
-			int h;
-			int j;
-			MemberInfo tmp;
-
-			h = 1;
-			while (h * 3 + 1 <= list.Length)
-				h = 3 * h + 1;
-
-			while (h > 0)
-			{
-				for (int i = h - 1; i < list.Length; i++)
-				{
-					tmp = list[i];
-					j = i;
-					while (true)
-					{
-						if (j >= h)
-						{
-							if (string.Compare(list[j - h].Name, tmp.Name, StringComparison.InvariantCulture) > 0)
-							{
-								list[j] = list[j - h];
-								j -= h;
-							}
-							else
-								break;
-						}
-						else
-							break;
-					}
-
-					list[j] = tmp;
-				}
-				h /= 3;
-			}
 		}
 	}
 }
