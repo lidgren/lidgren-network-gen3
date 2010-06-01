@@ -29,6 +29,7 @@ namespace Lidgren.Network
 		private ushort[] m_lastReceivedSequenced;
 
 		internal readonly Dictionary<ushort, NetOutgoingMessage>[] m_storedMessages = new Dictionary<ushort, NetOutgoingMessage>[NetConstants.NumReliableChannels];
+		internal readonly Dictionary<NetOutgoingMessage, ushort>[] m_inverseStored = new Dictionary<NetOutgoingMessage, ushort>[NetConstants.NumReliableChannels];
 		internal readonly NetBitVector m_storedMessagesNotEmpty = new NetBitVector(NetConstants.NumReliableChannels);
 
 		private readonly ushort[] m_nextExpectedReliableSequence = new ushort[NetConstants.NumReliableChannels];
@@ -44,6 +45,18 @@ namespace Lidgren.Network
 			for (int i = 0; i < m_storedMessages.Length; i++)
 			{
 				var list = m_storedMessages[i];
+				if (list != null)
+					retval += list.Count;
+			}
+			return retval;
+		}
+
+		public int GetWithheldMessagesCount()
+		{
+			int retval = 0;
+			for (int i = 0; i < m_withheldMessages.Length; i++)
+			{
+				var list = m_withheldMessages[i];
 				if (list != null)
 					retval += list.Count;
 			}
@@ -91,22 +104,50 @@ namespace Lidgren.Network
 		{
 			m_owner.VerifyNetworkThread();
 
-			ushort seqNr = GetSendSequenceNumber(msg.m_type);
+			int seqNr = -1;
 
 			int reliableSlot = (int)msg.m_type - (int)NetMessageType.UserReliableUnordered;
-
 			Dictionary<ushort, NetOutgoingMessage> slotDict = m_storedMessages[reliableSlot];
+			Dictionary<NetOutgoingMessage, ushort> invSlotDict = m_inverseStored[reliableSlot];
 			if (slotDict == null)
 			{
 				slotDict = new Dictionary<ushort, NetOutgoingMessage>();
 				m_storedMessages[reliableSlot] = slotDict;
+
+				invSlotDict = new Dictionary<NetOutgoingMessage, ushort>();
+				m_inverseStored[reliableSlot] = invSlotDict;
+
+				// (cannot be a resend here)
+			}
+			else
+			{
+				// we assume there's a invSlotDict if there's a slotDict
+				// is it a resend? if so, return the old sequence number
+				ushort oldSeqNr;
+				if (invSlotDict.TryGetValue(msg, out oldSeqNr))
+					seqNr = oldSeqNr;
 			}
 
-			Interlocked.Increment(ref msg.m_inQueueCount);
-			slotDict.Add(seqNr, msg);
+			if (seqNr != -1)
+			{
+				// resend!
+				// m_owner.LogDebug("Resending " + msg.m_type + "|" + seqNr);
+				m_statistics.MessageResent();
+			}
+			else
+			{
+				// first send
+				seqNr = GetSendSequenceNumber(msg.m_type);
 
-			if (slotDict.Count > 0)
-				m_storedMessagesNotEmpty.Set(reliableSlot, true);
+				//m_owner.LogDebug("Sending " + msg.m_type + "|" + seqNr);
+
+				Interlocked.Increment(ref msg.m_inQueueCount);
+				slotDict.Add((ushort)seqNr, msg);
+				invSlotDict.Add(msg, (ushort)seqNr);
+
+				if (slotDict.Count > 0)
+					m_storedMessagesNotEmpty.Set(reliableSlot, true);
+			}
 
 			// schedule next resend
 			int numSends = msg.m_numSends;
@@ -114,7 +155,7 @@ namespace Lidgren.Network
 			float[] multiplers = m_peerConfiguration.m_resendRTTMultiplier;
 			msg.m_nextResendTime = now + baseTimes[numSends] + (m_averageRoundtripTime * multiplers[numSends]);
 
-			return seqNr;
+			return (ushort)seqNr;
 		}
 
 		private void Resend(double now, ushort seqNr, NetOutgoingMessage msg)
@@ -128,14 +169,14 @@ namespace Lidgren.Network
 				// no more resends! We failed!
 				int reliableSlot = (int)msg.m_type - (int)NetMessageType.UserReliableUnordered;
 				m_storedMessages[reliableSlot].Remove(seqNr);
-				m_owner.LogWarning("Failed to deliver reliable message " + msg);
+				m_owner.LogWarning("Failed to deliver reliable message " + msg + " (seqNr " + seqNr + ")");
 
 				Disconnect("Failed to deliver reliable message!");
 
 				return; // bye
 			}
 
-			m_owner.LogVerbose("Resending " + msg);
+			m_owner.LogVerbose("Resending " + msg + " (seqNr " + seqNr + ")");
 
 			Interlocked.Increment(ref msg.m_inQueueCount);
 			m_unsentMessages.EnqueueFirst(msg);
@@ -160,7 +201,7 @@ namespace Lidgren.Network
 			{
 				ushort seqNr = (ushort)(buffer[ptr++] | (buffer[ptr++] << 8));
 				NetMessageType tp = (NetMessageType)buffer[ptr++];
-				// m_owner.LogDebug("Got ack for " + tp + " " + seqNr);
+				//m_owner.LogDebug("Got ack for " + tp + "|" + seqNr);
 
 				// remove stored message
 				int reliableSlot = (int)tp - (int)NetMessageType.UserReliableUnordered;
@@ -175,6 +216,8 @@ namespace Lidgren.Network
 				{
 					// found!
 					dict.Remove(seqNr);
+					m_inverseStored[reliableSlot].Remove(om);
+
 					Interlocked.Decrement(ref om.m_inQueueCount);
 
 					NetException.Assert(om.m_lastSentTime != 0);

@@ -316,7 +316,7 @@ namespace Lidgren.Network
 				{
 					// Expected sequence number
 					AcceptMessage(mtp, isFragment, channelSequenceNumber, ptr, payloadLengthBits);
-				
+
 					ExpectedReliableSequenceArrived(reliableSlot);
 					return;
 				}

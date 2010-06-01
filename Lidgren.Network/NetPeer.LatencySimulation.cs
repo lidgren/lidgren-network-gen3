@@ -45,7 +45,7 @@ namespace Lidgren.Network
 			{
 				if (NetRandom.Instance.Chance(m_configuration.m_loss))
 				{
-					LogVerbose("Sending packet " + numBytes + " bytes - SIMULATED LOST!");
+					//LogVerbose("Sending packet " + numBytes + " bytes - SIMULATED LOST!");
 					return; // packet "lost"
 				}
 			}
@@ -58,7 +58,7 @@ namespace Lidgren.Network
 			if (m == 0.0f && r == 0.0f)
 			{
 				// no latency simulation
-				LogVerbose("Sending packet " + numBytes + " bytes");
+				//LogVerbose("Sending packet " + numBytes + " bytes");
 				ActuallySendPacket(m_sendBuffer, numBytes, target);
 				return;
 			}
@@ -82,7 +82,7 @@ namespace Lidgren.Network
 				m_delayedPackets.Add(p);
 			}
 
-			LogVerbose("Sending packet " + numBytes + " bytes - delayed " + NetTime.ToReadable(delay));
+			// LogVerbose("Sending packet " + numBytes + " bytes - delayed " + NetTime.ToReadable(delay));
 		}
 
 		private void SendDelayedPackets()

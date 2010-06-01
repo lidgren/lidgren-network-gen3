@@ -23,7 +23,7 @@ using System.Diagnostics;
 namespace Lidgren.Network
 {
 	/// <summary>
-	/// Thread safe queue with TryDequeue()
+	/// Thread safe (blocking) queue with TryDequeue() and EnqueueFirst()
 	/// </summary>
 	[DebuggerDisplay("Count={m_size}")]
 	public sealed class NetQueue<T>
@@ -98,38 +98,34 @@ namespace Lidgren.Network
 			}
 		}
 
+		// must be called from within a lock(m_lock) !
 		private void SetCapacity(int newCapacity)
 		{
 			if (m_size == 0)
 			{
-				lock (m_lock)
+				if (m_size == 0)
 				{
-					if (m_size == 0)
-					{
-						m_items = new T[newCapacity];
-						m_head = 0;
-						return;
-					}
+					m_items = new T[newCapacity];
+					m_head = 0;
+					return;
 				}
 			}
 
 			T[] newItems = new T[newCapacity];
 
-			lock (m_lock)
+			if (m_head + m_size - 1 < m_items.Length)
 			{
-				if (m_head + m_size - 1 < m_items.Length)
-				{
-					Array.Copy(m_items, m_head, newItems, 0, m_size);
-				}
-				else
-				{
-					Array.Copy(m_items, m_head, newItems, 0, m_items.Length - m_head);
-					Array.Copy(m_items, 0, newItems, m_items.Length - m_head, (m_size - (m_items.Length - m_head)));
-				}
-
-				m_items = newItems;
-				m_head = 0;
+				Array.Copy(m_items, m_head, newItems, 0, m_size);
 			}
+			else
+			{
+				Array.Copy(m_items, m_head, newItems, 0, m_items.Length - m_head);
+				Array.Copy(m_items, 0, newItems, m_items.Length - m_head, (m_size - (m_items.Length - m_head)));
+			}
+
+			m_items = newItems;
+			m_head = 0;
+
 		}
 
 		/// <summary>

@@ -36,6 +36,8 @@ namespace Lidgren.Network
 		internal int m_sentBytes;
 		internal int m_receivedBytes;
 
+		internal int m_resentMessages;
+
 		internal NetConnectionStatistics(NetConnection conn)
 		{
 			m_connection = conn;
@@ -86,18 +88,32 @@ namespace Lidgren.Network
 			m_receivedMessages += numMessages;
 		}
 
+		[Conditional("DEBUG")]
+		internal void MessageResent()
+		{
+			m_resentMessages++;
+		}
+
 		public override string ToString()
 		{
 			StringBuilder bdr = new StringBuilder();
 			bdr.AppendLine("Average roundtrip time: " + NetTime.ToReadable(m_connection.m_averageRoundtripTime));
 			bdr.AppendLine("Sent " + m_sentBytes + " bytes in " + m_sentMessages + " messages in " + m_sentPackets + " packets");
 			bdr.AppendLine("Received " + m_receivedBytes + " bytes in " + m_receivedMessages + " messages in " + m_receivedPackets + " packets");
+
+			if (m_resentMessages > 0)
+				bdr.AppendLine("Resent messages: " + m_resentMessages);
+
 			int numUnsent = m_connection.m_unsentMessages.Count;
 			if (numUnsent > 0)
 				bdr.AppendLine("Unsent messages: " + numUnsent);
 			int numStored = m_connection.GetStoredMessagesCount();
 			if (numStored > 0)
 				bdr.AppendLine("Stored messages: " + numStored);
+			int numWithheld = m_connection.GetWithheldMessagesCount();
+			if (numWithheld > 0)
+				bdr.AppendLine("Withheld messages: " + numWithheld);
+
 			return bdr.ToString();
 		}
 	}

@@ -84,7 +84,7 @@ namespace DurableClient
 				{
 					double now = NetTime.Now;
 
-					float speed = 50.0f;
+					float speed = 1.0f;
 
 					float speedMultiplier = 1.0f / speed;
 
