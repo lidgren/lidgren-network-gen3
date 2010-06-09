@@ -40,5 +40,7 @@ namespace Lidgren.Network
 		/// Number of bytes added when message is really a fragment
 		/// </summary>
 		internal const int FragmentHeaderSize = 6;
+
+		internal const string ConnResetMessage = "Connection was reset by remote host";
 	}
 }

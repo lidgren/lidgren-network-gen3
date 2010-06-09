@@ -227,14 +227,73 @@ namespace Lidgren.Network
 
 			string one = NetUtility.ToHexString(A);
 			string two = NetUtility.ToHexString(B);
-			string compound = one + two.PadLeft(one.Length, '0');
+			string compound = one.PadLeft(64, '0') + two.PadLeft(64, '0');
 			byte[] cc = NetUtility.ToByteArray(compound);
+
 			return NetSha.Hash(cc);
+
+			//byte[] res = NetSha.Hash(cc);
+			//var resbig = new BigInteger(res);
+			//return BigInteger.Modulus(resbig, N).GetBytes();
+
+			/*
+			 * 
+ * SRP-3: u = first 32 bits (MSB) of SHA-1(B)
+ * SRP-6(a): u = SHA-1(A || B)
+function srp_compute_u(Nv, av, bv) {
+  var ahex;
+  var bhex = String(bigInt2radix(bv, 16));
+  var hashin = "";
+  var utmp;
+  var nlen;
+  if(proto != "3") {
+    ahex = String(bigInt2radix(av, 16));
+    if(proto == "6") {
+      if((ahex.length & 1) == 0) {
+        hashin += ahex;
+      }
+      else {
+        hashin += "0" + ahex;
+      }
+    }
+    else { // 6a requires left-padding
+      nlen = 2 * ((Nv.bitLength() + 7) >> 3);
+      hashin += nzero(nlen - ahex.length) + ahex;
+    }
+  }
+  if(proto == "3" || proto == "6") {
+    if((bhex.length & 1) == 0) {
+      hashin += bhex;
+    }
+    else {
+      hashin += "0" + bhex;
+    }
+  }
+  else { // 6a requires left-padding; nlen already set above 
+    hashin += nzero(nlen - bhex.length) + bhex;
+  }
+  if(proto == "3") {
+    utmp = parseBigInt(calcSHA1Hex(hashin).substr(0, 8), 16);
+  }
+  else {
+    utmp = parseBigInt(calcSHA1Hex(hashin), 16);
+  }
+  if(utmp.compareTo(Nv) < 0) {
+    return utmp;
+  }
+  else {
+    return utmp.mod(Nv.subtract(one));
+  }
+}
+
+
+			*/
+
 		}
 
 		/*
-		public static byte[] ComputeClientToken(byte[] serverChallenge, byte[] x, byte[] u
-
+		public static byte[] ComputeClientToken(byte[] serverChallenge, byte[] x, byte[] u)
+		{
 
 		// S = (B - kg^x) ^ (a + ux) (mod N)
 function srp_compute_client_S(BB, xx, uu, aa, kk) {
@@ -243,7 +302,7 @@ function srp_compute_client_S(BB, xx, uu, aa, kk) {
   return btmp.modPow(xx.multiply(uu).add(aa), N);
 }
 		*/
- 
+
 		public static byte[] ComputeServerToken(byte[] clientChallenge, byte[] verifier, byte[] u, byte[] serverChallengeSalt)
 		{
 			// S = (Av^u) ^ b (mod N)

@@ -230,6 +230,7 @@ namespace Lidgren.Network
 				//
 
 				int ptr = um.Encode(now, m_sendBuffer, 0, null);
+				bool connectionReset = false;
 
 				if (recipient.Address.Equals(IPAddress.Broadcast))
 				{
@@ -237,7 +238,7 @@ namespace Lidgren.Network
 					try
 					{
 						m_socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Broadcast, true);
-						SendPacket(ptr, recipient, 1);
+						SendPacket(ptr, recipient, 1, out connectionReset);
 					}
 					finally
 					{
@@ -247,8 +248,11 @@ namespace Lidgren.Network
 				else
 				{
 					// send normally
-					SendPacket(ptr, recipient, 1);
+					SendPacket(ptr, recipient, 1, out connectionReset);
 				}
+
+				if (connectionReset)
+					LogWarning(NetConstants.ConnResetMessage);
 			}
 
 			// check if we need to reduce the recycled pool
@@ -276,9 +280,9 @@ namespace Lidgren.Network
 				catch (SocketException sx)
 				{
 					// no good response to this yet
-					if (sx.ErrorCode == 10054)
+					if (sx.SocketErrorCode == SocketError.ConnectionReset)
 					{
-						// connection reset by peer, aka forcibly closed
+						// connection reset by peer, aka connection forcibly closed aka "ICMP port unreachable" 
 						// we should shut down the connection; but m_senderRemote seemingly cannot be trusted, so which connection should we shut down?!
 						//LogWarning("Connection reset by peer, seemingly from " + m_senderRemote);
 						return;
@@ -288,7 +292,7 @@ namespace Lidgren.Network
 					return;
 				}
 
-				if (bytesReceived < 1)
+				if (bytesReceived < NetPeer.kMinPacketHeaderSize)
 					return;
 
 				// renew current time; we might have waited in Poll
@@ -584,9 +588,13 @@ namespace Lidgren.Network
 			int len = msg.Encode(now, m_sendBuffer, 0, conn);
 			Interlocked.Decrement(ref msg.m_inQueueCount);
 
-			SendPacket(len, conn.m_remoteEndpoint, 1);
+			bool connectionReset;
+			SendPacket(len, conn.m_remoteEndpoint, 1, out connectionReset);
 
 			Recycle(msg);
+
+			if (connectionReset)
+				LogWarning("Connection was reset; remote host is not listening");
 		}
 	}
 }

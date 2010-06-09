@@ -27,7 +27,7 @@ namespace Lidgren.Network
 	/// </summary>
 	public sealed class NetPeerConfiguration
 	{
-		private const string c_isLockedMessage = "You may not alter the NetPeerConfiguration after the NetPeer has been initialized!";
+		private const string c_isLockedMessage = "You may not modify the NetPeerConfiguration after it has been used to initialize a NetPeer";
 
 		private bool m_isLocked;
 		internal bool m_acceptIncomingConnections;

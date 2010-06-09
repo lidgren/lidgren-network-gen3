@@ -207,7 +207,16 @@ namespace Lidgren.Network
 					if (ptr > 0 && (ptr + NetPeer.kMaxPacketHeaderSize + msgPayloadLength) > mtu)
 					{
 						// send packet and start new packet
-						m_owner.SendPacket(ptr, m_remoteEndpoint, numIncludedMessages);
+						bool connectionReset;
+						m_owner.SendPacket(ptr, m_remoteEndpoint, numIncludedMessages, out connectionReset);
+						if (connectionReset)
+						{
+							// ouch! can't sent any more; lets disconnect
+							Disconnect(NetConstants.ConnResetMessage);
+							ptr = 0;
+							numIncludedMessages = 0;
+							break;
+						}
 						m_statistics.PacketSent(ptr, numIncludedMessages);
 						numIncludedMessages = 0;
 						m_throttleDebt += ptr;
@@ -247,10 +256,19 @@ namespace Lidgren.Network
 
 				if (ptr > 0)
 				{
-					m_owner.SendPacket(ptr, m_remoteEndpoint, numIncludedMessages);
-					m_statistics.PacketSent(ptr, numIncludedMessages);
-					numIncludedMessages = 0;
-					m_throttleDebt += ptr;
+					bool connectionReset;
+					m_owner.SendPacket(ptr, m_remoteEndpoint, numIncludedMessages, out connectionReset);
+					if (connectionReset)
+					{
+						// ouch! can't sent any more; lets disconnect
+						Disconnect(NetConstants.ConnResetMessage);
+					}
+					else
+					{
+						m_statistics.PacketSent(ptr, numIncludedMessages);
+						numIncludedMessages = 0;
+						m_throttleDebt += ptr;
+					}
 				}
 			}
 		}

@@ -58,16 +58,16 @@ namespace UnitTests
 
 			Console.WriteLine("Message encryption OK");
 
-			byte[] salt = NetUtility.ToByteArray("e6fb7e23f001f3e6c081"); // s
+			byte[] salt = NetUtility.ToByteArray("62191568b7a1aa18f8eb"); // s
 			byte[] verifier = NetSRP.ComputePasswordVerifier("user", "password", salt);
 
 			Console.WriteLine("v = " + NetUtility.ToHexString(verifier));
 
-			byte[] a = NetUtility.ToByteArray("3b6485358d1721cb438cb7d0b3c5f8f46186d43e1c47db7cd8aa80e19760e409");
+			byte[] a = NetUtility.ToByteArray("129aac7ce0be45ab5f65ec0c6879222386c32177cb4024fe7ad593341c0a5085");
 			byte[] A = NetSRP.ComputeClientChallenge(a);
 			Console.WriteLine("A = " + NetUtility.ToHexString(A));
 
-			byte[] b = NetUtility.ToByteArray("fc17d424ce73a4c73e8fedfb25839e9917e861bc5253fff65697f81c75a87ea3");
+			byte[] b = NetUtility.ToByteArray("cdbe8cec49e33c78c0b434be67fa2fdb7646776e757bcf59fad51bbbee0d53a1");
 			Console.WriteLine("b = " + NetUtility.ToHexString(b)); 
 			byte[] B = NetSRP.ComputeServerChallenge(b, verifier);
 			Console.WriteLine("B = " + NetUtility.ToHexString(B));
