@@ -37,6 +37,7 @@ namespace Lidgren.Network
 		internal int m_receiveBufferSize, m_sendBufferSize;
 		internal int m_defaultOutgoingMessageCapacity;
 		internal int m_maximumTransmissionUnit;
+		internal bool m_useMessageCoalescing;
 		internal int m_maximumConnections;
 		internal NetIncomingMessageType m_disabledTypes;
 		internal int m_throttleBytesPerSecond;
@@ -85,6 +86,7 @@ namespace Lidgren.Network
 			m_handshakeAttemptDelay = 1.0f;
 			m_handshakeMaxAttempts = 7;
 			m_maxRecycledBytesKept = 128 * 1024;
+			m_useMessageCoalescing = true;
 
 			m_loss = 0.0f;
 			m_minimumOneWayLatency = 0.0f;
@@ -252,6 +254,15 @@ namespace Lidgren.Network
 					throw new NetException("MaximumTransmissionUnit must be between 1 and 4095 bytes");
 				m_maximumTransmissionUnit = value;
 			}
+		}
+
+		/// <summary>
+		/// Gets or sets if message coalescing (sending multiple messages in a single packet) should be used. Normally this should be true.
+		/// </summary>
+		public bool UseMessageCoalescing
+		{
+			get { return m_useMessageCoalescing; }
+			set { m_useMessageCoalescing = value; }
 		}
 
 		/// <summary>

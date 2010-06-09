@@ -182,7 +182,8 @@ namespace Lidgren.Network
 				m_lastSentUnsentMessages = now;
 			}
 
-			int mtu = m_peerConfiguration.MaximumTransmissionUnit;
+			int mtu = m_peerConfiguration.m_maximumTransmissionUnit;
+			bool useCoalescing = m_peerConfiguration.m_useMessageCoalescing;
 
 			float throttleThreshold = m_peerConfiguration.m_throttlePeakBytes;
 			if (m_throttleDebt < throttleThreshold)
@@ -204,7 +205,7 @@ namespace Lidgren.Network
 					int msgPayloadLength = msg.LengthBytes;
 					msg.m_lastSentTime = now;
 
-					if (ptr > 0 && (ptr + NetPeer.kMaxPacketHeaderSize + msgPayloadLength) > mtu)
+					if (!useCoalescing || (ptr > 0 && (ptr + NetPeer.kMaxPacketHeaderSize + msgPayloadLength) > mtu))
 					{
 						// send packet and start new packet
 						bool connectionReset;
@@ -561,6 +562,9 @@ namespace Lidgren.Network
 		{
 			if (msg.IsSent)
 				throw new NetException("Message has already been sent!");
+
+			NetException.Assert(sequenceChannel >= 0 && sequenceChannel < NetConstants.NetChannelsPerDeliveryMethod, "Sequence channel must be between 0 and NetConstants.NetChannelsPerDeliveryMethod (" + NetConstants.NetChannelsPerDeliveryMethod + ")");
+	
 			msg.m_type = (NetMessageType)((int)method + sequenceChannel);
 			EnqueueOutgoingMessage(msg);
 		}
