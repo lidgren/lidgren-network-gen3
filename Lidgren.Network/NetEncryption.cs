@@ -154,9 +154,9 @@ namespace Lidgren.Network
 
 	public static class NetSRP
 	{
-		private static readonly BigInteger N = new BigInteger(NetUtility.ToByteArray("0115b8b692e0e045692cf280b436735c77a5a9e8a9e7ed56c965f87db5b2a2ece3"));
-		private static readonly BigInteger g = new BigInteger((uint)2);
-		private static readonly BigInteger k = ComputeMultiplier();
+		public static readonly BigInteger N = new BigInteger(NetUtility.ToByteArray("0115b8b692e0e045692cf280b436735c77a5a9e8a9e7ed56c965f87db5b2a2ece3"));
+		public static readonly BigInteger g = new BigInteger((uint)2);
+		public static readonly BigInteger k = ComputeMultiplier();
 
 		/// <summary>
 		/// Compute multiplier (k)
@@ -172,7 +172,7 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Creates a verifier that the server can use to authenticate users later on (v)
 		/// </summary>
-		public static byte[] ComputePasswordVerifier(string username, string password, byte[] salt)
+		public static byte[] ComputePasswordVerifier(string username, string password, byte[] salt, out byte[] x)
 		{
 			byte[] tmp = Encoding.ASCII.GetBytes(username + ":" + password);
 			byte[] innerHash = NetSha.Hash(tmp);
@@ -181,7 +181,7 @@ namespace Lidgren.Network
 			Buffer.BlockCopy(salt, 0, total, 0, salt.Length);
 			Buffer.BlockCopy(innerHash, 0, total, salt.Length, innerHash.Length);
 
-			byte[] x = NetSha.Hash(total);
+			x = NetSha.Hash(total);
 
 			// Verifier (v) = g^x (mod N) 
 			BigInteger xx = new BigInteger(x);
@@ -227,7 +227,8 @@ namespace Lidgren.Network
 
 			string one = NetUtility.ToHexString(A);
 			string two = NetUtility.ToHexString(B);
-			string compound = one.PadLeft(64, '0') + two.PadLeft(64, '0');
+			string compound = one.PadLeft(66, '0') + two.PadLeft(66, '0');
+
 			byte[] cc = NetUtility.ToByteArray(compound);
 
 			return NetSha.Hash(cc);
@@ -319,6 +320,53 @@ function srp_compute_client_S(BB, xx, uu, aa, kk) {
 
 			return r2.ModPow(new BigInteger(serverChallengeSalt), N).GetBytes();
 			//return vv.modPow(uu, N).multiply(A).mod(N).modPow(bb, N);
+		}
+
+		public static byte[] ComputeServerCompareValue(byte[] A, byte[] verifier, byte[] u, byte[] b)
+		{
+			// S = (Av^u) ^ b (mod N)
+
+			BigInteger verBi = new BigInteger(verifier);
+			BigInteger uBi = new BigInteger(u);
+			BigInteger ABi = new BigInteger(A);
+			BigInteger bBi = new BigInteger(b);
+
+			BigInteger res1 = verBi.ModPow(uBi, N);
+			BigInteger res2 = BigInteger.Multiply(res1, ABi);
+			BigInteger res3 = BigInteger.Modulus(res2, N);
+			BigInteger res4 = res3.ModPow(bBi, N);
+
+			return res4.GetBytes();
+		}
+
+		public static byte[] ComputeClientCompareValue(byte[] B, byte[] x, byte[] u, byte[] A)
+		{
+			// S = (B - kg^x) ^ (a + ux) (mod N)
+			BigInteger xBi = new BigInteger(x);
+			BigInteger BBi = new BigInteger(B);
+			BigInteger uBi = new BigInteger(u);
+			BigInteger ABi = new BigInteger(A);
+
+
+			//var btmp = BB.add(N.multiply(kk)).subtract(bx.multiply(kk)).mod(N);
+			
+			//return btmp.modPow(xx.multiply(uu).add(aa), N);
+
+
+
+			BigInteger bx = g.ModPow(xBi, N);
+
+			BigInteger res1 = BigInteger.Multiply(N, k);
+			BigInteger btmp1 = BigInteger.Add(BBi, res1);
+
+			BigInteger res2 = BigInteger.Multiply(bx, k);
+			BigInteger res3 = BigInteger.Subtract(btmp1, res2);
+			BigInteger btmp = BigInteger.Modulus(res3, N);
+
+			BigInteger res5 = BigInteger.Multiply(xBi, uBi);
+			BigInteger res6 = BigInteger.Add(res5, ABi);
+
+			return btmp.ModPow(res6, N).GetBytes();
 		}
 	}
 }

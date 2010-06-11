@@ -42,7 +42,6 @@ namespace UnitTests
 						break;
 					case NetIncomingMessageType.Error:
 						throw new Exception("Received error message!");
-						break;
 				}
 			}
 

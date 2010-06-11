@@ -58,22 +58,32 @@ namespace UnitTests
 
 			Console.WriteLine("Message encryption OK");
 
-			byte[] salt = NetUtility.ToByteArray("62191568b7a1aa18f8eb"); // s
-			byte[] verifier = NetSRP.ComputePasswordVerifier("user", "password", salt);
+			byte[] salt = NetUtility.ToByteArray("47d980ce4c2333b6ce5b"); // s
+			byte[] x;
+			byte[] verifier = NetSRP.ComputePasswordVerifier("user", "password", salt, out x);
 
 			Console.WriteLine("v = " + NetUtility.ToHexString(verifier));
 
-			byte[] a = NetUtility.ToByteArray("129aac7ce0be45ab5f65ec0c6879222386c32177cb4024fe7ad593341c0a5085");
+			byte[] a = NetUtility.ToByteArray("94f5a7f6875df8b569840a917b918c84aa002b145e24e77dabdd3941de82e6f5");
 			byte[] A = NetSRP.ComputeClientChallenge(a);
 			Console.WriteLine("A = " + NetUtility.ToHexString(A));
 
-			byte[] b = NetUtility.ToByteArray("cdbe8cec49e33c78c0b434be67fa2fdb7646776e757bcf59fad51bbbee0d53a1");
+			byte[] b = NetUtility.ToByteArray("a4ae167ba24c498a52d9a6963c285bb999246d3ce4c5e1028be5206809611358");
 			Console.WriteLine("b = " + NetUtility.ToHexString(b)); 
 			byte[] B = NetSRP.ComputeServerChallenge(b, verifier);
 			Console.WriteLine("B = " + NetUtility.ToHexString(B));
 
 			byte[] u = NetSRP.ComputeU(A, B);
 			Console.WriteLine("u = " + NetUtility.ToHexString(u));
+
+			byte[] serverCompareValue; // Ss
+			serverCompareValue = NetSRP.ComputeServerCompareValue(A, verifier, u, b);
+			Console.WriteLine("Ss = " + NetUtility.ToHexString(serverCompareValue));
+
+			byte[] clientCompareValue; // Ss
+			clientCompareValue = NetSRP.ComputeClientCompareValue(B, x, u, A);
+			Console.WriteLine("Sc = " + NetUtility.ToHexString(clientCompareValue));
+
 		}
 	}
 }

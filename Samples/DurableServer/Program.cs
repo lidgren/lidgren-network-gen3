@@ -111,7 +111,6 @@ namespace DurableServer
 									break;
 								default:
 									throw new Exception("Bad NetDeliveryMethod: " + msg.DeliveryMethod);
-									break;
 							}
 							break;
 					}

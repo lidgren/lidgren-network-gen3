@@ -398,9 +398,6 @@ namespace Lidgren.Network
 					continue;
 				}
 			} while (true);
-
-			// heartbeat done
-			return;
 		}
 
 		private void HandleUnconnectedLibraryMessage(NetMessageLibraryType libType, int ptr, int payloadLengthBits, IPEndPoint senderEndpoint)
