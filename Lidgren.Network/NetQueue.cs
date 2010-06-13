@@ -25,7 +25,7 @@ namespace Lidgren.Network
 	/// <summary>
 	/// Thread safe (blocking) queue with TryDequeue() and EnqueueFirst()
 	/// </summary>
-	[DebuggerDisplay("Count={m_size}")]
+	[DebuggerDisplay("Count={Count} Capacity={Capacity}")]
 	public sealed class NetQueue<T>
 	{
 		// Example:
@@ -48,6 +48,8 @@ namespace Lidgren.Network
 		private int m_head;
 
 		public int Count { get { return m_size; } }
+
+		public int Capacity { get { return m_items.Length; } }
 
 		public NetQueue(int initialCapacity)
 		{

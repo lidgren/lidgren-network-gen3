@@ -166,13 +166,14 @@ namespace Lidgren.Network
 			string one = NetUtility.ToHexString(N.GetBytes());
 			string two = NetUtility.ToHexString(g.GetBytes());
 			byte[] cc = NetUtility.ToByteArray(one + two.PadLeft(one.Length, '0'));
-			return BigInteger.Modulus(new BigInteger(NetSha.Hash(cc)), N);
+			BigInteger retval = BigInteger.Modulus(new BigInteger(NetSha.Hash(cc)), N);
+			return retval;
 		}
 
 		/// <summary>
 		/// Creates a verifier that the server can use to authenticate users later on (v)
 		/// </summary>
-		public static byte[] ComputePasswordVerifier(string username, string password, byte[] salt, out byte[] x)
+		public static void ComputePasswordVerifier(string username, string password, byte[] salt, out byte[] serverVerifier, out byte[] clientVerifier)
 		{
 			byte[] tmp = Encoding.ASCII.GetBytes(username + ":" + password);
 			byte[] innerHash = NetSha.Hash(tmp);
@@ -181,17 +182,19 @@ namespace Lidgren.Network
 			Buffer.BlockCopy(salt, 0, total, 0, salt.Length);
 			Buffer.BlockCopy(innerHash, 0, total, salt.Length, innerHash.Length);
 
-			x = NetSha.Hash(total);
+			clientVerifier = NetSha.Hash(total);
 
 			// Verifier (v) = g^x (mod N) 
-			BigInteger xx = new BigInteger(x);
-			return g.ModPow(xx, N).GetBytes();
+			BigInteger xx = new BigInteger(clientVerifier);
+			serverVerifier = g.ModPow(xx, N).GetBytes();
+
+			return;
 		}
 
 		/// <summary>
 		/// Get 256 random bits
 		/// </summary>
-		public static byte[] CreateRandomChallenge()
+		public static byte[] CreateRandomKey()
 		{
 			byte[] retval = new byte[32];
 			NetRandom.Instance.NextBytes(retval);
@@ -199,20 +202,39 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
+		/// Gets 80 random bits
+		/// </summary>
+		public static byte[] CreateRandomSalt()
+		{
+			byte[] retval = new byte[10];
+			NetRandom.Instance.NextBytes(retval);
+			return retval;
+		}
+
+		/// <summary>
 		/// Compute client challenge (A)
 		/// </summary>
-		public static byte[] ComputeClientChallenge(byte[] clientSalt) // a
+		public static byte[] ComputeClientPublicKey(byte[] clientPrivateKey) // a
 		{
-			BigInteger salt = new BigInteger(clientSalt);
-			return g.ModPow(salt, N).GetBytes();
+			BigInteger salt = new BigInteger(clientPrivateKey);
+
+			BigInteger retval = g.ModPow(salt, N);
+
+			string gs = NetUtility.ToHexString(g.GetBytes());
+
+
+			Console.WriteLine("SALT: " + NetUtility.ToHexString(salt.GetBytes()));
+			Console.WriteLine("A: " + NetUtility.ToHexString(retval.GetBytes()));
+
+			return retval.GetBytes();
 		}
 
 		/// <summary>
 		/// Compute server challenge (B)
 		/// </summary>
-		public static byte[] ComputeServerChallenge(byte[] serverSalt, byte[] verifier) // b
+		public static byte[] ComputeServerPublicKey(byte[] serverPrivateKey, byte[] verifier) // b
 		{
-			BigInteger salt = new BigInteger(serverSalt);
+			BigInteger salt = new BigInteger(serverPrivateKey);
 
 			var bb = g.ModPow(salt, N);
 			var B = BigInteger.Modulus((bb + (new BigInteger(verifier) * k)), N);
@@ -220,10 +242,10 @@ namespace Lidgren.Network
 			return B.GetBytes();
 		}
 
-		public static byte[] ComputeU(byte[] clientChallenge, byte[] serverChallenge)
+		public static byte[] ComputeU(byte[] clientPublicKey, byte[] serverPublicKey) // u
 		{
-			byte[] A = clientChallenge;
-			byte[] B = serverChallenge;
+			byte[] A = clientPublicKey;
+			byte[] B = serverPublicKey;
 
 			string one = NetUtility.ToHexString(A);
 			string two = NetUtility.ToHexString(B);
@@ -232,141 +254,75 @@ namespace Lidgren.Network
 			byte[] cc = NetUtility.ToByteArray(compound);
 
 			return NetSha.Hash(cc);
-
-			//byte[] res = NetSha.Hash(cc);
-			//var resbig = new BigInteger(res);
-			//return BigInteger.Modulus(resbig, N).GetBytes();
-
-			/*
-			 * 
- * SRP-3: u = first 32 bits (MSB) of SHA-1(B)
- * SRP-6(a): u = SHA-1(A || B)
-function srp_compute_u(Nv, av, bv) {
-  var ahex;
-  var bhex = String(bigInt2radix(bv, 16));
-  var hashin = "";
-  var utmp;
-  var nlen;
-  if(proto != "3") {
-    ahex = String(bigInt2radix(av, 16));
-    if(proto == "6") {
-      if((ahex.length & 1) == 0) {
-        hashin += ahex;
-      }
-      else {
-        hashin += "0" + ahex;
-      }
-    }
-    else { // 6a requires left-padding
-      nlen = 2 * ((Nv.bitLength() + 7) >> 3);
-      hashin += nzero(nlen - ahex.length) + ahex;
-    }
-  }
-  if(proto == "3" || proto == "6") {
-    if((bhex.length & 1) == 0) {
-      hashin += bhex;
-    }
-    else {
-      hashin += "0" + bhex;
-    }
-  }
-  else { // 6a requires left-padding; nlen already set above 
-    hashin += nzero(nlen - bhex.length) + bhex;
-  }
-  if(proto == "3") {
-    utmp = parseBigInt(calcSHA1Hex(hashin).substr(0, 8), 16);
-  }
-  else {
-    utmp = parseBigInt(calcSHA1Hex(hashin), 16);
-  }
-  if(utmp.compareTo(Nv) < 0) {
-    return utmp;
-  }
-  else {
-    return utmp.mod(Nv.subtract(one));
-  }
-}
-
-
-			*/
-
 		}
 
-		/*
-		public static byte[] ComputeClientToken(byte[] serverChallenge, byte[] x, byte[] u)
-		{
-
-		// S = (B - kg^x) ^ (a + ux) (mod N)
-function srp_compute_client_S(BB, xx, uu, aa, kk) {
-  var bx = g.modPow(xx, N);
-  var btmp = BB.add(N.multiply(kk)).subtract(bx.multiply(kk)).mod(N);
-  return btmp.modPow(xx.multiply(uu).add(aa), N);
-}
-		*/
-
-		public static byte[] ComputeServerToken(byte[] clientChallenge, byte[] verifier, byte[] u, byte[] serverChallengeSalt)
+		public static byte[] ComputeServerSessionKey(byte[] clientPublicKey, byte[] verifier, byte[] u, byte[] serverPrivateKey) // Ss
 		{
 			// S = (Av^u) ^ b (mod N)
-			// function srp_compute_server_S(AA, vv, uu, bb) {
-
-			BigInteger vv = new BigInteger(verifier);
-
-			BigInteger c1 = vv.ModPow(new BigInteger(u), N);
-			BigInteger c2 = new BigInteger(clientChallenge);
-
-			BigInteger r1 = c1 * c2;
-
-			BigInteger r2 = BigInteger.Modulus(r1, N);
-
-			return r2.ModPow(new BigInteger(serverChallengeSalt), N).GetBytes();
-			//return vv.modPow(uu, N).multiply(A).mod(N).modPow(bb, N);
-		}
-
-		public static byte[] ComputeServerCompareValue(byte[] A, byte[] verifier, byte[] u, byte[] b)
-		{
-			// S = (Av^u) ^ b (mod N)
+			// return vv.modPow(uu, N).multiply(A).mod(N).modPow(bb, N);
 
 			BigInteger verBi = new BigInteger(verifier);
 			BigInteger uBi = new BigInteger(u);
-			BigInteger ABi = new BigInteger(A);
-			BigInteger bBi = new BigInteger(b);
+			BigInteger ABi = new BigInteger(clientPublicKey); // A
+			BigInteger bBi = new BigInteger(serverPrivateKey); // b
 
-			BigInteger res1 = verBi.ModPow(uBi, N);
-			BigInteger res2 = BigInteger.Multiply(res1, ABi);
-			BigInteger res3 = BigInteger.Modulus(res2, N);
-			BigInteger res4 = res3.ModPow(bBi, N);
+			Console.WriteLine("Ss input v: " + NetUtility.ToHexString(verifier));
+			Console.WriteLine("Ss input u: " + NetUtility.ToHexString(u));
+			Console.WriteLine("Ss input A: " + NetUtility.ToHexString(clientPublicKey));
+			Console.WriteLine("Ss input A: " + ABi.ToString(16));
+			Console.WriteLine("Ss input b: " + NetUtility.ToHexString(serverPrivateKey));
 
-			return res4.GetBytes();
-		}
+			BigInteger retval = verBi.ModPow(uBi, N).Multiply(ABi).Modulus(N).ModPow(bBi, N).Modulus(N);
+			Console.WriteLine("Ss (trad): " + NetUtility.ToHexString(retval.GetBytes()));
+			BigInteger f1 = verBi.ModPow(uBi, N);
+			Console.WriteLine("f1 (trad): " + NetUtility.ToHexString(f1.GetBytes()));
 
-		public static byte[] ComputeClientCompareValue(byte[] B, byte[] x, byte[] u, byte[] A)
-		{
-			// S = (B - kg^x) ^ (a + ux) (mod N)
-			BigInteger xBi = new BigInteger(x);
-			BigInteger BBi = new BigInteger(B);
-			BigInteger uBi = new BigInteger(u);
-			BigInteger ABi = new BigInteger(A);
+			//return retval.GetBytes();
 
 
-			//var btmp = BB.add(N.multiply(kk)).subtract(bx.multiply(kk)).mod(N);
+			// own
+			// BigInteger tmp1 = verBi.ModPow(uBi, N).ModPow(bBi, N).Modulus(N);
+			BigInteger tmp1 = (ABi * verBi.ModPow(uBi, N)).ModPow(bBi, N);
+			Console.WriteLine("Ss (own): " + NetUtility.ToHexString(tmp1.GetBytes()));
+
+
+
+			// bc
+			BigIntegerBC verBi2 = new BigIntegerBC(verifier);
+			BigIntegerBC ABi2 = new BigIntegerBC(clientPublicKey); // A
+			BigIntegerBC uBi2 = new BigIntegerBC(u);
+			BigIntegerBC bBi2 = new BigIntegerBC(serverPrivateKey);
+			BigIntegerBC N2 = new BigIntegerBC(N.GetBytes());
+
+			BigIntegerBC retval2 = verBi2.ModPow(uBi2, N2).Multiply(ABi2).Modulus(N2).ModPow(bBi2, N2).Modulus(N2);
+			Console.WriteLine("Ss (bc): " + NetUtility.ToHexString(retval2.ToByteArray()));
+			BigIntegerBC f12 = verBi2.ModPow(uBi2, N2);
+			Console.WriteLine("f1 (bc): " + NetUtility.ToHexString(f12.ToByteArray()));
 			
-			//return btmp.modPow(xx.multiply(uu).add(aa), N);
+
+			// own bc
+			BigIntegerBC tmp2 = verBi2.ModPow(uBi2, N2).ModPow(bBi2, N2).Modulus(N2);
+			Console.WriteLine("Ss (ownBC): " + NetUtility.ToHexString(tmp2.ToByteArray()));
 
 
 
-			BigInteger bx = g.ModPow(xBi, N);
+			return retval.GetBytes();
 
-			BigInteger res1 = BigInteger.Multiply(N, k);
-			BigInteger btmp1 = BigInteger.Add(BBi, res1);
-
-			BigInteger res2 = BigInteger.Multiply(bx, k);
-			BigInteger res3 = BigInteger.Subtract(btmp1, res2);
-			BigInteger btmp = BigInteger.Modulus(res3, N);
-
-			BigInteger res5 = BigInteger.Multiply(xBi, uBi);
-			BigInteger res6 = BigInteger.Add(res5, ABi);
-
-			return btmp.ModPow(res6, N).GetBytes();
+			//return NetSha.Hash(retval.GetBytes());
 		}
+
+		public static byte[] ComputeClientSessionKey(byte[] serverPublicKey, byte[] x, byte[] u, byte[] clientPrivateKey) // Sc
+		{
+			BigInteger xBi = new BigInteger(x);
+			BigInteger BBi = new BigInteger(serverPublicKey); // B
+			BigInteger uBi = new BigInteger(u);
+			BigInteger aBi = new BigInteger(clientPrivateKey); // a
+
+			BigInteger retval = (BBi + (N - ((k * g.ModPow(xBi, N)) % N))).ModPow(aBi + uBi * xBi, N);
+
+			return retval.GetBytes();
+
+			//return NetSha.Hash(retval.GetBytes());
+		}		
 	}
 }

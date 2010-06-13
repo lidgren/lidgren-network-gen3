@@ -34,13 +34,25 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
+
 using System;
 using System.Security.Cryptography;
+//using Mono.Math.Prime.Generator;
+//using Mono.Math.Prime;
 
 namespace Lidgren.Network
 {
-	public sealed class BigInteger
+
+#if INSIDE_CORLIB
+	internal
+#else
+	public
+#endif
+ class BigInteger
 	{
+
+		#region Data Storage
+
 		/// <summary>
 		/// The Length of this BigInteger
 		/// </summary>
@@ -50,6 +62,10 @@ namespace Lidgren.Network
 		/// The data for this BigInteger
 		/// </summary>
 		uint[] data;
+
+		#endregion
+
+		#region Constants
 
 		/// <summary>
 		/// Default length of a BigInteger in bytes
@@ -146,7 +162,13 @@ namespace Lidgren.Network
 			Positive = 1
 		};
 
+		#region Exception Messages
 		const string WouldReturnNegVal = "Operation would return a negative value";
+		#endregion
+
+		#endregion
+
+		#region Constructors
 
 		public BigInteger()
 		{
@@ -154,7 +176,9 @@ namespace Lidgren.Network
 			this.length = DEFAULT_LEN;
 		}
 
+#if !INSIDE_CORLIB
 		[CLSCompliant(false)]
+#endif
 		public BigInteger(Sign sign, uint len)
 		{
 			this.data = new uint[len];
@@ -167,7 +191,9 @@ namespace Lidgren.Network
 			this.length = bi.length;
 		}
 
+#if !INSIDE_CORLIB
 		[CLSCompliant(false)]
+#endif
 		public BigInteger(BigInteger bi, uint len)
 		{
 
@@ -178,6 +204,10 @@ namespace Lidgren.Network
 
 			this.length = bi.length;
 		}
+
+		#endregion
+
+		#region Conversions
 
 		public BigInteger(byte[] inData)
 		{
@@ -209,7 +239,9 @@ namespace Lidgren.Network
 			this.Normalize();
 		}
 
+#if !INSIDE_CORLIB
 		[CLSCompliant(false)]
+#endif
 		public BigInteger(uint[] inData)
 		{
 			length = (uint)inData.Length;
@@ -222,13 +254,17 @@ namespace Lidgren.Network
 			this.Normalize();
 		}
 
+#if !INSIDE_CORLIB
 		[CLSCompliant(false)]
+#endif
 		public BigInteger(uint ui)
 		{
 			data = new uint[] { ui };
 		}
 
+#if !INSIDE_CORLIB
 		[CLSCompliant(false)]
+#endif
 		public BigInteger(ulong ul)
 		{
 			data = new uint[2] { (uint)ul, (uint)(ul >> 32) };
@@ -237,7 +273,9 @@ namespace Lidgren.Network
 			this.Normalize();
 		}
 
+#if !INSIDE_CORLIB
 		[CLSCompliant(false)]
+#endif
 		public static implicit operator BigInteger(uint value)
 		{
 			return (new BigInteger(value));
@@ -249,7 +287,9 @@ namespace Lidgren.Network
 			return (new BigInteger((uint)value));
 		}
 
+#if !INSIDE_CORLIB
 		[CLSCompliant(false)]
+#endif
 		public static implicit operator BigInteger(ulong value)
 		{
 			return (new BigInteger(value));
@@ -307,6 +347,10 @@ namespace Lidgren.Network
 				throw new FormatException();
 			return val;
 		}
+
+		#endregion
+
+		#region Operators
 
 		public static BigInteger operator +(BigInteger bi1, BigInteger bi2)
 		{
@@ -413,6 +457,10 @@ namespace Lidgren.Network
 			return Kernel.RightShift(bi1, shiftVal);
 		}
 
+		#endregion
+
+		#region Friendly names for operators
+
 		// with names suggested by FxCop 1.30
 
 		public static BigInteger Add(BigInteger bi1, BigInteger bi2)
@@ -423,6 +471,16 @@ namespace Lidgren.Network
 		public static BigInteger Subtract(BigInteger bi1, BigInteger bi2)
 		{
 			return (bi1 - bi2);
+		}
+
+		public BigInteger Modulus(BigInteger mod)
+		{
+			return BigInteger.Modulus(this, mod);
+		}
+
+		public BigInteger Multiply(BigInteger mult)
+		{
+			return BigInteger.Multiply(this, mult);
 		}
 
 		public static int Modulus(BigInteger bi, int i)
@@ -462,7 +520,114 @@ namespace Lidgren.Network
 		{
 			return (bi * i);
 		}
-				
+
+		#endregion
+
+		#region Random
+		private static RandomNumberGenerator rng;
+		private static RandomNumberGenerator Rng
+		{
+			get
+			{
+				if (rng == null)
+					rng = RandomNumberGenerator.Create();
+				return rng;
+			}
+		}
+
+		/// <summary>
+		/// Generates a new, random BigInteger of the specified length.
+		/// </summary>
+		/// <param name="bits">The number of bits for the new number.</param>
+		/// <param name="rng">A random number generator to use to obtain the bits.</param>
+		/// <returns>A random number of the specified length.</returns>
+		public static BigInteger GenerateRandom(int bits, RandomNumberGenerator rng)
+		{
+			int dwords = bits >> 5;
+			int remBits = bits & 0x1F;
+
+			if (remBits != 0)
+				dwords++;
+
+			BigInteger ret = new BigInteger(Sign.Positive, (uint)dwords + 1);
+			byte[] random = new byte[dwords << 2];
+
+			rng.GetBytes(random);
+			Buffer.BlockCopy(random, 0, ret.data, 0, (int)dwords << 2);
+
+			if (remBits != 0)
+			{
+				uint mask = (uint)(0x01 << (remBits - 1));
+				ret.data[dwords - 1] |= mask;
+
+				mask = (uint)(0xFFFFFFFF >> (32 - remBits));
+				ret.data[dwords - 1] &= mask;
+			}
+			else
+				ret.data[dwords - 1] |= 0x80000000;
+
+			ret.Normalize();
+			return ret;
+		}
+
+		/// <summary>
+		/// Generates a new, random BigInteger of the specified length using the default RNG crypto service provider.
+		/// </summary>
+		/// <param name="bits">The number of bits for the new number.</param>
+		/// <returns>A random number of the specified length.</returns>
+		public static BigInteger GenerateRandom(int bits)
+		{
+			return GenerateRandom(bits, Rng);
+		}
+
+		/// <summary>
+		/// Randomizes the bits in "this" from the specified RNG.
+		/// </summary>
+		/// <param name="rng">A RNG.</param>
+		public void Randomize(RandomNumberGenerator rng)
+		{
+			if (this == 0)
+				return;
+
+			int bits = this.BitCount();
+			int dwords = bits >> 5;
+			int remBits = bits & 0x1F;
+
+			if (remBits != 0)
+				dwords++;
+
+			byte[] random = new byte[dwords << 2];
+
+			rng.GetBytes(random);
+			Buffer.BlockCopy(random, 0, data, 0, (int)dwords << 2);
+
+			if (remBits != 0)
+			{
+				uint mask = (uint)(0x01 << (remBits - 1));
+				data[dwords - 1] |= mask;
+
+				mask = (uint)(0xFFFFFFFF >> (32 - remBits));
+				data[dwords - 1] &= mask;
+			}
+
+			else
+				data[dwords - 1] |= 0x80000000;
+
+			Normalize();
+		}
+
+		/// <summary>
+		/// Randomizes the bits in "this" from the default RNG.
+		/// </summary>
+		public void Randomize()
+		{
+			Randomize(Rng);
+		}
+
+		#endregion
+
+		#region Bitwise
+
 		public int BitCount()
 		{
 			this.Normalize();
@@ -486,7 +651,9 @@ namespace Lidgren.Network
 		/// </summary>
 		/// <param name="bitNum">The bit to test. The least significant bit is 0.</param>
 		/// <returns>True if bitNum is set to 1, else false.</returns>
+#if !INSIDE_CORLIB
 		[CLSCompliant(false)]
+#endif
 		public bool TestBit(uint bitNum)
 		{
 			uint bytePos = bitNum >> 5;             // divide by 32
@@ -507,19 +674,25 @@ namespace Lidgren.Network
 			return ((this.data[bytePos] | mask) == this.data[bytePos]);
 		}
 
+#if !INSIDE_CORLIB
 		[CLSCompliant(false)]
+#endif
 		public void SetBit(uint bitNum)
 		{
 			SetBit(bitNum, true);
 		}
 
+#if !INSIDE_CORLIB
 		[CLSCompliant(false)]
+#endif
 		public void ClearBit(uint bitNum)
 		{
 			SetBit(bitNum, false);
 		}
 
+#if !INSIDE_CORLIB
 		[CLSCompliant(false)]
+#endif
 		public void SetBit(uint bitNum, bool value)
 		{
 			uint bytePos = bitNum >> 5;             // divide by 32
@@ -571,14 +744,22 @@ namespace Lidgren.Network
 			return result;
 		}
 
+		#endregion
+
+		#region Compare
+
+#if !INSIDE_CORLIB
 		[CLSCompliant(false)]
+#endif
 		public static bool operator ==(BigInteger bi1, uint ui)
 		{
 			if (bi1.length != 1) bi1.Normalize();
 			return bi1.length == 1 && bi1.data[0] == ui;
 		}
 
+#if !INSIDE_CORLIB
 		[CLSCompliant(false)]
+#endif
 		public static bool operator !=(BigInteger bi1, uint ui)
 		{
 			if (bi1.length != 1) bi1.Normalize();
@@ -630,13 +811,21 @@ namespace Lidgren.Network
 			return Kernel.Compare(this, bi);
 		}
 
+		#endregion
+
+		#region Formatting
+
+#if !INSIDE_CORLIB
 		[CLSCompliant(false)]
+#endif
 		public string ToString(uint radix)
 		{
 			return ToString(radix, "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ");
 		}
 
+#if !INSIDE_CORLIB
 		[CLSCompliant(false)]
+#endif
 		public string ToString(uint radix, string characterSet)
 		{
 			if (characterSet.Length < radix)
@@ -660,6 +849,10 @@ namespace Lidgren.Network
 			return result;
 		}
 
+		#endregion
+
+		#region Misc
+
 		/// <summary>
 		///     Normalizes this by setting the length to the actual number of
 		///     uints used in data and by setting the sign to Sign.Zero if the
@@ -680,6 +873,10 @@ namespace Lidgren.Network
 			for (int i = 0; i < length; i++)
 				data[i] = 0x00;
 		}
+
+		#endregion
+
+		#region Object Impl
 
 		public override int GetHashCode()
 		{
@@ -704,6 +901,10 @@ namespace Lidgren.Network
 			return Kernel.Compare(this, (BigInteger)o) == 0;
 		}
 
+		#endregion
+
+		#region Number Theory
+
 		public BigInteger GCD(BigInteger bi)
 		{
 			return Kernel.gcd(this, bi);
@@ -720,8 +921,17 @@ namespace Lidgren.Network
 			return mr.Pow(this, exp);
 		}
 
-		public sealed class ModulusRing
+		#endregion
+
+	
+#if INSIDE_CORLIB
+		internal
+#else
+		public
+#endif
+ sealed class ModulusRing
 		{
+
 			BigInteger mod, constant;
 
 			public ModulusRing(BigInteger modulus)
@@ -922,10 +1132,13 @@ namespace Lidgren.Network
 				return resultNum;
 			}
 
+			#region Pow Small Base
+
 			// TODO: Make tests for this, not really needed b/c prime stuff
 			// checks it, but still would be nice
-
+#if !INSIDE_CORLIB
 			[CLSCompliant(false)]
+#endif
 			public BigInteger Pow(uint b, BigInteger exp)
 			{
 				//				if (b != 2) {
@@ -1180,6 +1393,142 @@ namespace Lidgren.Network
 
 				return resultNum;
 			}
+
+			/* known to be buggy in some cases
+						private unsafe BigInteger EvenModTwoPow (BigInteger exp)
+						{
+							exp.Normalize ();
+							uint [] wkspace = new uint [mod.length << 1 + 1];
+
+							BigInteger resultNum = new BigInteger (2, mod.length << 1 +1);
+
+							uint value = exp.data [exp.length - 1];
+							uint mask = 0x80000000;
+
+							// Find the first bit of the exponent
+							while ((value & mask) == 0)
+								mask >>= 1;
+
+							//
+							// We know that the first itr will make the val 2,
+							// so eat one bit of the exponent
+							//
+							mask >>= 1;
+
+							uint wPos = exp.length - 1;
+
+							do {
+								value = exp.data [wPos];
+								do {
+									Kernel.SquarePositive (resultNum, ref wkspace);
+									if (resultNum.length >= mod.length)
+										BarrettReduction (resultNum);
+
+									if ((value & mask) != 0) {
+										//
+										// resultNum = (resultNum * 2) % mod
+										//
+
+										fixed (uint* u = resultNum.data) {
+											//
+											// Double
+											//
+											uint* uu = u;
+											uint* uuE = u + resultNum.length;
+											uint x, carry = 0;
+											while (uu < uuE) {
+												x = *uu;
+												*uu = (x << 1) | carry;
+												carry = x >> (32 - 1);
+												uu++;
+											}
+
+											// subtraction inlined because we know it is square
+											if (carry != 0 || resultNum >= mod) {
+												uu = u;
+												uint c = 0;
+												uint [] s = mod.data;
+												uint i = 0;
+												do {
+													uint a = s [i];
+													if (((a += c) < c) | ((* (uu++) -= a) > ~a))
+														c = 1;
+													else
+														c = 0;
+													i++;
+												} while (uu < uuE);
+											}
+										}
+									}
+								} while ((mask >>= 1) > 0);
+								mask = 0x80000000;
+							} while (wPos-- > 0);
+
+							return resultNum;
+						}
+
+						private unsafe BigInteger OddModTwoPow (BigInteger exp)
+						{
+
+							uint [] wkspace = new uint [mod.length << 1 + 1];
+
+							BigInteger resultNum = Montgomery.ToMont ((BigInteger)2, this.mod);
+							resultNum = new BigInteger (resultNum, mod.length << 1 +1);
+
+							uint mPrime = Montgomery.Inverse (mod.data [0]);
+
+							//
+							// TODO: eat small bits, the ones we can do with no modular reduction
+							//
+							uint pos = (uint)exp.BitCount () - 2;
+
+							do {
+								Kernel.SquarePositive (resultNum, ref wkspace);
+								resultNum = Montgomery.Reduce (resultNum, mod, mPrime);
+
+								if (exp.TestBit (pos)) {
+									//
+									// resultNum = (resultNum * 2) % mod
+									//
+
+									fixed (uint* u = resultNum.data) {
+										//
+										// Double
+										//
+										uint* uu = u;
+										uint* uuE = u + resultNum.length;
+										uint x, carry = 0;
+										while (uu < uuE) {
+											x = *uu;
+											*uu = (x << 1) | carry;
+											carry = x >> (32 - 1);
+											uu++;
+										}
+
+										// subtraction inlined because we know it is square
+										if (carry != 0 || resultNum >= mod) {
+											fixed (uint* s = mod.data) {
+												uu = u;
+												uint c = 0;
+												uint* ss = s;
+												do {
+													uint a = *ss++;
+													if (((a += c) < c) | ((* (uu++) -= a) > ~a))
+														c = 1;
+													else
+														c = 0;
+												} while (uu < uuE);
+											}
+										}
+									}
+								}
+							} while (pos-- > 0);
+
+							resultNum = Montgomery.Reduce (resultNum, mod, mPrime);
+							return resultNum;
+						}
+			*/
+			#endregion
 		}
 
 		internal sealed class Montgomery
@@ -1266,13 +1615,22 @@ namespace Lidgren.Network
 
 				return A;
 			}
+#if _NOT_USED_
+			public static BigInteger Reduce (BigInteger n, BigInteger m)
+			{
+				return Reduce (n, m, Inverse (m.data [0]));
+			}
+#endif
 		}
 
 		/// <summary>
 		/// Low level functions for the BigInteger
 		/// </summary>
-		private static class Kernel
+		private sealed class Kernel
 		{
+
+			#region Addition/Subtraction
+
 			/// <summary>
 			/// Adds two numbers with the same sign.
 			/// </summary>
@@ -1488,6 +1846,10 @@ namespace Lidgren.Network
 				bi1.Normalize();
 			}
 
+			#endregion
+
+			#region Compare
+
 			/// <summary>
 			/// Compares two BigInteger
 			/// </summary>
@@ -1526,6 +1888,12 @@ namespace Lidgren.Network
 				else
 					return Sign.Zero;
 			}
+
+			#endregion
+
+			#region Division
+
+			#region Dword
 
 			/// <summary>
 			/// Performs n / d and n % d in one operation.
@@ -1604,6 +1972,10 @@ namespace Lidgren.Network
 
 				return new BigInteger[] { ret, rem };
 			}
+
+			#endregion
+
+			#region BigNum
 
 			public static BigInteger[] multiByteDivide(BigInteger bi1, BigInteger bi2)
 			{
@@ -1720,6 +2092,11 @@ namespace Lidgren.Network
 				return ret;
 			}
 
+			#endregion
+
+			#endregion
+
+			#region Shift
 			public static BigInteger LeftShift(BigInteger bi, int n)
 			{
 				if (n == 0) return new BigInteger(bi, bi.length + 1);
@@ -1786,6 +2163,10 @@ namespace Lidgren.Network
 				ret.Normalize();
 				return ret;
 			}
+
+			#endregion
+
+			#region Multiply
 
 			public static BigInteger MultiplyByDword(BigInteger n, uint f)
 			{
@@ -1992,6 +2373,10 @@ namespace Lidgren.Network
 							return carry != 0;
 						}*/
 
+			#endregion
+
+			#region Number Theory
+
 			public static BigInteger gcd(BigInteger a, BigInteger b)
 			{
 				BigInteger x = a;
@@ -2100,7 +2485,9 @@ namespace Lidgren.Network
 					throw (new ArithmeticException("No inverse!"));
 
 				return mr.Difference(p[0], p[1] * q[0]);
+
 			}
+			#endregion
 		}
 	}
 }

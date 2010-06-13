@@ -113,7 +113,7 @@ namespace Lidgren.Network
 
 					m_listenPort = boundEp.Port;
 
-					long first = (pa == null ? (long)0 : (long)pa.GetHashCode());
+					long first = (pa == null ? (long)this.GetHashCode() : (long)pa.GetHashCode());
 					long second = (long)((long)boundEp.GetHashCode() << 32);
 					m_uniqueIdentifier = first ^ second;
 

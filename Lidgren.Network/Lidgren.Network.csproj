@@ -38,6 +38,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="NetBigInteger.cs" />
+    <Compile Include="NetBigIntegerBC.cs" />
     <Compile Include="NetBitVector.cs" />
     <Compile Include="NetConnectionStatistics.cs" />
     <Compile Include="NetBitWriter.cs" />
