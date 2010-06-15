@@ -233,7 +233,7 @@ namespace Lidgren.Network
 
 					ptr = msg.Encode(now, buffer, ptr, this);
 					numIncludedMessages++;
-					
+
 					// room to piggyback some acks?
 					if (m_acknowledgesToSend.Count > 0)
 					{
@@ -339,7 +339,7 @@ namespace Lidgren.Network
 					// Expected sequence number
 					AcceptMessage(mtp, isFragment, channelSequenceNumber, ptr, payloadLengthBits);
 
-					ExpectedReliableSequenceArrived(reliableSlot);
+					ExpectedReliableSequenceArrived(reliableSlot, isFragment);
 					return;
 				}
 
@@ -404,7 +404,7 @@ namespace Lidgren.Network
 				im.m_senderEndpoint = m_remoteEndpoint;
 
 				m_owner.LogVerbose("Withholding " + im + " (waiting for " + m_nextExpectedReliableSequence[reliableSlot] + ")");
-				
+
 				wmList.Add(im);
 
 				return;
@@ -498,7 +498,10 @@ namespace Lidgren.Network
 
 			Buffer.BlockCopy(m_owner.m_receiveBuffer, ptr, im.m_data, offset, payloadLength);
 
-			im.m_bitLength = (8 * (offset + payloadLength));
+			// only enlarge message length if this is latest fragment received
+			int newBitLength = (8 * (offset + payloadLength));
+			if (newBitLength > im.m_bitLength)
+				im.m_bitLength = newBitLength;
 
 			info.Received[nr] = true;
 			info.TotalReceived++;
@@ -567,7 +570,7 @@ namespace Lidgren.Network
 				throw new NetException("Message has already been sent!");
 
 			NetException.Assert(sequenceChannel >= 0 && sequenceChannel < NetConstants.NetChannelsPerDeliveryMethod, "Sequence channel must be between 0 and NetConstants.NetChannelsPerDeliveryMethod (" + NetConstants.NetChannelsPerDeliveryMethod + ")");
-	
+
 			msg.m_type = (NetMessageType)((int)method + sequenceChannel);
 			EnqueueOutgoingMessage(msg);
 		}
@@ -602,7 +605,7 @@ namespace Lidgren.Network
 
 			int numFragments = (msgLen + mtu - 1) / mtu;
 
-			for(int i=0;i<numFragments;i++)
+			for (int i = 0; i < numFragments; i++)
 			{
 				int flen = (i == numFragments - 1 ? (msgLen - (mtu * (numFragments - 1))) : mtu);
 

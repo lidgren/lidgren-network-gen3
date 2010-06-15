@@ -49,6 +49,8 @@ namespace Lidgren.Network
 		{
 			NetException.Assert(msg.m_status != NetIncomingMessageReleaseStatus.ReleasedToApplication, "Message released to application twice!");
 
+			NetException.Assert(msg.m_fragmentationInfo == null, "Fragment released to application!");
+
 			msg.m_status = NetIncomingMessageReleaseStatus.ReleasedToApplication;
 			m_releasedIncomingMessages.Enqueue(msg);
 			if (m_messageReceivedEvent != null)

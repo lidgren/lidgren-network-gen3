@@ -233,7 +233,7 @@ namespace Lidgren.Network
 			}
 		}
 
-		private void ExpectedReliableSequenceArrived(int reliableSlot)
+		private void ExpectedReliableSequenceArrived(int reliableSlot, bool isFragment)
 		{
 			NetBitVector received = m_reliableReceived[reliableSlot];
 
@@ -275,8 +275,11 @@ namespace Lidgren.Network
 								// Found withheld message due for delivery
 								m_owner.LogVerbose("Releasing withheld message " + wm);
 
-								// AcceptMessage
-								m_owner.ReleaseMessage(wm);
+								//Console.WriteLine("Releasing withheld message " + wm);
+
+								// Accept, unless a fragment
+								if (wm.m_fragmentationInfo == null)
+									m_owner.ReleaseMessage(wm);
 
 								foundWithheld = true;
 								withheldList.Remove(wm);
@@ -290,7 +293,13 @@ namespace Lidgren.Network
 						}
 					}
 					if (!foundWithheld)
-						throw new NetException("Failed to find withheld message!");
+					{
+						// probably a fragment; we don't withhold those - advance anyway
+						//Console.WriteLine("Withheld #" + nextExpected + " not found; probably a fragment!");
+						//received[(nextExpected + (NetConstants.NumSequenceNumbers / 2)) % NetConstants.NumSequenceNumbers] = false; // reset for next pass
+						//nextExpected = (nextExpected + 1) % NetConstants.NumSequenceNumbers;
+						throw new NetException("Withheld message not found!");
+					}
 				}
 			}
 

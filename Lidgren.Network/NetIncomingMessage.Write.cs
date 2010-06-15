@@ -438,7 +438,17 @@ namespace Lidgren.Network
 			}
 
 			byte[] bytes = Encoding.UTF8.GetBytes(source);
-			InternalEnsureBufferSize(m_bitLength + (bytes.Length > 127 ? 2 * 8 : 1 * 8) + (bytes.Length * 8));
+
+			// determine number of bytes to store length
+			int lenBytesNeeded = 1;
+			uint num1 = (uint)bytes.Length;
+			while (num1 >= 0x80)
+			{
+				num1 = num1 >> 7;
+				lenBytesNeeded++;
+			}
+			InternalEnsureBufferSize(m_bitLength + ((bytes.Length + lenBytesNeeded) * 8));
+
 			WriteVariableUInt32((uint)bytes.Length);
 			Write(bytes);
 		}
