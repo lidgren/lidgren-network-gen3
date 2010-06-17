@@ -485,6 +485,10 @@ namespace Lidgren.Network
 					{
 						// wrong app ident
 						LogWarning("Connect received with wrong appidentifier (need '" + m_configuration.AppIdentifier + "' found '" + appIdent + "') from " + senderEndpoint);
+
+						NetOutgoingMessage bye = CreateLibraryMessage(NetMessageLibraryType.Disconnect, "Wrong app identifier!");
+						SendUnconnectedLibraryMessage(bye, NetMessageLibraryType.Disconnect, senderEndpoint);
+
 						break;
 					}
 
