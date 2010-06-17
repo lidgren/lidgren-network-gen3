@@ -12,6 +12,7 @@ namespace BarebonesClient
 		{
 			NetPeerConfiguration config = new NetPeerConfiguration("barebones");
 			config.SimulatedLoss = 0.1f;
+			config.EnableMessageType(NetIncomingMessageType.VerboseDebugMessage);
 			NetClient client = new NetClient(config);
 			client.Start();
 
@@ -39,7 +40,7 @@ namespace BarebonesClient
 
 								// temporary code to verify issue with large messages
 								StringBuilder bdr = new StringBuilder();
-								for (int i = 0; i < 1000; i++)
+								for (int i = 0; i < 400; i++)
 									bdr.Append("Hallonsmurf" + i.ToString());
 								om.Write(bdr.ToString());
 

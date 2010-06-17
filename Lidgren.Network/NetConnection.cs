@@ -28,6 +28,8 @@ namespace Lidgren.Network
 	[DebuggerDisplay("RemoteEndpoint={m_remoteEndpoint} Status={m_status}")]
 	public partial class NetConnection
 	{
+		private static readonly NetFragmentationInfo s_genericFragmentationInfo = new NetFragmentationInfo();
+
 		private readonly NetPeer m_owner;
 		internal readonly IPEndPoint m_remoteEndpoint;
 		internal double m_lastHeardFrom;
@@ -402,6 +404,8 @@ namespace Lidgren.Network
 				im.m_sequenceNumber = channelSequenceNumber;
 				im.m_senderConnection = this;
 				im.m_senderEndpoint = m_remoteEndpoint;
+				if (isFragment)
+					im.m_fragmentationInfo = s_genericFragmentationInfo;
 
 				m_owner.LogVerbose("Withholding " + im + " (waiting for " + m_nextExpectedReliableSequence[reliableSlot] + ")");
 
@@ -443,11 +447,13 @@ namespace Lidgren.Network
 					im.m_sequenceNumber = seqNr;
 					im.m_senderConnection = this;
 					im.m_senderEndpoint = m_remoteEndpoint;
+
 					NetFragmentationInfo info = new NetFragmentationInfo();
 					info.TotalFragmentCount = fragmentTotalCount;
 					info.Received = new bool[fragmentTotalCount];
 					info.FragmentSize = bytesLen;
 					im.m_fragmentationInfo = info;
+
 					m_fragmentGroups[fragmentGroup] = im;
 				}
 
@@ -457,6 +463,7 @@ namespace Lidgren.Network
 					return;
 
 				// all received!
+				im.m_fragmentationInfo = null;
 				m_fragmentGroups.Remove(fragmentGroup);
 			}
 			else

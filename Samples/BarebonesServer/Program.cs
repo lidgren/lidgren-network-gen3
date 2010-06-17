@@ -13,6 +13,7 @@ namespace BarebonesServer
 			NetPeerConfiguration config = new NetPeerConfiguration("barebones");
 			config.Port = 14242;
 			config.SimulatedLoss = 0.1f;
+			config.EnableMessageType(NetIncomingMessageType.VerboseDebugMessage);
 			NetServer server = new NetServer(config);
 			server.Start();
 
@@ -42,7 +43,7 @@ namespace BarebonesServer
 
 							// temporary code to verify issue with large messages
 							StringBuilder bdr = new StringBuilder();
-							for (int i = 0; i < 1000; i++)
+							for (int i = 0; i < 400; i++)
 								bdr.Append("Hallonsmurf" + i.ToString());
 
 							string str = inc.ReadString();
