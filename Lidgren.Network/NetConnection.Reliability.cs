@@ -153,6 +153,8 @@ namespace Lidgren.Network
 			int numSends = msg.m_numSends;
 			float[] baseTimes = m_peerConfiguration.m_resendBaseTime;
 			float[] multiplers = m_peerConfiguration.m_resendRTTMultiplier;
+			if (numSends >= baseTimes.Length)
+				numSends = baseTimes.Length - 1;
 			msg.m_nextResendTime = now + baseTimes[numSends] + (m_averageRoundtripTime * multiplers[numSends]);
 
 			return (ushort)seqNr;
