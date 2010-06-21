@@ -72,6 +72,20 @@ namespace Lidgren.Network
 		/// </summary>
 		public int ReceivedBytes { get { return m_receivedBytes; } }
 
+		public double LastSendRespondedTo { get { return m_connection.m_lastSendRespondedTo; } }
+
+		public int MostSends
+		{
+			get
+			{
+				int most = 0;
+				foreach (var a in m_connection.m_unackedSends)
+					if (a.NumSends > most)
+						most = a.NumSends;
+				return most;
+			}
+		}
+
 		[Conditional("DEBUG")]
 		internal void PacketSent(int numBytes, int numMessages)
 		{

@@ -74,6 +74,7 @@
     <Compile Include="NetPeerStatus.cs" />
     <Compile Include="NetQueue.cs" />
     <Compile Include="NetRandom.cs" />
+    <Compile Include="NetSending.cs" />
     <Compile Include="NetServer.cs" />
     <Compile Include="NetTime.cs" />
     <Compile Include="NetUtility.cs" />

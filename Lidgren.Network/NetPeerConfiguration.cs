@@ -52,8 +52,6 @@ namespace Lidgren.Network
 		internal float m_pingFrequency;
 
 		// reliability
-		internal float[] m_resendRTTMultiplier;
-		internal float[] m_resendBaseTime;
 		internal float m_maxAckDelayTime;
 
 		// bad network simulation
@@ -77,7 +75,7 @@ namespace Lidgren.Network
 			m_sendBufferSize = 131071;
 			m_keepAliveDelay = 4.0f;
 			m_connectionTimeout = 25;
-			m_maximumConnections = 8;
+			m_maximumConnections = 16;
 			m_defaultOutgoingMessageCapacity = 8;
 			m_pingFrequency = 6.0f;
 			m_throttleBytesPerSecond = 1024 * 512;
@@ -95,37 +93,6 @@ namespace Lidgren.Network
 
 			// default disabled types
 			m_disabledTypes = NetIncomingMessageType.ConnectionApproval | NetIncomingMessageType.UnconnectedData | NetIncomingMessageType.VerboseDebugMessage;
-
-			// reliability
-			m_resendRTTMultiplier = new float[]
-			{
-				1.1f,
-				2.25f,
-				3.5f,
-				4.0f,
-				4.0f,
-				4.0f,
-				4.0f,
-				4.0f,
-				4.0f,
-				6.0f,
-				6.0f
-			};
-
-			m_resendBaseTime = new float[]
-			{
-				0.025f, // just processing time + ack delay wait time
-				0.05f, // just processing time + ack delay wait time
-				0.2f, // 0.16 delay since last resend
-				0.5f, // 0.3 delay 
-				1.5f, // 1.0 delay
-				3.0f, // 1.5 delay
-				5.0f, // 2.0 delay
-				7.5f, // 2.5 delay
-				12.5f, // 5.0 delay
-				17.5f, // 5.0 delay
-				25.0f // 7.5 delay, obi wan you're my only hope
-			};
 
 			// Maximum transmission unit
 			// The aim is for a max full packet to be 1440 bytes (30 x 48 bytes, lower than 1468)

@@ -18,21 +18,23 @@ namespace Lidgren.Network
 		{
 			// send message to client
 			NetOutgoingMessage msg = CreateMessage(10 + token.Length + 1);
+			msg.m_libType = NetMessageLibraryType.NatIntroduction;
 			msg.Write(false);
 			msg.WritePadBits();
 			msg.Write(hostInternal);
 			msg.Write(hostExternal);
 			msg.Write(token);
-			SendUnconnectedLibraryMessage(msg, NetMessageLibraryType.NatIntroduction, clientExternal);
+			SendUnconnectedLibrary(msg, clientExternal);
 
 			// send message to host
 			msg = CreateMessage(10 + token.Length + 1);
+			msg.m_libType = NetMessageLibraryType.NatIntroduction;
 			msg.Write(true);
 			msg.WritePadBits();
 			msg.Write(clientInternal);
 			msg.Write(clientExternal);
 			msg.Write(token);
-			SendUnconnectedLibraryMessage(msg, NetMessageLibraryType.NatIntroduction, hostExternal);
+			SendUnconnectedLibrary(msg, hostExternal);
 		}
 
 		/// <summary>
@@ -60,15 +62,17 @@ namespace Lidgren.Network
 
 			// send internal punch
 			punch = CreateMessage(1);
+			punch.m_libType = NetMessageLibraryType.NatPunchMessage;
 			punch.Write(hostByte);
 			punch.Write(token);
-			SendUnconnectedLibraryMessage(punch, NetMessageLibraryType.NatPunchMessage, remoteInternal);
+			SendUnconnectedLibrary(punch, remoteInternal);
 
 			// send external punch
 			punch = CreateMessage(1);
+			punch.m_libType = NetMessageLibraryType.NatPunchMessage;
 			punch.Write(hostByte);
 			punch.Write(token);
-			SendUnconnectedLibraryMessage(punch, NetMessageLibraryType.NatPunchMessage, remoteExternal);
+			SendUnconnectedLibrary(punch, remoteExternal);
 		}
 
 		/// <summary>

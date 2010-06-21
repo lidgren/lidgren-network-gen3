@@ -32,7 +32,7 @@ namespace Lidgren.Network
 		private byte m_lastSentPingNumber;
 		private double m_lastPingSendTime;
 		private double m_nextPing;
-		private double m_lastSendRespondedTo;
+		internal double m_lastSendRespondedTo;
 
 		// remote + diff = local
 		// diff = local - remote
@@ -62,14 +62,12 @@ namespace Lidgren.Network
 			double now = NetTime.Now;
 
 			// send pong
-			NetOutgoingMessage pong = m_owner.CreateMessage(1);
-			pong.m_type = NetMessageType.Library;
+			NetOutgoingMessage pong = m_owner.CreateMessage(1 + 8);
 			pong.m_libType = NetMessageLibraryType.Pong;
 			pong.Write((byte)pingNumber);
 			pong.Write(now);
 
-			// send immediately
-			m_owner.SendImmediately(now, this, pong);
+			m_owner.SendLibraryImmediately(pong, m_remoteEndpoint);
 		}
 
 		internal void HandleIncomingPong(double receiveNow, byte pingNumber, double remoteNetTime)
@@ -122,9 +120,8 @@ namespace Lidgren.Network
 			{
 				// send keepalive thru regular channels to give acks something to piggyback on
 				NetOutgoingMessage pig = m_owner.CreateMessage(1);
-				pig.m_type = NetMessageType.Library;
 				pig.m_libType = NetMessageLibraryType.KeepAlive;
-				EnqueueOutgoingMessage(pig);
+				SendLibrary(pig);
 				m_nextForceAckTime = now + m_peerConfiguration.m_maxAckDelayTime;
 			}
 
@@ -141,17 +138,17 @@ namespace Lidgren.Network
 				//
 				// send ping
 				//
+				now = NetTime.Now; // need exact number
 				m_lastSentPingNumber++;
+				m_lastPingSendTime = now;
+				m_nextPing = now + m_owner.Configuration.m_pingFrequency;
 
 				NetOutgoingMessage ping = m_owner.CreateMessage(1);
-				ping.m_type = NetMessageType.Library;
 				ping.m_libType = NetMessageLibraryType.Ping;
 				ping.Write((byte)m_lastSentPingNumber);
 
-				m_owner.SendImmediately(now, this, ping);
+				m_owner.SendLibraryImmediately(ping, m_remoteEndpoint);
 
-				m_lastPingSendTime = NetTime.Now; // need exact number
-				m_nextPing = now + m_owner.Configuration.m_pingFrequency;
 			}
 		}
 	}

@@ -25,11 +25,13 @@ namespace Lidgren.Network
 {
 	public partial class NetConnection
 	{
-		private ushort[] m_nextSendSequenceNumber;
+		private int[] m_nextSendSequenceNumber;
 		private ushort[] m_lastReceivedSequenced;
 
-		internal readonly Dictionary<ushort, NetOutgoingMessage>[] m_storedMessages = new Dictionary<ushort, NetOutgoingMessage>[NetConstants.NumReliableChannels];
-		internal readonly Dictionary<NetOutgoingMessage, ushort>[] m_inverseStored = new Dictionary<NetOutgoingMessage, ushort>[NetConstants.NumReliableChannels];
+		internal readonly List<NetSending> m_unackedSends = new List<NetSending>();
+
+		//internal readonly Dictionary<ushort, NetOutgoingMessage>[] m_storedMessages = new Dictionary<ushort, NetOutgoingMessage>[NetConstants.NumReliableChannels];
+		//internal readonly Dictionary<NetOutgoingMessage, ushort>[] m_inverseStored = new Dictionary<NetOutgoingMessage, ushort>[NetConstants.NumReliableChannels];
 		internal readonly NetBitVector m_storedMessagesNotEmpty = new NetBitVector(NetConstants.NumReliableChannels);
 
 		private readonly ushort[] m_nextExpectedReliableSequence = new ushort[NetConstants.NumReliableChannels];
@@ -41,14 +43,7 @@ namespace Lidgren.Network
 
 		public int GetStoredMessagesCount()
 		{
-			int retval = 0;
-			for (int i = 0; i < m_storedMessages.Length; i++)
-			{
-				var list = m_storedMessages[i];
-				if (list != null)
-					retval += list.Count;
-			}
-			return retval;
+			return m_unackedSends.Count;
 		}
 
 		public int GetWithheldMessagesCount()
@@ -66,16 +61,17 @@ namespace Lidgren.Network
 		private void InitializeReliability()
 		{
 			int num = ((int)NetMessageType.UserReliableOrdered + NetConstants.NetChannelsPerDeliveryMethod) - (int)NetMessageType.UserSequenced;
-			m_nextSendSequenceNumber = new ushort[num];
+			m_nextSendSequenceNumber = new int[num];
+			for(int i=0;i<m_nextSendSequenceNumber.Length;i++)
+				m_nextSendSequenceNumber[i] = -1; // initialize to -1; pre-increment will start sending at 0
 			m_lastReceivedSequenced = new ushort[num];
 			m_nextForceAckTime = double.MaxValue;
 		}
 
 		internal ushort GetSendSequenceNumber(NetMessageType mtp)
 		{
-			m_owner.VerifyNetworkThread();
 			int slot = (int)mtp - (int)NetMessageType.UserSequenced;
-			return m_nextSendSequenceNumber[slot]++;
+			return (ushort)Interlocked.Increment(ref m_nextSendSequenceNumber[slot]);
 		}
 
 		internal static int Relate(int seqNr, int lastReceived)
@@ -99,6 +95,7 @@ namespace Lidgren.Network
 			return false;
 		}
 
+		/*
 		// called by Encode() to retrieve a sequence number and store the message for potential resending
 		internal ushort StoreReliableMessage(double now, NetOutgoingMessage msg)
 		{
@@ -159,36 +156,7 @@ namespace Lidgren.Network
 
 			return (ushort)seqNr;
 		}
-
-		private void Resend(double now, ushort seqNr, NetOutgoingMessage msg)
-		{
-			m_owner.VerifyNetworkThread();
-
-			int numSends = msg.m_numSends;
-			float[] baseTimes = m_peerConfiguration.m_resendBaseTime;
-			if (numSends >= baseTimes.Length)
-			{
-				// no more resends! We failed!
-				int reliableSlot = (int)msg.m_type - (int)NetMessageType.UserReliableUnordered;
-				m_storedMessages[reliableSlot].Remove(seqNr);
-				m_owner.LogWarning("Failed to deliver reliable message " + msg + " (seqNr " + seqNr + ")");
-
-				Disconnect("Failed to deliver reliable message!");
-
-				return; // bye
-			}
-
-			m_owner.LogVerbose("Resending " + msg + " (seqNr " + seqNr + ")");
-
-			Interlocked.Increment(ref msg.m_inQueueCount);
-			m_unsentMessages.EnqueueFirst(msg);
-
-			msg.m_lastSentTime = now;
-
-			// schedule next resend
-			float[] multiplers = m_peerConfiguration.m_resendRTTMultiplier;
-			msg.m_nextResendTime = now + baseTimes[numSends] + (m_averageRoundtripTime * multiplers[numSends]);
-		}
+		*/
 
 		private void HandleIncomingAcks(int ptr, int payloadByteLength)
 		{
@@ -205,6 +173,25 @@ namespace Lidgren.Network
 				NetMessageType tp = (NetMessageType)buffer[ptr++];
 				//m_owner.LogDebug("Got ack for " + tp + "|" + seqNr);
 
+				foreach(NetSending send in m_unackedSends)
+				{
+					if (send.MessageType == tp && send.SequenceNumber == seqNr)
+					{
+						// found it
+						m_lastSendRespondedTo = NetTime.Now; // TODO: calculate from send.NextResend and send.NumSends
+						int unfin = send.Message.m_numUnfinishedSendings;
+						send.Message.m_numUnfinishedSendings = unfin - 1;
+						if (unfin <= 1)
+							m_owner.Recycle(send.Message); // every sent has been acked; free the message
+
+						m_unackedSends.Remove(send);
+
+						// TODO: recycle send
+						break;
+					}
+				}
+
+				/*
 				// remove stored message
 				int reliableSlot = (int)tp - (int)NetMessageType.UserReliableUnordered;
 
@@ -220,6 +207,9 @@ namespace Lidgren.Network
 					dict.Remove(seqNr);
 					m_inverseStored[reliableSlot].Remove(om);
 
+					if (dict.Count < 1)
+						m_storedMessagesNotEmpty[reliableSlot] = false;
+
 					Interlocked.Decrement(ref om.m_inQueueCount);
 
 					NetException.Assert(om.m_lastSentTime != 0);
@@ -230,6 +220,7 @@ namespace Lidgren.Network
 					if (om.m_inQueueCount < 1)
 						m_owner.Recycle(om);
 				}
+				*/
 
 				// TODO: receipt handling
 			}
@@ -250,6 +241,10 @@ namespace Lidgren.Network
 
 			received[(nextExpected + (NetConstants.NumSequenceNumbers / 2)) % NetConstants.NumSequenceNumbers] = false; // reset for next pass
 			nextExpected = (nextExpected + 1) % NetConstants.NumSequenceNumbers;
+
+			//
+			// Release withheld messages
+			//
 
 			while (received[nextExpected] == true)
 			{

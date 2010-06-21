@@ -75,7 +75,7 @@ namespace Lidgren.Network
 					case PendingConnectionStatus.Denied:
 						// send disconnected
 						NetOutgoingMessage bye = CreateLibraryMessage(NetMessageLibraryType.Disconnect, conn.m_pendingDenialReason);
-						EnqueueUnconnectedMessage(bye, conn.m_remoteEndpoint);
+						SendUnconnectedLibrary(bye, conn.m_remoteEndpoint);
 						m_pendingConnections.Remove(conn);
 						return;
 				}

@@ -239,35 +239,37 @@ namespace Lidgren.Network
 			if (m_status != NetPeerStatus.Running)
 				return false;
 
-			msg.m_type = (NetMessageType)((int)deliveryMethod + channel);
-
-			recipient.EnqueueOutgoingMessage(msg);
-
-			return true;
+			return recipient.SendMessage(msg, deliveryMethod, channel);
 		}
 
 		/// <summary>
-		/// Send a message to a number of existing connections
+		/// Send a message to a number of existing connections; returns true if all recipients were sent the message
 		/// </summary>
 		/// <param name="channel">Delivery channel (0-31)</param>
-		public bool SendMessage(NetOutgoingMessage msg, IEnumerable<NetConnection> recipients, NetDeliveryMethod deliveryMethod, int channel)
+		public bool SendMessage(NetOutgoingMessage msg, IEnumerable<NetConnection> recipients, NetDeliveryMethod deliveryMethod, int sequenceChannel)
 		{
 			if (msg.IsSent)
 				throw new NetException("Message has already been sent!");
-			if (channel < 0 || channel > NetConstants.NetChannelsPerDeliveryMethod)
+			if (sequenceChannel < 0 || sequenceChannel > NetConstants.NetChannelsPerDeliveryMethod)
 				throw new NetException("Channel must be between 0 and " + (NetConstants.NetChannelsPerDeliveryMethod - 1));
-			if (channel != 0 && (deliveryMethod == NetDeliveryMethod.Unreliable || deliveryMethod == NetDeliveryMethod.ReliableUnordered))
+			if (sequenceChannel != 0 && (deliveryMethod == NetDeliveryMethod.Unreliable || deliveryMethod == NetDeliveryMethod.ReliableUnordered))
 				throw new NetException("Channel must be 0 for Unreliable and ReliableUnordered");
 
 			if (m_status != NetPeerStatus.Running)
 				return false;
 
-			msg.m_type = (NetMessageType)((int)deliveryMethod + channel);
+			msg.m_wasSent = true;
 
+			NetMessageType tp = (NetMessageType)((int)deliveryMethod + sequenceChannel);
+
+			bool all = true;
 			foreach (NetConnection conn in recipients)
-				conn.EnqueueOutgoingMessage(msg);
+			{
+				if (!conn.EnqueueSendMessage(msg, tp))
+					all = false;
+			}
 
-			return true;
+			return all;
 		}
 
 		/// <summary>
@@ -282,7 +284,6 @@ namespace Lidgren.Network
 			if (adr == null)
 				throw new NetException("Failed to resolve " + host);
 
-			msg.m_type = NetMessageType.UserUnreliable; // sortof not applicable
 			EnqueueUnconnectedMessage(msg, new IPEndPoint(adr, port));
 		}
 
@@ -293,16 +294,6 @@ namespace Lidgren.Network
 		{
 			if (msg.IsSent)
 				throw new NetException("Message has already been sent!");
-			msg.m_type = NetMessageType.UserUnreliable; // sortof not applicable
-			EnqueueUnconnectedMessage(msg, recipient);
-		}
-
-		internal void SendUnconnectedLibraryMessage(NetOutgoingMessage msg, NetMessageLibraryType libType, IPEndPoint recipient)
-		{
-			if (msg.IsSent)
-				throw new NetException("Message has already been sent!");
-			msg.m_type = NetMessageType.Library;
-			msg.m_libType = libType;
 			EnqueueUnconnectedMessage(msg, recipient);
 		}
 
@@ -313,9 +304,8 @@ namespace Lidgren.Network
 		{
 			if (msg.IsSent)
 				throw new NetException("Message has already been sent!");
-			msg.m_type = NetMessageType.UserUnreliable; // sortof not applicable
-			foreach (IPEndPoint ipe in recipients)
-				EnqueueUnconnectedMessage(msg, ipe);
+			foreach (IPEndPoint rec in recipients)
+				EnqueueUnconnectedMessage(msg, rec);
 		}
 
 		/// <summary>
@@ -327,9 +317,9 @@ namespace Lidgren.Network
 				msg = CreateMessage(0);
 			if (msg.IsSent)
 				throw new NetException("Message has already been sent!");
-			msg.m_type = NetMessageType.Library;
+
 			msg.m_libType = NetMessageLibraryType.DiscoveryResponse;
-			EnqueueUnconnectedMessage(msg, recipient);
+			SendUnconnectedLibrary(msg, recipient);
 		}
 
 		/// <summary>

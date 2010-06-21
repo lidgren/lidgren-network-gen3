@@ -96,7 +96,6 @@ namespace Lidgren.Network
 		internal NetOutgoingMessage CreateLibraryMessage(NetMessageLibraryType tp, string content)
 		{
 			NetOutgoingMessage retval = CreateMessage(1 + (content == null ? 0 : content.Length));
-			retval.m_type = NetMessageType.Library;
 			retval.m_libType = tp;
 			retval.Write((content == null ? "" : content));
 			return retval;
@@ -139,22 +138,20 @@ namespace Lidgren.Network
 			{
 				foreach (NetConnection conn in m_connections)
 				{
-					if (conn.m_unsentMessages.Contains(msg))
-						throw new NetException("Ouch! Recycling unsent message!");
-
-					for(int i=0;i<conn.m_storedMessages.Length;i++)
+					for (int i = 0; i < conn.m_unsentMessages.Count; i++)
 					{
-						var dict = conn.m_storedMessages[i];
-						if (dict != null)
-						{
-							if (dict.ContainsValue(msg))
+						NetSending send = conn.m_unsentMessages.TryPeek(i);
+						if (send != null && send.Message == msg)
+							throw new NetException("Ouch! Recycling unsent message!");
+
+						foreach (NetSending asend in conn.m_unackedSends)
+							if (asend.Message == msg)
 								throw new NetException("Ouch! Recycling stored message!");
-						}
 					}
 				}
 			}
 #endif
-			NetException.Assert(msg.m_inQueueCount == 0, "Recycling message still in some queue!");
+			NetException.Assert(msg.m_numUnfinishedSendings == 0, "Recycling m_numUnfinishedSendings is " + msg.m_numUnfinishedSendings + " (expected 0)");
 
 			if (msg.m_data != null)
 			{

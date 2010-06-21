@@ -63,12 +63,12 @@ namespace Lidgren.Network
 		public void Enqueue(T item)
 		{
 #if DEBUG
-			if (typeof(T) == typeof(NetOutgoingMessage))
+			if (typeof(T) == typeof(NetSending))
 			{
-				NetOutgoingMessage om = item as NetOutgoingMessage;
+				NetSending om = item as NetSending;
 				if (om != null)
-					if (om.m_type == NetMessageType.Error)
-						throw new NetException("Enqueuing error message!");
+					if (om.MessageType == NetMessageType.Error)
+						throw new NetException("Enqueuing NetSending with MessageType.Error!");
 			}
 #endif
 			lock (m_lock)
@@ -150,6 +150,19 @@ namespace Lidgren.Network
 				m_size--;
 
 				return retval;
+			}
+		}
+
+		public T TryPeek(int offset)
+		{
+			if (m_size == 0)
+				return default(T);
+
+			lock (m_lock)
+			{
+				if (m_size == 0)
+					return default(T);
+				return m_items[(m_head + offset) % m_items.Length];
 			}
 		}
 

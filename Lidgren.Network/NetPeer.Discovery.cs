@@ -11,7 +11,8 @@ namespace Lidgren.Network
 		public void DiscoverLocalPeers(int serverPort)
 		{
 			NetOutgoingMessage om = CreateMessage(0);
-			SendUnconnectedLibraryMessage(om, NetMessageLibraryType.Discovery, new IPEndPoint(IPAddress.Broadcast, serverPort));
+			om.m_libType = NetMessageLibraryType.Discovery;
+			SendUnconnectedLibrary(om, new IPEndPoint(IPAddress.Broadcast, serverPort));
 		}
 
 		/// <summary>
@@ -31,7 +32,8 @@ namespace Lidgren.Network
 		public bool DiscoverKnownPeer(IPEndPoint endpoint)
 		{
 			NetOutgoingMessage om = CreateMessage(0);
-			SendUnconnectedLibraryMessage(om, NetMessageLibraryType.Discovery, endpoint);
+			om.m_libType = NetMessageLibraryType.Discovery;
+			SendUnconnectedLibrary(om, endpoint);
 			return true;
 		}
 	}

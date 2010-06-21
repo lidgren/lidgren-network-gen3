@@ -28,40 +28,32 @@ namespace Lidgren.Network
 	public sealed partial class NetOutgoingMessage
 	{
 		// reference count before message can be recycled
-		internal int m_inQueueCount;
+		internal int m_numUnfinishedSendings;
 
-		internal NetMessageType m_type;
-		internal NetMessageLibraryType m_libType;
+		internal bool m_wasSent; // true is SendMessage() public method has been called
+		internal NetMessageLibraryType m_libType = NetMessageLibraryType.Error;
 
-		internal IPEndPoint m_unconnectedRecipient;
-
-		internal double m_lastSentTime; // when was this message sent last?
-		internal double m_nextResendTime; // when to resend this message the next time
-		internal int m_numSends; // the number of times this message has been sent/resent
-
-		internal int m_fragmentGroupId;
-		internal int m_fragmentNumber;
-		internal int m_fragmentTotalCount;
+		//internal int m_fragmentGroupId;
+		//internal int m_fragmentNumber;
+		//internal int m_fragmentTotalCount;
 
 		/// <summary>
 		/// Returns true if this message has been passed to SendMessage() already
 		/// </summary>
-		public bool IsSent { get { return m_numSends > 0; } }
+		public bool IsSent { get { return m_wasSent; } }
 
 		internal NetOutgoingMessage()
 		{
-			Reset();
 		}
 
 		internal void Reset()
 		{
-			NetException.Assert(m_inQueueCount == 0, "Ouch! Resetting NetOutgoingMessage still in some queue!");
+			NetException.Assert(m_numUnfinishedSendings == 0, "Ouch! Resetting NetOutgoingMessage still in some queue!");
+			NetException.Assert(m_wasSent == true, "Ouch! Resetting unsent message!");
 
 			m_bitLength = 0;
-			m_type = NetMessageType.Error;
-			m_inQueueCount = 0;
-			m_numSends = 0;
-			m_fragmentGroupId = -1;
+			m_libType = NetMessageLibraryType.Error;
+			m_wasSent = false;
 		}
 
 		internal static int EncodeAcksMessage(byte[] buffer, int ptr, NetConnection conn, int maxBytesPayload)
@@ -98,27 +90,18 @@ namespace Lidgren.Network
 			return ptr;
 		}
 
-		// encode and store for resending (if conn != null and message is reliable)
-		internal int Encode(double now, byte[] buffer, int ptr, NetConnection conn)
+		internal int EncodeUnfragmented(byte[] buffer, int ptr, NetMessageType tp, ushort sequenceNumber)
 		{
 			// message type
-			buffer[ptr++] = (byte)((int)m_type | (m_fragmentGroupId == -1 ? 0 : 128));
+			buffer[ptr++] = (byte)tp; //  | (m_fragmentGroupId == -1 ? 0 : 128));
 
-			if (m_type == NetMessageType.Library)
-				buffer[ptr++] =(byte)m_libType;
+			if (tp == NetMessageType.Library)
+				buffer[ptr++] = (byte)m_libType;
 
 			// channel sequence number
-			if (m_type >= NetMessageType.UserSequenced)
+			if (tp >= NetMessageType.UserSequenced)
 			{
-				if (conn == null)
-					throw new NetException("Trying to encode NetMessageType " + m_type + " to unconnected endpoint!");
-				
-				ushort seqNr;
-				if (m_type < NetMessageType.UserReliableUnordered)
-					seqNr = conn.GetSendSequenceNumber(m_type); // "disposable" sequence number
-				else
-					seqNr = conn.StoreReliableMessage(now, this);
-
+				ushort seqNr = (ushort)sequenceNumber;
 				buffer[ptr++] = (byte)seqNr;
 				buffer[ptr++] = (byte)(seqNr >> 8);
 			}
@@ -140,17 +123,6 @@ namespace Lidgren.Network
 				throw new NetException("Packet content too large; 4095 bytes maximum");
 			}
 
-			// fragmentation info
-			if (m_fragmentGroupId != -1)
-			{
-				buffer[ptr++] = (byte)m_fragmentGroupId;
-				buffer[ptr++] = (byte)(m_fragmentGroupId >> 8);
-				buffer[ptr++] = (byte)m_fragmentTotalCount;
-				buffer[ptr++] = (byte)(m_fragmentTotalCount >> 8);
-				buffer[ptr++] = (byte)m_fragmentNumber;
-				buffer[ptr++] = (byte)(m_fragmentNumber >> 8);
-			}
-
 			// payload
 			if (payloadBitsLength > 0)
 			{
@@ -161,7 +133,62 @@ namespace Lidgren.Network
 				ptr += payloadBytesLength;
 			}
 
-			m_numSends++;
+			return ptr;
+		}
+
+		internal int EncodeFragmented(byte[] buffer, int ptr, NetSending send, int mtu)
+		{
+			NetException.Assert(send.MessageType != NetMessageType.Library, "Library messages cant be fragmented");
+
+			// message type
+			buffer[ptr++] = (byte)((int)send.MessageType | 128);
+
+			// channel sequence number
+			if (send.MessageType >= NetMessageType.UserSequenced)
+			{
+				ushort seqNr = (ushort)send.SequenceNumber;
+				buffer[ptr++] = (byte)seqNr;
+				buffer[ptr++] = (byte)(seqNr >> 8);
+			}
+
+			// calculate fragment payload length
+			mtu -= NetConstants.FragmentHeaderSize; // size of fragmentation info
+			int thisFragmentLength = (send.FragmentNumber == send.FragmentTotalCount - 1 ? (send.Message.LengthBytes - (mtu * (send.FragmentTotalCount - 1))) : mtu);
+
+			int payloadBitsLength = thisFragmentLength * 8;
+			if (payloadBitsLength < 127)
+			{
+				buffer[ptr++] = (byte)payloadBitsLength;
+			}
+			else if (payloadBitsLength < 32768)
+			{
+				buffer[ptr++] = (byte)((payloadBitsLength & 127) | 128);
+				buffer[ptr++] = (byte)(payloadBitsLength >> 7);
+			}
+			else
+			{
+				throw new NetException("Packet content too large; 4095 bytes maximum");
+			}
+
+			// fragmentation info
+			buffer[ptr++] = (byte)send.FragmentGroupId;
+			buffer[ptr++] = (byte)(send.FragmentGroupId >> 8);
+			buffer[ptr++] = (byte)send.FragmentTotalCount;
+			buffer[ptr++] = (byte)(send.FragmentTotalCount >> 8);
+			buffer[ptr++] = (byte)send.FragmentNumber;
+			buffer[ptr++] = (byte)(send.FragmentNumber >> 8);
+
+			// payload
+			if (payloadBitsLength > 0)
+			{
+				// zero out last byte
+				buffer[ptr + thisFragmentLength] = 0;
+
+				int offset = (mtu * send.FragmentNumber);
+
+				Buffer.BlockCopy(m_data, offset, buffer, ptr, thisFragmentLength);
+				ptr += thisFragmentLength;
+			}
 
 			return ptr;
 		}
@@ -184,18 +211,7 @@ namespace Lidgren.Network
 
 		public override string ToString()
 		{
-			StringBuilder bdr = new StringBuilder();
-			bdr.Append("[NetOutgoingMessage ");
-			bdr.Append(m_type.ToString());
-			if (m_type == NetMessageType.Library)
-			{
-				bdr.Append('|');
-				bdr.Append(m_libType.ToString());
-			}
-			bdr.Append(" sent ");
-			bdr.Append(m_numSends);
-			bdr.Append(" times]");
-			return bdr.ToString();
+			return "[NetOutgoingMessage " + LengthBytes + " bytes]";
 		}
 	}
 }

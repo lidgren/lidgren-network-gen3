@@ -84,7 +84,6 @@ namespace Lidgren.Network
 
 			int len = 2 + m_peerConfiguration.AppIdentifier.Length + 8 + 4 + (m_approvalMessage == null ? 0 : m_approvalMessage.LengthBytes);
 			NetOutgoingMessage om = m_owner.CreateMessage(len);
-			om.m_type = NetMessageType.Library;
 			om.m_libType = NetMessageLibraryType.Connect;
 			om.Write(m_peerConfiguration.AppIdentifier);
 			om.Write(m_owner.m_uniqueIdentifier);
@@ -100,10 +99,9 @@ namespace Lidgren.Network
 			}
 			m_owner.LogVerbose("Sending Connect");
 
-			double now = NetTime.Now;
-			m_owner.SendImmediately(now, this, om);
+			m_owner.SendLibraryImmediately(om, m_remoteEndpoint);
 
-			m_connectInitationTime = now;
+			m_connectInitationTime = NetTime.Now;
 			SetStatus(NetConnectionStatus.Connecting, "Connecting");
 
 			return;
@@ -114,12 +112,11 @@ namespace Lidgren.Network
 			double now = NetTime.Now;
 
 			NetOutgoingMessage reply = m_owner.CreateMessage(4);
-			reply.m_type = NetMessageType.Library;
 			reply.m_libType = NetMessageLibraryType.ConnectResponse;
 			reply.Write((float)now);
 
 			m_owner.LogVerbose("Sending LibraryConnectResponse");
-			m_owner.SendImmediately(now, this, reply);
+			m_owner.SendLibraryImmediately(reply, m_remoteEndpoint);
 		}
 
 		internal void SendConnectionEstablished()
@@ -127,12 +124,11 @@ namespace Lidgren.Network
 			double now = NetTime.Now;
 
 			NetOutgoingMessage ce = m_owner.CreateMessage(4);
-			ce.m_type = NetMessageType.Library;
 			ce.m_libType = NetMessageLibraryType.ConnectionEstablished;
 			ce.Write((float)now);
 
 			m_owner.LogVerbose("Sending LibraryConnectionEstablished");
-			m_owner.SendImmediately(now, this, ce);
+			m_owner.SendLibraryImmediately(ce, m_remoteEndpoint);
 		}
 
 		internal void ExecuteDisconnect(bool sendByeMessage)
@@ -145,7 +141,7 @@ namespace Lidgren.Network
 			if (sendByeMessage)
 			{
 				NetOutgoingMessage om = m_owner.CreateLibraryMessage(NetMessageLibraryType.Disconnect, m_disconnectByeMessage);
-				EnqueueOutgoingMessage(om);
+				SendLibrary(om);
 			}
 
 			m_owner.LogVerbose("Executing Disconnect(" + m_disconnectByeMessage + ")");
@@ -163,12 +159,7 @@ namespace Lidgren.Network
 			m_owner.LogVerbose("Finishing Disconnect(" + m_disconnectByeMessage + ")");
 
 			// release some held memory
-			if (m_storedMessages != null)
-			{
-				foreach (var dict in m_storedMessages)
-					if (dict != null)
-						dict.Clear();
-			}
+			m_unackedSends.Clear();
 			m_acknowledgesToSend.Clear();
 
 			SetStatus(NetConnectionStatus.Disconnected, m_disconnectByeMessage);

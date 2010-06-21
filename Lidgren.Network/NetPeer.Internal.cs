@@ -34,8 +34,8 @@ namespace Lidgren.Network
 		private int m_listenPort;
 		private AutoResetEvent m_messageReceivedEvent = new AutoResetEvent(false);
 
-		private readonly NetQueue<NetIncomingMessage> m_releasedIncomingMessages = new NetQueue<NetIncomingMessage>(16);
-		private readonly NetQueue<NetOutgoingMessage> m_unsentUnconnectedMessage = new NetQueue<NetOutgoingMessage>(4);
+		private readonly NetQueue<NetIncomingMessage> m_releasedIncomingMessages = new NetQueue<NetIncomingMessage>(8);
+		private readonly NetQueue<NetSending> m_unsentUnconnectedMessage = new NetQueue<NetSending>(2);
 
 		/// <summary>
 		/// Signalling event which can be waited on to determine when a message is queued for reading.
@@ -115,9 +115,19 @@ namespace Lidgren.Network
 
 					m_listenPort = boundEp.Port;
 
-					long first = (pa == null ? (long)this.GetHashCode() : (long)pa.GetHashCode());
-					long second = (long)((long)boundEp.GetHashCode() << 32);
-					m_uniqueIdentifier = first ^ second;
+					int first = (pa == null ? this.GetHashCode() : pa.GetHashCode());
+					int second = boundEp.GetHashCode();
+					
+					byte[] raw = new byte[8];
+					raw[0] = (byte)first;
+					raw[1] = (byte)(first << 8);
+					raw[2] = (byte)(first << 16);
+					raw[3] = (byte)(first << 24);
+					raw[4] = (byte)second;
+					raw[5] = (byte)(second << 8);
+					raw[6] = (byte)(second << 16);
+					raw[7] = (byte)(second << 24);
+					m_uniqueIdentifier = BitConverter.ToInt64(NetSha.Hash(raw), 0);
 
 					m_receiveBuffer = new byte[m_configuration.ReceiveBufferSize];
 					m_sendBuffer = new byte[m_configuration.SendBufferSize];
@@ -222,25 +232,23 @@ namespace Lidgren.Network
 			}
 
 			// send unconnected sends
-			NetOutgoingMessage um;
-			while ((um = m_unsentUnconnectedMessage.TryDequeue()) != null)
+			NetSending uncSend;
+			while ((uncSend = m_unsentUnconnectedMessage.TryDequeue()) != null)
 			{
-				IPEndPoint recipient = um.m_unconnectedRecipient;
-
 				//
 				// TODO: use throttling here
 				//
 
-				int ptr = um.Encode(now, m_sendBuffer, 0, null);
+				int ptr = uncSend.Message.EncodeUnfragmented(m_sendBuffer, 0, uncSend.MessageType, uncSend.SequenceNumber);
 				bool connectionReset = false;
 
-				if (recipient.Address.Equals(IPAddress.Broadcast))
+				if (uncSend.Recipient.Address.Equals(IPAddress.Broadcast))
 				{
 					// send using broadcast
 					try
 					{
 						m_socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Broadcast, true);
-						SendPacket(ptr, recipient, 1, out connectionReset);
+						SendPacket(ptr, uncSend.Recipient, 1, out connectionReset);
 					}
 					finally
 					{
@@ -250,11 +258,16 @@ namespace Lidgren.Network
 				else
 				{
 					// send normally
-					SendPacket(ptr, recipient, 1, out connectionReset);
+					SendPacket(ptr, uncSend.Recipient, 1, out connectionReset);
 				}
 
 				if (connectionReset)
 					LogWarning(NetConstants.ConnResetMessage);
+
+				int unfin = uncSend.Message.m_numUnfinishedSendings;
+				uncSend.Message.m_numUnfinishedSendings = unfin - 1;
+				if (unfin <= 1)
+					Recycle(uncSend.Message);
 			}
 
 			// check if we need to reduce the recycled pool
@@ -487,7 +500,7 @@ namespace Lidgren.Network
 						LogWarning("Connect received with wrong appidentifier (need '" + m_configuration.AppIdentifier + "' found '" + appIdent + "') from " + senderEndpoint);
 
 						NetOutgoingMessage bye = CreateLibraryMessage(NetMessageLibraryType.Disconnect, "Wrong app identifier!");
-						SendUnconnectedLibraryMessage(bye, NetMessageLibraryType.Disconnect, senderEndpoint);
+						SendUnconnectedLibrary(bye, senderEndpoint);
 
 						break;
 					}
@@ -557,17 +570,30 @@ namespace Lidgren.Network
 
 		private void HandleServerFull(IPEndPoint connecter)
 		{
-			const string rejectMessage = "Server is full!";
+			const string rejectMessage = "Server is full!"; // TODO: put in configuration
 			NetOutgoingMessage reply = CreateLibraryMessage(NetMessageLibraryType.Disconnect, rejectMessage);
-			EnqueueUnconnectedMessage(reply, connecter);
+			SendLibraryImmediately(reply, connecter);
 		}
 
 		// called by user and network thread
 		private void EnqueueUnconnectedMessage(NetOutgoingMessage msg, IPEndPoint recipient)
 		{
-			msg.m_unconnectedRecipient = recipient;
-			Interlocked.Increment(ref msg.m_inQueueCount);
-			m_unsentUnconnectedMessage.Enqueue(msg);
+			NetSending send = new NetSending(msg, NetMessageType.UserUnreliable, 0);
+			send.Recipient = recipient;
+
+			msg.m_numUnfinishedSendings++;
+			m_unsentUnconnectedMessage.Enqueue(send);
+		}
+
+		// called by user and network thread
+		private void SendUnconnectedLibrary(NetOutgoingMessage msg, IPEndPoint recipient)
+		{
+			msg.m_wasSent = true;
+			NetSending send = new NetSending(msg, NetMessageType.Library, 0);
+			send.Recipient = recipient;
+
+			msg.m_numUnfinishedSendings++;
+			m_unsentUnconnectedMessage.Enqueue(send);
 		}
 
 		internal static NetDeliveryMethod GetDeliveryMethod(NetMessageType mtp)
@@ -583,21 +609,18 @@ namespace Lidgren.Network
 			return NetDeliveryMethod.Unreliable;
 		}
 
-		internal void SendImmediately(double now, NetConnection conn, NetOutgoingMessage msg)
+		internal void SendLibraryImmediately(NetOutgoingMessage msg, IPEndPoint destination)
 		{
-			NetException.Assert(msg.m_type == NetMessageType.Library, "SendImmediately can only send library (non-reliable) messages");
-
-			msg.m_inQueueCount = 1;
-			int len = msg.Encode(now, m_sendBuffer, 0, conn);
-			Interlocked.Decrement(ref msg.m_inQueueCount);
+			msg.m_wasSent = true;
+			int len = msg.EncodeUnfragmented(m_sendBuffer, 0, NetMessageType.Library, 0);
 
 			bool connectionReset;
-			SendPacket(len, conn.m_remoteEndpoint, 1, out connectionReset);
+			SendPacket(len, destination, 1, out connectionReset);
+
+			// TODO: handle connectionReset
 
 			Recycle(msg);
-
-			if (connectionReset)
-				LogWarning("Connection was reset; remote host is not listening");
 		}
+
 	}
 }
