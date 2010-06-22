@@ -11,7 +11,9 @@ namespace BarebonesClient
 		static void Main(string[] args)
 		{
 			NetPeerConfiguration config = new NetPeerConfiguration("barebones");
+#if DEBUG
 			config.SimulatedLoss = 0.1f;
+#endif
 			config.EnableMessageType(NetIncomingMessageType.VerboseDebugMessage);
 			NetClient client = new NetClient(config);
 			client.Start();

@@ -12,7 +12,9 @@ namespace BarebonesServer
 		{
 			NetPeerConfiguration config = new NetPeerConfiguration("barebones");
 			config.Port = 14242;
+#if DEBUG
 			config.SimulatedLoss = 0.1f;
+#endif
 			config.EnableMessageType(NetIncomingMessageType.VerboseDebugMessage);
 			NetServer server = new NetServer(config);
 			server.Start();

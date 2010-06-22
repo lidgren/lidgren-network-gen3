@@ -139,6 +139,7 @@ namespace Lidgren.Network
 		//
 		internal void SendPacket(int numBytes, IPEndPoint target, int numMessages, out bool connectionReset)
 		{
+			connectionReset = false;
 			try
 			{
 				int bytesSent = m_socket.SendTo(m_sendBuffer, 0, numBytes, SocketFlags.None, target);
