@@ -44,6 +44,9 @@ namespace ChatClient
 
 		public static void Input(string input)
 		{
+			if (string.IsNullOrEmpty(input))
+				return;
+
 			if (input.ToLowerInvariant().StartsWith("connect "))
 			{
 				string host = input.Substring(8).Trim();

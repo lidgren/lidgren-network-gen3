@@ -38,5 +38,12 @@ namespace ChatClient
 			else
 				Program.SettingsWindow.Show();
 		}
+
+		private void button1_Click(object sender, EventArgs e)
+		{
+			string txt = textBox1.Text.Trim();
+			Program.Input(txt);
+			textBox1.Text = "";
+		}
 	}
 }

@@ -111,10 +111,6 @@ namespace Lidgren.Network
 			if (m_status == NetConnectionStatus.Disconnected || m_status == NetConnectionStatus.None)
 				return;
 
-			// in case of inactivity; send forced keepalive/ping
-			if (now > m_lastSendRespondedTo + m_peerConfiguration.m_keepAliveDelay)
-				m_nextPing = now;
-
 			// force ack sending?
 			if (now > m_nextForceAckTime)
 			{
@@ -141,7 +137,12 @@ namespace Lidgren.Network
 				now = NetTime.Now; // need exact number
 				m_lastSentPingNumber++;
 				m_lastPingSendTime = now;
-				m_nextPing = now + m_owner.Configuration.m_pingFrequency;
+
+				// in case of not heard for a while
+				if (now > m_lastSendRespondedTo + (m_owner.Configuration.m_pingFrequency * 1.5f))
+					m_nextPing = now + (m_owner.Configuration.m_pingFrequency * 0.5f); // double ping rate
+				else
+					m_nextPing = now + m_owner.Configuration.m_pingFrequency;
 
 				NetOutgoingMessage ping = m_owner.CreateMessage(1);
 				ping.m_libType = NetMessageLibraryType.Ping;

@@ -48,7 +48,6 @@ namespace Lidgren.Network
 		internal float m_handshakeAttemptDelay;
 		internal int m_handshakeMaxAttempts;
 		internal float m_connectionTimeout;
-		internal float m_keepAliveDelay;
 		internal float m_pingFrequency;
 
 		// reliability
@@ -73,7 +72,6 @@ namespace Lidgren.Network
 			m_port = 0;
 			m_receiveBufferSize = 131071;
 			m_sendBufferSize = 131071;
-			m_keepAliveDelay = 4.0f;
 			m_connectionTimeout = 25;
 			m_maximumConnections = 16;
 			m_defaultOutgoingMessageCapacity = 8;
@@ -317,20 +315,6 @@ namespace Lidgren.Network
 				if (m_isLocked)
 					throw new NetException(c_isLockedMessage);
 				m_sendBufferSize = value;
-			}
-		}
-
-		/// <summary>
-		/// Gets or sets the number of seconds of inactivity before sending an extra ping packet as keepalive. This should be shorter than ping interval.
-		/// </summary>
-		public float KeepAliveDelay
-		{
-			get { return m_keepAliveDelay; }
-			set
-			{
-				if (value < m_pingFrequency)
-					throw new NetException("Setting KeepAliveDelay to lower than ping frequency doesn't make sense!");
-				m_keepAliveDelay = value;
 			}
 		}
 
