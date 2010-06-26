@@ -264,7 +264,7 @@ namespace Lidgren.Network
 					if (send.MessageType >= NetMessageType.UserReliableUnordered)
 					{
 						// store for reliability
-						if (send.NumSends == 0)
+						if (send.NumSends == 1)
 							m_unackedSends.Add(send);
 					}
 					else

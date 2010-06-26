@@ -62,8 +62,6 @@ namespace Lidgren.Network
 		{
 			int num = ((int)NetMessageType.UserReliableOrdered + NetConstants.NetChannelsPerDeliveryMethod) - (int)NetMessageType.UserSequenced;
 			m_nextSendSequenceNumber = new int[num];
-			for(int i=0;i<m_nextSendSequenceNumber.Length;i++)
-				m_nextSendSequenceNumber[i] = -1; // initialize to -1; pre-increment will start sending at 0
 			m_lastReceivedSequenced = new ushort[num];
 			m_nextForceAckTime = double.MaxValue;
 		}
@@ -71,7 +69,15 @@ namespace Lidgren.Network
 		internal ushort GetSendSequenceNumber(NetMessageType mtp)
 		{
 			int slot = (int)mtp - (int)NetMessageType.UserSequenced;
-			return (ushort)Interlocked.Increment(ref m_nextSendSequenceNumber[slot]);
+			int retval;
+			lock (m_nextSendSequenceNumber)
+			{
+				retval = m_nextSendSequenceNumber[slot];
+				if (retval == ushort.MaxValue)
+					retval = -1;
+				m_nextSendSequenceNumber[slot] = retval + 1;
+			}
+			return (ushort)retval;
 		}
 
 		internal static int Relate(int seqNr, int lastReceived)
@@ -181,7 +187,7 @@ namespace Lidgren.Network
 						m_lastSendRespondedTo = NetTime.Now; // TODO: calculate from send.NextResend and send.NumSends
 						int unfin = send.Message.m_numUnfinishedSendings;
 						send.Message.m_numUnfinishedSendings = unfin - 1;
-						if (unfin <= 1)
+						if (unfin <= 0)
 							m_owner.Recycle(send.Message); // every sent has been acked; free the message
 
 						m_unackedSends.Remove(send);
