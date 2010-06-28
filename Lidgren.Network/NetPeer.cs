@@ -277,14 +277,11 @@ namespace Lidgren.Network
 		/// </summary>
 		public void SendUnconnectedMessage(NetOutgoingMessage msg, string host, int port)
 		{
-			if (msg.IsSent)
-				throw new NetException("Message has already been sent!");
-
 			IPAddress adr = NetUtility.Resolve(host);
 			if (adr == null)
 				throw new NetException("Failed to resolve " + host);
 
-			EnqueueUnconnectedMessage(msg, new IPEndPoint(adr, port));
+			SendUnconnectedMessage(msg, new IPEndPoint(adr, port));
 		}
 
 		/// <summary>
@@ -294,6 +291,8 @@ namespace Lidgren.Network
 		{
 			if (msg.IsSent)
 				throw new NetException("Message has already been sent!");
+			msg.m_wasSent = true;
+
 			EnqueueUnconnectedMessage(msg, recipient);
 		}
 
@@ -304,6 +303,8 @@ namespace Lidgren.Network
 		{
 			if (msg.IsSent)
 				throw new NetException("Message has already been sent!");
+			msg.m_wasSent = true;
+
 			foreach (IPEndPoint rec in recipients)
 				EnqueueUnconnectedMessage(msg, rec);
 		}
