@@ -78,7 +78,7 @@ namespace Lidgren.Network
 				//LogError("Cannot send message, no server connection!");
 				return;
 			}
-			serverConnection.SendMessage(msg, method);
+			serverConnection.SendMessage(msg, method, 0);
 		}
 
 		/// <summary>
