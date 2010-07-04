@@ -60,22 +60,13 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Returns a random seed based on time and working set
 		/// </summary>
-		public static int GetRandomSeed()
+		public static int GetRandomSeed(object forObject)
 		{
+			// mix some semi-random properties
 			int seed = (int)Environment.TickCount;
-
-			try
-			{
-				// tickcount + gettimestamp + workingset should be random enough
-				if (!string.IsNullOrEmpty(Environment.CommandLine))
-					seed ^= Environment.CommandLine.GetHashCode();
-				seed ^= (int)(Stopwatch.GetTimestamp());
-				seed ^= (int)(Environment.WorkingSet); // will return 0 on mono
-			}
-			catch
-			{
-				// maybe commandline etc is not available, TickCount will have to do
-			}
+			seed ^= forObject.GetHashCode();
+			seed ^= (int)(Stopwatch.GetTimestamp());
+			seed ^= (int)(Environment.WorkingSet); // will return 0 on mono
 
 			int extraSeed = Interlocked.Increment(ref m_extraSeed);
 
@@ -88,7 +79,7 @@ namespace Lidgren.Network
 		public NetRandom()
 		{
 			// Initialise using the system tick count
-			Reinitialise(GetRandomSeed());
+			Reinitialise(GetRandomSeed(this));
 		}
 
 		/// <summary>
