@@ -105,6 +105,17 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
+		/// Returns the connection to a remote endpoint; if it exists
+		/// </summary>
+		public NetConnection GetConnection(IPEndPoint remoteEndPoint)
+		{
+			NetConnection retval;
+			if (m_connectionLookup.TryGetValue(remoteEndPoint, out retval))
+				return retval;
+			return null;
+		}
+
+		/// <summary>
 		/// Binds to socket
 		/// </summary>
 		public void Start()
