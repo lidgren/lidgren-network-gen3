@@ -185,30 +185,49 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
-		/// Create a connection to a remote endpoint
+		/// Tries to create a connection to a remote endpoint; returns true on success
+		/// Note that the connection attempt may still fail; the returning value only indicates that the connection procedure initiated successfully
 		/// </summary>
-		public virtual NetConnection Connect(IPEndPoint remoteEndpoint, NetOutgoingMessage approvalMessage)
+		public bool TryConnect(IPEndPoint remoteEndpoint, NetOutgoingMessage approvalMessage, out NetConnection connection)
 		{
-			if (m_status == NetPeerStatus.NotRunning)
-				throw new NetException("Must call Start() first");
-
-			if (m_connectionLookup.ContainsKey(remoteEndpoint))
-				throw new NetException("Already connected to that endpoint!");
-
-			NetConnection conn = new NetConnection(this, remoteEndpoint);
-			conn.m_approvalMessage = approvalMessage;
-
-			// handle on network thread
-			conn.m_connectRequested = true;
-			conn.m_connectionInitiator = true;
-
 			lock (m_connections)
 			{
+				if (m_status == NetPeerStatus.NotRunning || m_connectionLookup.ContainsKey(remoteEndpoint))
+				{
+					connection = null;
+					return false;
+				}
+
+				connection = Connect(remoteEndpoint, approvalMessage);
+				return true;
+			}
+		}
+
+		/// <summary>
+		/// Create a connection to a remote endpoint
+		/// </summary>
+		public NetConnection Connect(IPEndPoint remoteEndpoint, NetOutgoingMessage approvalMessage)
+		{
+			lock (m_connections)
+			{
+				if (m_status == NetPeerStatus.NotRunning)
+					throw new NetException("Must call Start() first");
+
+				if (m_connectionLookup.ContainsKey(remoteEndpoint))
+					throw new NetException("Already connected to that endpoint!");
+
+				NetConnection conn = new NetConnection(this, remoteEndpoint);
+				conn.m_approvalMessage = approvalMessage;
+
+				// handle on network thread
+				conn.m_connectRequested = true;
+				conn.m_connectionInitiator = true;
+
 				m_connections.Add(conn);
 				m_connectionLookup[remoteEndpoint] = conn;
-			}
 
-			return conn;
+				return conn;
+			}
 		}
 
 		/// <summary>
