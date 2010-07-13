@@ -12,8 +12,6 @@ namespace ManyServer
 		public static Form1 MainForm;
 		public static NetServer Server;
 
-		private static double m_lastUpdatedTitle;
-
 		[STAThread]
 		static void Main()
 		{

@@ -537,7 +537,10 @@ namespace Lidgren.Network
 			int offset = nr * info.FragmentSize;
 
 			if (im.m_data.Length < offset + payloadLength)
-				Array.Resize<byte>(ref im.m_data, offset + payloadLength);
+			{
+				byte[] arr = im.m_data;
+				Array.Resize<byte>(ref arr, offset + payloadLength);
+			}
 
 			Buffer.BlockCopy(m_owner.m_receiveBuffer, ptr, im.m_data, offset, payloadLength);
 

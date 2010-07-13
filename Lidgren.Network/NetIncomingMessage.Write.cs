@@ -88,7 +88,12 @@ namespace Lidgren.Network
 			m_bitLength += bits;
 		}
 
-		internal void Write(byte[] source, int offsetInBytes, int numberOfBytes)
+		public override void Write(byte[] source, int offsetInBytes, int numberOfBytes)
+		{
+			throw new NetException("NetIncomingMessage does not support writing!");
+		}
+
+		internal void WriteBytes(byte[] source, int offsetInBytes, int numberOfBytes)
 		{
 			if (source == null)
 				throw new ArgumentNullException("source");

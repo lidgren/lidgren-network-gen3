@@ -56,11 +56,13 @@
     <Compile Include="NetIncomingMessage.Peek.cs" />
     <Compile Include="NetIncomingMessage.Read.cs" />
     <Compile Include="NetIncomingMessage.Read.Reflection.cs" />
+    <Compile Include="NetIncomingMessage.Stream.cs" />
     <Compile Include="NetIncomingMessage.Write.cs" />
     <Compile Include="NetIncomingMessageType.cs" />
     <Compile Include="NetMessageType.cs" />
     <Compile Include="NetNatIntroduction.cs" />
     <Compile Include="NetOutgoingMessage.cs" />
+    <Compile Include="NetOutgoingMessage.Stream.cs" />
     <Compile Include="NetOutgoingMessage.Write.cs" />
     <Compile Include="NetOutgoingMessage.Write.Reflection.cs" />
     <Compile Include="NetPeer.ConnectionApproval.cs" />

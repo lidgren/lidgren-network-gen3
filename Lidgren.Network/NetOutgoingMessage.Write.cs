@@ -160,7 +160,7 @@ namespace Lidgren.Network
 			m_bitLength += bits;
 		}
 
-		public void Write(byte[] source, int offsetInBytes, int numberOfBytes)
+		public override void Write(byte[] source, int offsetInBytes, int numberOfBytes)
 		{
 			if (source == null)
 				throw new ArgumentNullException("source");

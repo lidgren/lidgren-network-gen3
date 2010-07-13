@@ -35,10 +35,10 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Gets or sets the read position in the buffer, in bits (not bytes)
 		/// </summary>
-		public int Position
+		public override long Position // override of Stream property
 		{
-			get { return m_readPosition; }
-			set { m_readPosition = value; }
+			get { return (long)m_readPosition; }
+			set { m_readPosition = (int)value; }
 		}
 
 		static NetIncomingMessage()
