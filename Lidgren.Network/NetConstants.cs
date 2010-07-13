@@ -22,9 +22,9 @@ namespace Lidgren.Network
 {
 	internal static class NetConstants
 	{
-		internal const int NetChannelsPerDeliveryMethod = 32;
+		public const int NetChannelsPerDeliveryMethod = 32;
 
-		internal const int NumSequenceNumbers = ushort.MaxValue + 1; // 0 is a valid sequence number
+		public const int NumSequenceNumbers = ushort.MaxValue + 1; // 0 is a valid sequence number
 
 		/// <summary>
 		/// Number of channels which needs a sequence number to work
