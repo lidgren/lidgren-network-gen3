@@ -64,7 +64,7 @@ namespace ChatClient
 
 			NetOutgoingMessage om = Client.CreateMessage();
 			om.WriteAllFields(cm);
-			Client.SendMessage(om, NetDeliveryMethod.ReliableOrdered);
+			Client.SendMessage(om, NetDeliveryMethod.ReliableOrdered, 8);
 		}
 
 		static void AppLoop(object sender, EventArgs e)
