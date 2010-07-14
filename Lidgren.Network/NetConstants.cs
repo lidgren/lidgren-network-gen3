@@ -20,7 +20,7 @@ using System;
 
 namespace Lidgren.Network
 {
-	internal static class NetConstants
+	public static class NetConstants
 	{
 		public const int NetChannelsPerDeliveryMethod = 32;
 
