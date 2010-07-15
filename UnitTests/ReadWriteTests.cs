@@ -76,14 +76,14 @@ namespace UnitTests
 			test.Name = "Hallon";
 			test.Age = 8.2f;
 
-			tmp.WriteAllFields(test);
+			tmp.WriteAllFields(test, BindingFlags.Public | BindingFlags.Instance);
 
 			data = tmp.PeekDataBuffer();
 
 			inc = Program.CreateIncomingMessage(data, tmp.LengthBits);
 
 			Test readTest = new Test();
-			inc.ReadAllFields(readTest);
+			inc.ReadAllFields(readTest, BindingFlags.Public | BindingFlags.Instance);
 
 			NetException.Assert(readTest.Number == 42);
 			NetException.Assert(readTest.Name == "Hallon");
@@ -110,9 +110,13 @@ namespace UnitTests
 		}
 	}
 
-	public class Test
+	public class TestBase
 	{
 		public int Number;
+	}
+
+	public class Test : TestBase
+	{
 		public float Age;
 		public string Name;
 	}

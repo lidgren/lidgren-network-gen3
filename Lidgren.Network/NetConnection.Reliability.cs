@@ -63,11 +63,16 @@ namespace Lidgren.Network
 			int num = ((int)NetMessageType.UserReliableOrdered + NetConstants.NetChannelsPerDeliveryMethod) - (int)NetMessageType.UserSequenced;
 			m_nextSendSequenceNumber = new int[num];
 			m_lastReceivedSequenced = new ushort[num];
+			for (int i = 0; i < m_lastReceivedSequenced.Length; i++)
+				m_lastReceivedSequenced[i] = ushort.MaxValue;
 			m_nextForceAckTime = double.MaxValue;
 		}
 
 		internal ushort GetSendSequenceNumber(NetMessageType mtp)
 		{
+			if (mtp < NetMessageType.UserSequenced)
+				return 0;
+
 			int slot = (int)mtp - (int)NetMessageType.UserSequenced;
 			int retval;
 			lock (m_nextSendSequenceNumber)

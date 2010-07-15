@@ -625,10 +625,23 @@ namespace Lidgren.Network
 			if (msg.IsSent)
 				throw new NetException("Message has already been sent!");
 
-			NetException.Assert(sequenceChannel >= 0 && sequenceChannel < NetConstants.NetChannelsPerDeliveryMethod, "Sequence channel must be between 0 and NetConstants.NetChannelsPerDeliveryMethod (" + NetConstants.NetChannelsPerDeliveryMethod + ")");
-			
-			if (method <= NetDeliveryMethod.Unknown || method > NetDeliveryMethod.ReliableOrdered)
-				throw new NetException("Bad delivery method!");
+			switch (method)
+			{
+				case NetDeliveryMethod.Unreliable:
+				case NetDeliveryMethod.ReliableUnordered:
+					if (sequenceChannel != 0)
+						throw new NetException("Delivery method " + method + " cannot use sequence channels other than 0!");
+					break;
+				case NetDeliveryMethod.ReliableOrdered:
+				case NetDeliveryMethod.ReliableSequenced:
+				case NetDeliveryMethod.UnreliableSequenced:
+					NetException.Assert(sequenceChannel >= 0 && sequenceChannel < NetConstants.NetChannelsPerDeliveryMethod, "Sequence channel must be between 0 and NetConstants.NetChannelsPerDeliveryMethod (" + NetConstants.NetChannelsPerDeliveryMethod + ")");
+					break;
+				case NetDeliveryMethod.Unknown:
+				default:
+					throw new NetException("Bad delivery method!");
+					break;
+			}
 
 			if (m_owner == null)
 				return false; // we've been disposed

@@ -84,15 +84,16 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Sends message to server
 		/// </summary>
-		public void SendMessage(NetOutgoingMessage msg, NetDeliveryMethod method, int sequenceChannel)
+		public bool SendMessage(NetOutgoingMessage msg, NetDeliveryMethod method, int sequenceChannel)
 		{
 			NetConnection serverConnection = ServerConnection;
 			if (serverConnection == null)
 			{
 				//LogError("Cannot send message, no server connection!");
-				return;
+				return false;
 			}
-			serverConnection.SendMessage(msg, method, sequenceChannel);
+
+			return serverConnection.SendMessage(msg, method, sequenceChannel);
 		}
 
 		public override string ToString()
