@@ -17,6 +17,8 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 */
+#define IS_MAC_AVAILABLE
+
 using System;
 using System.Net;
 using System.Net.Sockets;
@@ -77,6 +79,7 @@ namespace Lidgren.Network
 
 			InitializeRecycling();
 
+#if IS_MAC_AVAILABLE
 			System.Net.NetworkInformation.PhysicalAddress pa = NetUtility.GetMacAddress();
 			if (pa != null)
 			{
@@ -87,6 +90,10 @@ namespace Lidgren.Network
 			{
 				LogWarning("Failed to get Mac address");
 			}
+#else
+			// random bytes is better than nothing
+			NetRandom.Instance.NextBytes(m_macAddressBytes);
+#endif
 			
 			LogDebug("Network thread started");
 
