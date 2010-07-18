@@ -17,6 +17,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 using System;
+using System.Net;
 
 namespace Lidgren.Network
 {
@@ -50,6 +51,19 @@ namespace Lidgren.Network
 			: base(config)
 		{
 			config.AcceptIncomingConnections = false;
+		}
+
+		public override NetConnection Connect(IPEndPoint remoteEndpoint, NetOutgoingMessage approvalMessage)
+		{
+			lock(m_connections)
+			{
+				if (m_connections.Count > 0)
+				{
+					LogWarning("Connect attempt failed; Already connected");
+					return null;
+				}
+			}
+			return base.Connect(remoteEndpoint, approvalMessage);
 		}
 
 		/// <summary>

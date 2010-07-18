@@ -217,7 +217,7 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Create a connection to a remote endpoint
 		/// </summary>
-		public NetConnection Connect(IPEndPoint remoteEndpoint, NetOutgoingMessage approvalMessage)
+		public virtual NetConnection Connect(IPEndPoint remoteEndpoint, NetOutgoingMessage approvalMessage)
 		{
 			lock (m_connections)
 			{
