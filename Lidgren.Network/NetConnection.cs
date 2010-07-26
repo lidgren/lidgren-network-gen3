@@ -35,7 +35,7 @@ namespace Lidgren.Network
 		internal double m_lastHeardFrom;
 		internal readonly NetQueue<NetSending> m_unsentMessages;
 		internal NetConnectionStatus m_status;
-		private NetConnectionStatus m_visibleStatus;
+		internal NetConnectionStatus m_visibleStatus;
 		private double m_lastSentUnsentMessages;
 		private float m_throttleDebt;
 		private NetPeerConfiguration m_peerConfiguration;
@@ -70,10 +70,6 @@ namespace Lidgren.Network
 		public NetConnectionStatus Status
 		{
 			get { return m_visibleStatus; }
-			internal set
-			{
-				m_visibleStatus = value;
-			}
 		}
 
 		/// <summary>

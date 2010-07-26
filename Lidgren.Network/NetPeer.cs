@@ -164,7 +164,7 @@ namespace Lidgren.Network
 				if (retval.MessageType == NetIncomingMessageType.StatusChanged)
 				{
 					NetConnectionStatus status = (NetConnectionStatus)retval.PeekByte();
-					retval.SenderConnection.Status = status;
+					retval.SenderConnection.m_visibleStatus = status;
 				}
 			}
 			return retval;

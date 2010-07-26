@@ -158,6 +158,9 @@ namespace Lidgren.Network
 
 			m_owner.LogVerbose("Finishing Disconnect(" + m_disconnectByeMessage + ")");
 
+			if (m_unsentMessages.Count > 0)
+				m_owner.LogDebug(m_unsentMessages.Count + " unsent messages were not sent before disconnected");
+
 			// release some held memory
 			m_unackedSends.Clear();
 			m_acknowledgesToSend.Clear();
