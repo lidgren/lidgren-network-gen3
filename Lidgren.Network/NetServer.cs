@@ -32,6 +32,9 @@ namespace Lidgren.Network
 
 		public void Disconnect(NetConnection connection, string byeMessage)
 		{
+			if (connection == null)
+				throw new ArgumentNullException("connection");
+
 			connection.Disconnect(byeMessage);
 		}
 	}

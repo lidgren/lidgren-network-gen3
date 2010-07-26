@@ -96,6 +96,9 @@ namespace Lidgren.Network
 
 		public NetPeer(NetPeerConfiguration configuration)
 		{
+			if (configuration == null)
+				throw new ArgumentNullException("configuration");
+
 			m_status = NetPeerStatus.NotRunning;
 			m_configuration = configuration;
 			m_connections = new List<NetConnection>(m_configuration.MaximumConnections);
@@ -109,6 +112,9 @@ namespace Lidgren.Network
 		/// </summary>
 		public NetConnection GetConnection(IPEndPoint remoteEndPoint)
 		{
+			if (remoteEndPoint == null)
+				throw new ArgumentNullException("remoteEndPoint");
+
 			NetConnection retval;
 			if (m_connectionLookup.TryGetValue(remoteEndPoint, out retval))
 				return retval;
@@ -219,6 +225,9 @@ namespace Lidgren.Network
 		/// </summary>
 		public virtual NetConnection Connect(IPEndPoint remoteEndpoint, NetOutgoingMessage approvalMessage)
 		{
+			if (remoteEndpoint == null)
+				throw new ArgumentNullException("remoteEndpoint");
+
 			lock (m_connections)
 			{
 				if (m_status == NetPeerStatus.NotRunning)
@@ -259,6 +268,11 @@ namespace Lidgren.Network
 		/// <returns>True if the message was queued for delivery, else false</returns>
 		public bool SendMessage(NetOutgoingMessage msg, NetConnection recipient, NetDeliveryMethod deliveryMethod, int channel)
 		{
+			if (msg == null)
+				throw new ArgumentNullException("msg");
+			if (recipient == null)
+				throw new ArgumentNullException("recipient");
+
 			if (msg.IsSent)
 				throw new NetException("Message has already been sent!");
 			if (channel < 0 || channel > 63)
@@ -278,6 +292,11 @@ namespace Lidgren.Network
 		/// <param name="channel">Delivery channel (0-31)</param>
 		public bool SendMessage(NetOutgoingMessage msg, IEnumerable<NetConnection> recipients, NetDeliveryMethod deliveryMethod, int sequenceChannel)
 		{
+			if (msg == null)
+				throw new ArgumentNullException("msg");
+			if (recipients == null)
+				throw new ArgumentNullException("recipients");
+
 			if (msg.IsSent)
 				throw new NetException("Message has already been sent!");
 			if (sequenceChannel < 0 || sequenceChannel > NetConstants.NetChannelsPerDeliveryMethod)
@@ -307,6 +326,11 @@ namespace Lidgren.Network
 		/// </summary>
 		public void SendUnconnectedMessage(NetOutgoingMessage msg, string host, int port)
 		{
+			if (msg == null)
+				throw new ArgumentNullException("msg");
+			if (host == null)
+				throw new ArgumentNullException("host");
+
 			IPAddress adr = NetUtility.Resolve(host);
 			if (adr == null)
 				throw new NetException("Failed to resolve " + host);
@@ -319,6 +343,11 @@ namespace Lidgren.Network
 		/// </summary>
 		public void SendUnconnectedMessage(NetOutgoingMessage msg, IPEndPoint recipient)
 		{
+			if (msg == null)
+				throw new ArgumentNullException("msg");
+			if (recipient == null)
+				throw new ArgumentNullException("recipient");
+
 			if (msg.IsSent)
 				throw new NetException("Message has already been sent!");
 			msg.m_wasSent = true;
@@ -331,6 +360,10 @@ namespace Lidgren.Network
 		/// </summary>
 		public void SendUnconnectedMessage(NetOutgoingMessage msg, IEnumerable<IPEndPoint> recipients)
 		{
+			if (msg == null)
+				throw new ArgumentNullException("msg");
+			if (recipients == null)
+				throw new ArgumentNullException("recipients");
 			if (msg.IsSent)
 				throw new NetException("Message has already been sent!");
 			msg.m_wasSent = true;
@@ -344,9 +377,12 @@ namespace Lidgren.Network
 		/// </summary>
 		public void SendDiscoveryResponse(NetOutgoingMessage msg, IPEndPoint recipient)
 		{
+			if (recipient == null)
+				throw new ArgumentNullException("recipient");
+
 			if (msg == null)
 				msg = CreateMessage(0);
-			if (msg.IsSent)
+			else if (msg.IsSent)
 				throw new NetException("Message has already been sent!");
 
 			msg.m_libType = NetMessageLibraryType.DiscoveryResponse;

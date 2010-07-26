@@ -620,6 +620,9 @@ namespace Lidgren.Network
 
 		public bool SendMessage(NetOutgoingMessage msg, NetDeliveryMethod method, int sequenceChannel)
 		{
+			if (msg == null)
+				throw new ArgumentNullException("msg");
+
 			NetException.Assert(msg.m_libType == NetMessageLibraryType.Error, "Use SendLibrary() instead!");
 
 			if (msg.IsSent)

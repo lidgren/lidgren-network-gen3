@@ -74,6 +74,9 @@ namespace Lidgren.Network
 		public void ReadAllProperties(object target, BindingFlags flags)
 		{
 			if (target == null)
+				throw new ArgumentNullException("target");
+
+			if (target == null)
 				return;
 			Type tp = target.GetType();
 

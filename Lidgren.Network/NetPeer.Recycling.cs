@@ -106,6 +106,9 @@ namespace Lidgren.Network
 		/// </summary>
 		public void Recycle(NetIncomingMessage msg)
 		{
+			if (msg == null)
+				throw new ArgumentNullException("msg");
+
 			if (msg.m_status != NetIncomingMessageReleaseStatus.ReleasedToApplication)
 				throw new NetException("Message not under application control; recycled more than once?");
 
