@@ -107,6 +107,18 @@ namespace UnitTests
 			bool one = rdr.ReadBoolean();
 			string hallon = rdr.ReadString();
 			byte fourtyTwo = rdr.ReadByte();
+
+			// test aligned WriteBytes/ReadBytes
+			msg = peer.CreateMessage();
+			byte[] tmparr = new byte[] { 5, 6, 7, 8, 9 };
+			msg.Write(tmparr);
+
+			inc = Program.CreateIncomingMessage(msg.PeekDataBuffer(), msg.LengthBits);
+			byte[] result = inc.ReadBytes(tmparr.Length);
+
+			for (int i = 0; i < tmparr.Length; i++)
+				if (tmparr[i] != result[i])
+					throw new Exception("readbytes fail");
 		}
 	}
 

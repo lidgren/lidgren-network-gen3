@@ -72,8 +72,7 @@ namespace Lidgren.Network
 
 			if (startReadAtIndex == 0)
 			{
-				for (int i = 0; i < numberOfBytes; i++)
-					destination[destinationByteOffset++] = fromBuffer[readPtr++];
+				Buffer.BlockCopy(fromBuffer, readPtr, destination, destinationByteOffset, numberOfBytes);
 				return;
 			}
 
@@ -146,9 +145,7 @@ namespace Lidgren.Network
 
 			if (firstPartLen == 0)
 			{
-				// optimized; TODO: write 32 bit chunks if possible
-				for (int i = 0; i < numberOfBytes; i++)
-					destination[dstBytePtr++] = source[sourceByteOffset + i];
+				Buffer.BlockCopy(source, sourceByteOffset, destination, dstBytePtr, numberOfBytes);
 				return;
 			}
 

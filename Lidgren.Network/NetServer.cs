@@ -29,5 +29,10 @@ namespace Lidgren.Network
 			// force this to true
 			config.AcceptIncomingConnections = true;
 		}
+
+		public void Disconnect(NetConnection connection, string byeMessage)
+		{
+			connection.Disconnect(byeMessage);
+		}
 	}
 }
