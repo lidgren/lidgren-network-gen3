@@ -274,7 +274,7 @@ namespace Lidgren.Network
 				throw new ArgumentNullException("recipient");
 
 			if (msg.IsSent)
-				throw new NetException("Message has already been sent!");
+				throw new NetException("Message has already been sent! To send to multiple recipients use SendMessage(... IEnumerable<NetConnection...)");
 			if (channel < 0 || channel > 63)
 				throw new NetException("Channel must be between 0 and 63");
 			if (channel != 0 && (deliveryMethod == NetDeliveryMethod.Unreliable || deliveryMethod == NetDeliveryMethod.ReliableUnordered))
