@@ -419,6 +419,8 @@ namespace Lidgren.Network
 
 		public override string ToString()
 		{
+			if (m_socket == null)
+				return "[NetPeer unbound]";
 			return "[NetPeer bound to " + m_socket.LocalEndPoint + " " + ConnectionsCount + " connections]";
 		}
 	}
