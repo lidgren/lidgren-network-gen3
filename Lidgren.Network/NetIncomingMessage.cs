@@ -146,8 +146,6 @@ namespace Lidgren.Network
 			retval.m_senderEndpoint = m_senderEndpoint;
 			retval.m_senderConnection = m_senderConnection;
 			retval.m_fragmentationInfo = m_fragmentationInfo;
-			retval.m_bitLength = m_bitLength;
-			retval.m_bitLength = m_bitLength;
 
 			return retval;
 		}
