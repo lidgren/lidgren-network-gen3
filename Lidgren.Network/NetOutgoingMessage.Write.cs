@@ -518,7 +518,7 @@ namespace Lidgren.Network
 			}
 
 			byte[] bytes = Encoding.UTF8.GetBytes(source);
-			EnsureBufferSize(m_bitLength + 1 + (bytes.Length * 8));
+			EnsureBufferSize(m_bitLength + 8 + (bytes.Length * 8));
 			WriteVariableUInt32((uint)bytes.Length);
 			Write(bytes);
 		}
