@@ -151,6 +151,19 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
+		/// Returns true if there is a queued message available to read using ReadMessage()
+		/// </summary>
+		public bool MessageAvailable
+		{
+			get
+			{
+				if (m_status == NetPeerStatus.NotRunning)
+					return false;
+				return (m_releasedIncomingMessages.Count > 0);
+			}
+		}
+
+		/// <summary>
 		/// Read a pending message from any connection, if any
 		/// </summary>
 		public NetIncomingMessage ReadMessage()

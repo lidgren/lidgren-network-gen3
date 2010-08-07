@@ -93,9 +93,10 @@ namespace Lidgren.Network
 			m_disabledTypes = NetIncomingMessageType.ConnectionApproval | NetIncomingMessageType.UnconnectedData | NetIncomingMessageType.VerboseDebugMessage;
 
 			// Maximum transmission unit
+			// Ethernet can take 1500 bytes of payload, so lets stay below that.
 			// The aim is for a max full packet to be 1440 bytes (30 x 48 bytes, lower than 1468)
-			// 20 bytes ip header
-			//  8 bytes udp header
+			// 20 bytes IP header
+			//  8 bytes UDP header
 			//  5 bytes lidgren header for one message
 			//  1 byte just to be on the safe side
 			// Totals 1440 minus 34 = 1406 bytes free for payload
