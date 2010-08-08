@@ -143,14 +143,18 @@ namespace Lidgren.Network
 
 		public static string ToHexString(byte[] data)
 		{
-			StringBuilder sb = new StringBuilder(data.Length * 2);
-			foreach (byte b in data)
+			char[] c = new char[data.Length * 2];
+			byte b;
+			for (int i = 0; i < data.Length; ++i)
 			{
-				sb.AppendFormat("{0:X2}", b);
+				b = ((byte)(data[i] >> 4));
+				c[i * 2] = (char)(b > 9 ? b + 0x37 : b + 0x30);
+				b = ((byte)(data[i] & 0xF));
+				c[i * 2 + 1] = (char)(b > 9 ? b + 0x37 : b + 0x30);
 			}
-			return sb.ToString();
+			return new string(c);
 		}
-
+		
 		/// <summary>
 		/// Gets my local IP address (not necessarily external) and subnet mask
 		/// </summary>

@@ -19,6 +19,8 @@ namespace UnitTests
 				throw new NetException("setting enabled message types failed");
 
 			Console.WriteLine("Misc tests OK");
+			
+			Console.WriteLine("Hex test: " + NetUtility.ToHexString(new byte[]{0xDE,0xAD,0xBE,0xEF}));
 		}
 	}
 }
