@@ -124,7 +124,7 @@ namespace Lidgren.Network
 
 					int first = (pa == null ? this.GetHashCode() : pa.GetHashCode());
 					int second = boundEp.GetHashCode();
-					
+
 					byte[] raw = new byte[8];
 					raw[0] = (byte)first;
 					raw[1] = (byte)(first << 8);
@@ -139,21 +139,45 @@ namespace Lidgren.Network
 					m_receiveBuffer = new byte[m_configuration.ReceiveBufferSize];
 					m_sendBuffer = new byte[m_configuration.SendBufferSize];
 
-					LogVerbose("Initialization done");
+					throw new Exception("borak!");
 
 					// only set Running if everything succeeds
 					m_status = NetPeerStatus.Running;
+
+					LogVerbose("Initialization done");
 				}
+#if DEBUG
+				catch(Exception ex)
+				{
+					throw;
+				}
+#else		
 				catch (SocketException sex)
 				{
+					// catastrophic failure; we can't know what's been initialized, try to back out
+					m_status = NetPeerStatus.NotRunning;
+
 					if (sex.SocketErrorCode == SocketError.AddressAlreadyInUse)
-						throw new NetException("Failed to bind to port " + (iep == null ? "Null" : iep.ToString()) + " - Address already in use!", sex);
-					throw;
+						LogError("Failed to bind to port " + (iep == null ? "Null" : iep.ToString()) + " - Address already in use!");
+					else
+						LogError(sex.Message);
+					LogError("Lidgren could not initialize properly; please call Start() again");
+
+					// exit thread
+					return;
 				}
 				catch (Exception ex)
 				{
-					throw new NetException("Failed to bind to " + (iep == null ? "Null" : iep.ToString()), ex);
+					// catastrophic failure; we can't know what's been initialized, try to back out
+					m_status = NetPeerStatus.NotRunning;
+
+					LogError(ex.Message);
+					LogError("Lidgren could not initialize properly; please call Start() again");
+
+					// exit thread
+					return;
 				}
+#endif
 			}
 
 			//

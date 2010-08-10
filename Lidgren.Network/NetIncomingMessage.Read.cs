@@ -75,13 +75,14 @@ namespace Lidgren.Network
 		//
 		// 8 bit 
 		//
-		public byte ReadByte()
+		public new byte ReadByte()
 		{
 			NetException.Assert(m_bitLength - m_readPosition >= 8, c_readOverflowError);
 			byte retval = NetBitWriter.ReadByte(m_data, 8, m_readPosition);
 			m_readPosition += 8;
 			return retval;
 		}
+
 
 		[CLSCompliant(false)]
 		public sbyte ReadSByte()

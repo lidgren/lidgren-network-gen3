@@ -639,7 +639,6 @@ namespace Lidgren.Network
 				case NetDeliveryMethod.Unknown:
 				default:
 					throw new NetException("Bad delivery method!");
-					break;
 			}
 
 			if (m_owner == null)
