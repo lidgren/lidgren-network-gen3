@@ -139,15 +139,13 @@ namespace Lidgren.Network
 					m_receiveBuffer = new byte[m_configuration.ReceiveBufferSize];
 					m_sendBuffer = new byte[m_configuration.SendBufferSize];
 
-					throw new Exception("borak!");
-
 					// only set Running if everything succeeds
 					m_status = NetPeerStatus.Running;
 
 					LogVerbose("Initialization done");
 				}
 #if DEBUG
-				catch(Exception ex)
+				catch(Exception)
 				{
 					throw;
 				}
