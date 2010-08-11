@@ -216,14 +216,14 @@ namespace Lidgren.Network
 		/// </summary>
 		public static byte[] ComputeClientPublicKey(byte[] clientPrivateKey) // a
 		{
-			BigInteger salt = new BigInteger(clientPrivateKey);
+			BigInteger a = new BigInteger(clientPrivateKey);
 
-			BigInteger retval = g.ModPow(salt, N);
+			BigInteger retval = g.ModPow(a, N);
 
 			string gs = NetUtility.ToHexString(g.GetBytes());
 
 
-			Console.WriteLine("SALT: " + NetUtility.ToHexString(salt.GetBytes()));
+			Console.WriteLine("a: " + NetUtility.ToHexString(a.GetBytes()));
 			Console.WriteLine("A: " + NetUtility.ToHexString(retval.GetBytes()));
 
 			return retval.GetBytes();

@@ -70,12 +70,11 @@ namespace Lidgren.Network
 		//
 		// Network loop
 		//
-		private void Run()
+		private void InitializeNetwork()
 		{
 			//
 			// Initialize
 			//
-			VerifyNetworkThread();
 
 			InitializeRecycling();
 
@@ -94,8 +93,7 @@ namespace Lidgren.Network
 			// random bytes is better than nothing
 			NetRandom.Instance.NextBytes(m_macAddressBytes);
 #endif
-			
-			LogDebug("Network thread started");
+			LogDebug("Initializing Network");
 
 			lock (m_initializeLock)
 			{
@@ -106,77 +104,50 @@ namespace Lidgren.Network
 
 				// bind to socket
 				IPEndPoint iep = null;
-				try
-				{
-					iep = new IPEndPoint(m_configuration.LocalAddress, m_configuration.Port);
-					EndPoint ep = (EndPoint)iep;
 
-					m_socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-					m_socket.ReceiveBufferSize = m_configuration.ReceiveBufferSize;
-					m_socket.SendBufferSize = m_configuration.SendBufferSize;
-					m_socket.Blocking = false;
-					m_socket.Bind(ep);
+				iep = new IPEndPoint(m_configuration.LocalAddress, m_configuration.Port);
+				EndPoint ep = (EndPoint)iep;
 
-					IPEndPoint boundEp = m_socket.LocalEndPoint as IPEndPoint;
-					LogDebug("Socket bound to " + boundEp + ": " + m_socket.IsBound);
+				m_socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+				m_socket.ReceiveBufferSize = m_configuration.ReceiveBufferSize;
+				m_socket.SendBufferSize = m_configuration.SendBufferSize;
+				m_socket.Blocking = false;
+				m_socket.Bind(ep);
 
-					m_listenPort = boundEp.Port;
+				IPEndPoint boundEp = m_socket.LocalEndPoint as IPEndPoint;
+				LogDebug("Socket bound to " + boundEp + ": " + m_socket.IsBound);
 
-					int first = (pa == null ? this.GetHashCode() : pa.GetHashCode());
-					int second = boundEp.GetHashCode();
+				m_listenPort = boundEp.Port;
 
-					byte[] raw = new byte[8];
-					raw[0] = (byte)first;
-					raw[1] = (byte)(first << 8);
-					raw[2] = (byte)(first << 16);
-					raw[3] = (byte)(first << 24);
-					raw[4] = (byte)second;
-					raw[5] = (byte)(second << 8);
-					raw[6] = (byte)(second << 16);
-					raw[7] = (byte)(second << 24);
-					m_uniqueIdentifier = BitConverter.ToInt64(NetSha.Hash(raw), 0);
+				int first = (pa == null ? this.GetHashCode() : pa.GetHashCode());
+				int second = boundEp.GetHashCode();
 
-					m_receiveBuffer = new byte[m_configuration.ReceiveBufferSize];
-					m_sendBuffer = new byte[m_configuration.SendBufferSize];
+				byte[] raw = new byte[8];
+				raw[0] = (byte)first;
+				raw[1] = (byte)(first << 8);
+				raw[2] = (byte)(first << 16);
+				raw[3] = (byte)(first << 24);
+				raw[4] = (byte)second;
+				raw[5] = (byte)(second << 8);
+				raw[6] = (byte)(second << 16);
+				raw[7] = (byte)(second << 24);
+				m_uniqueIdentifier = BitConverter.ToInt64(NetSha.Hash(raw), 0);
 
-					// only set Running if everything succeeds
-					m_status = NetPeerStatus.Running;
+				m_receiveBuffer = new byte[m_configuration.ReceiveBufferSize];
+				m_sendBuffer = new byte[m_configuration.SendBufferSize];
 
-					LogVerbose("Initialization done");
-				}
-#if DEBUG
-				catch(Exception)
-				{
-					throw;
-				}
-#else		
-				catch (SocketException sex)
-				{
-					// catastrophic failure; we can't know what's been initialized, try to back out
-					m_status = NetPeerStatus.NotRunning;
+				LogVerbose("Initialization done");
 
-					if (sex.SocketErrorCode == SocketError.AddressAlreadyInUse)
-						LogError("Failed to bind to port " + (iep == null ? "Null" : iep.ToString()) + " - Address already in use!");
-					else
-						LogError(sex.Message);
-					LogError("Lidgren could not initialize properly; please call Start() again");
-
-					// exit thread
-					return;
-				}
-				catch (Exception ex)
-				{
-					// catastrophic failure; we can't know what's been initialized, try to back out
-					m_status = NetPeerStatus.NotRunning;
-
-					LogError(ex.Message);
-					LogError("Lidgren could not initialize properly; please call Start() again");
-
-					// exit thread
-					return;
-				}
-#endif
+				// only set Running if everything succeeds
+				m_status = NetPeerStatus.Running;
 			}
+		}
+
+		private void NetworkLoop()
+		{
+			VerifyNetworkThread();
+
+			LogDebug("Network thread started");
 
 			//
 			// Network loop
@@ -329,6 +300,17 @@ namespace Lidgren.Network
 						// connection reset by peer, aka connection forcibly closed aka "ICMP port unreachable" 
 						// we should shut down the connection; but m_senderRemote seemingly cannot be trusted, so which connection should we shut down?!
 						//LogWarning("Connection reset by peer, seemingly from " + m_senderRemote);
+						lock (m_connections)
+						{
+							if (m_connections.Count == 1)
+							{
+								// only one connection; let's shut it down, unless already in progress
+								m_connections[0].Disconnect("Connection forcibly closed");
+								m_connections[0].ExecuteDisconnect(false);
+								m_connections[0].FinishDisconnect();
+							}
+						}
+
 						return;
 					}
 

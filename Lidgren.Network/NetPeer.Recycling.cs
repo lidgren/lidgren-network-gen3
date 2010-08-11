@@ -26,9 +26,9 @@ namespace Lidgren.Network
 	{
 		internal int m_storedBytes;
 		private int m_maxStoredBytes;
-		private List<byte[]> m_storagePool = new List<byte[]>();
-		private NetQueue<NetIncomingMessage> m_incomingMessagesPool = new NetQueue<NetIncomingMessage>(16);
-		private NetQueue<NetOutgoingMessage> m_outgoingMessagesPool = new NetQueue<NetOutgoingMessage>(16);
+		private readonly List<byte[]> m_storagePool = new List<byte[]>();
+		private readonly NetQueue<NetIncomingMessage> m_incomingMessagesPool = new NetQueue<NetIncomingMessage>(16);
+		private readonly NetQueue<NetOutgoingMessage> m_outgoingMessagesPool = new NetQueue<NetOutgoingMessage>(16);
 
 		private void InitializeRecycling()
 		{

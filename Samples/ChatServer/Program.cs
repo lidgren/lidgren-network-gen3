@@ -79,7 +79,7 @@ namespace ChatServer
 							NetOutgoingMessage om = Server.CreateMessage();
 							om.WriteAllProperties(cm, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
 
-							Display("Forwarding text from " + cm.Sender + " to all clients: " + cm.Text);
+							Display("Forwarding text from " + cm.Sender + " (seqchan " + msg.SequenceChannel + ") to all clients: " + cm.Text);
 							Server.SendMessage(om, Server.Connections, NetDeliveryMethod.ReliableOrdered, 0);
 
 							break;

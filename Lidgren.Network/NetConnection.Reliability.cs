@@ -25,8 +25,8 @@ namespace Lidgren.Network
 {
 	public partial class NetConnection
 	{
-		private int[] m_nextSendSequenceNumber;
-		private ushort[] m_lastReceivedSequenced;
+		private readonly int[] m_nextSendSequenceNumber;
+		private readonly ushort[] m_lastReceivedSequenced;
 
 		internal readonly List<NetSending> m_unackedSends = new List<NetSending>();
 
@@ -57,17 +57,7 @@ namespace Lidgren.Network
 			}
 			return retval;
 		}
-
-		private void InitializeReliability()
-		{
-			int num = ((int)NetMessageType.UserReliableOrdered + NetConstants.NetChannelsPerDeliveryMethod) - (int)NetMessageType.UserSequenced;
-			m_nextSendSequenceNumber = new int[num];
-			m_lastReceivedSequenced = new ushort[num];
-			for (int i = 0; i < m_lastReceivedSequenced.Length; i++)
-				m_lastReceivedSequenced[i] = ushort.MaxValue;
-			m_nextForceAckTime = double.MaxValue;
-		}
-
+			
 		internal ushort GetSendSequenceNumber(NetMessageType mtp)
 		{
 			if (mtp < NetMessageType.UserSequenced)

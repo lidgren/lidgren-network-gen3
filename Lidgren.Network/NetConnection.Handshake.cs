@@ -149,7 +149,7 @@ namespace Lidgren.Network
 			return;
 		}
 
-		private void FinishDisconnect()
+		internal void FinishDisconnect()
 		{
 			m_owner.VerifyNetworkThread();
 

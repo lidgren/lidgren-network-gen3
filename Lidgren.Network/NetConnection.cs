@@ -38,12 +38,12 @@ namespace Lidgren.Network
 		internal NetConnectionStatus m_visibleStatus;
 		private double m_lastSentUnsentMessages;
 		private float m_throttleDebt;
-		private NetPeerConfiguration m_peerConfiguration;
+		private readonly NetPeerConfiguration m_peerConfiguration;
 		internal NetConnectionStatistics m_statistics;
 		private int m_lesserHeartbeats;
 		private int m_nextFragmentGroupId;
 		internal long m_remoteUniqueIdentifier;
-		private Dictionary<int, NetIncomingMessage> m_fragmentGroups;
+		private readonly Dictionary<int, NetIncomingMessage> m_fragmentGroups;
 		private int m_handshakeAttempts;
 
 		internal PendingConnectionStatus m_pendingStatus = PendingConnectionStatus.NotPending;
@@ -99,7 +99,13 @@ namespace Lidgren.Network
 			m_lastSendRespondedTo = now;
 			m_statistics = new NetConnectionStatistics(this);
 
-			InitializeReliability();
+			//InitializeReliability();
+			int num = ((int)NetMessageType.UserReliableOrdered + NetConstants.NetChannelsPerDeliveryMethod) - (int)NetMessageType.UserSequenced;
+			m_nextSendSequenceNumber = new int[num];
+			m_lastReceivedSequenced = new ushort[num];
+			for (int i = 0; i < m_lastReceivedSequenced.Length; i++)
+				m_lastReceivedSequenced[i] = ushort.MaxValue;
+			m_nextForceAckTime = double.MaxValue;
 		}
 
 		// run on network thread
@@ -286,6 +292,7 @@ namespace Lidgren.Network
 						}
 					}
 
+					// when sending disconnect we can finish our own disconnect
 					if (send.MessageType == NetMessageType.Library && msg.m_libType == NetMessageLibraryType.Disconnect)
 					{
 						FinishDisconnect();
@@ -705,6 +712,9 @@ namespace Lidgren.Network
 
 			m_owner.LogVerbose("Disconnect requested for " + this);
 			m_disconnectByeMessage = byeMessage;
+
+			if (m_status != NetConnectionStatus.Disconnected && m_status != NetConnectionStatus.None)
+				SetStatus(NetConnectionStatus.Disconnecting, byeMessage);
 
 			// loosen up throttling
 			m_throttleDebt = -m_owner.m_configuration.m_throttlePeakBytes;

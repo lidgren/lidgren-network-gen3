@@ -64,6 +64,8 @@ namespace Lidgren.Network
 						{
 							LogWarning("Pending connection still in pending state after 10 seconds; forgot to Approve/Deny?");
 							m_pendingConnections.Remove(conn);
+							if (m_pendingConnections.Count < 1)
+								m_pendingConnections = null;
 							return;
 						}
 						break;
@@ -71,12 +73,16 @@ namespace Lidgren.Network
 						// accept connection
 						AcceptConnection(conn);
 						m_pendingConnections.Remove(conn);
+						if (m_pendingConnections.Count < 1)
+							m_pendingConnections = null;
 						return;
 					case PendingConnectionStatus.Denied:
 						// send disconnected
 						NetOutgoingMessage bye = CreateLibraryMessage(NetMessageLibraryType.Disconnect, conn.m_pendingDenialReason);
 						SendUnconnectedLibrary(bye, conn.m_remoteEndpoint);
 						m_pendingConnections.Remove(conn);
+						if (m_pendingConnections.Count < 1)
+							m_pendingConnections = null;
 						return;
 				}
 			}

@@ -140,14 +140,16 @@ namespace Lidgren.Network
 
 			m_configuration.VerifyAndLock();
 
+			InitializeNetwork();
+
 			// start network thread
-			m_networkThread = new Thread(new ThreadStart(Run));
+			m_networkThread = new Thread(new ThreadStart(NetworkLoop));
 			m_networkThread.Name = "Lidgren network thread";
 			m_networkThread.IsBackground = true;
 			m_networkThread.Start();
 
 			// allow some time for network thread to start up in case they call Connect() immediately
-			Thread.Sleep(3);
+			Thread.Sleep(10);
 		}
 
 		/// <summary>

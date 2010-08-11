@@ -28,7 +28,7 @@ namespace Lidgren.Network
 	{
 		private const string c_readOverflowError = "Trying to read past the buffer size - likely caused by mismatching Write/Reads, different size or order.";
 
-		private static Dictionary<Type, MethodInfo> s_readMethods;
+		private static readonly Dictionary<Type, MethodInfo> s_readMethods;
 
 		private int m_readPosition;
 
