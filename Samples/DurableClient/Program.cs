@@ -14,7 +14,7 @@ namespace DurableClient
 		public static Form1 MainForm;
 		public static NetClient Client;
 
-		private static bool m_sendStuff;
+		private static bool s_sendStuff;
 
 		[STAThread]
 		static void Main()
@@ -38,13 +38,13 @@ namespace DurableClient
 			NativeMethods.AppendText(MainForm.richTextBox1, text);
 		}
 
-		private static double m_nextSendReliableOrdered;
-		private static uint[] m_reliableOrderedNr = new uint[3];
+		private static double s_nextSendReliableOrdered;
+		private static uint[] s_reliableOrderedNr = new uint[3];
 
-		private static double m_nextSendSequenced;
-		private static uint[] m_sequencedNr = new uint[3];
+		private static double s_nextSendSequenced;
+		private static uint[] s_sequencedNr = new uint[3];
 
-		private static double m_lastLabelUpdate;
+		private static double s_lastLabelUpdate;
 		private const double kLabelUpdateFrequency = 0.25;
 
 		static void AppLoop(object sender, EventArgs e)
@@ -73,14 +73,14 @@ namespace DurableClient
 							if (status == NetConnectionStatus.Connected)
 							{
 								// go
-								m_sendStuff = true;
+								s_sendStuff = true;
 							}
 							break;
 					}
 					Client.Recycle(msg);
 				}
 
-				if (m_sendStuff)
+				if (s_sendStuff)
 				{
 					double now = NetTime.Now;
 
@@ -89,34 +89,34 @@ namespace DurableClient
 					float speedMultiplier = 1.0f / speed;
 
 					int r = NetRandom.Instance.Next(3);
-					if (now > m_nextSendReliableOrdered)
+					if (now > s_nextSendReliableOrdered)
 					{
 						NetOutgoingMessage om = Client.CreateMessage(5);
 
-						uint rv = m_reliableOrderedNr[r];
-						m_reliableOrderedNr[r]++;
+						uint rv = s_reliableOrderedNr[r];
+						s_reliableOrderedNr[r]++;
 
 						om.Write(rv);
 
 						Client.SendMessage(om, NetDeliveryMethod.ReliableOrdered, r);
-						m_nextSendReliableOrdered = now + (NetRandom.Instance.NextFloat() * (0.01f * speedMultiplier)) + (0.005f * speedMultiplier);
+						s_nextSendReliableOrdered = now + (NetRandom.Instance.NextFloat() * (0.01f * speedMultiplier)) + (0.005f * speedMultiplier);
 					}
 
-					if (now > m_nextSendSequenced)
+					if (now > s_nextSendSequenced)
 					{
 						NetOutgoingMessage om = Client.CreateMessage();
 
-						uint v = m_sequencedNr[r];
-						m_sequencedNr[r]++;
+						uint v = s_sequencedNr[r];
+						s_sequencedNr[r]++;
 						om.Write(v);
 						Client.SendMessage(om, NetDeliveryMethod.UnreliableSequenced, r);
-						m_nextSendSequenced = now + (NetRandom.Instance.NextFloat() * (0.01f * speedMultiplier)) + (0.005f * speedMultiplier);
+						s_nextSendSequenced = now + (NetRandom.Instance.NextFloat() * (0.01f * speedMultiplier)) + (0.005f * speedMultiplier);
 					}
 
-					if (now > m_lastLabelUpdate + kLabelUpdateFrequency)
+					if (now > s_lastLabelUpdate + kLabelUpdateFrequency)
 					{
 						UpdateLabel();
-						m_lastLabelUpdate = now;
+						s_lastLabelUpdate = now;
 					}
 				}
 			}
@@ -131,8 +131,8 @@ namespace DurableClient
 				bdr.Append(Client.Statistics.ToString());
 				bdr.Append(conn.Statistics.ToString());
 
-				bdr.AppendLine("SENT Reliable ordered: " + m_reliableOrderedNr[0] + ", " + m_reliableOrderedNr[1] + ", " + m_reliableOrderedNr[2]);
-				bdr.AppendLine("SENT Sequenced: " + m_sequencedNr[0] + ", " + m_sequencedNr[1] + ", " + m_sequencedNr[2]);
+				bdr.AppendLine("SENT Reliable ordered: " + s_reliableOrderedNr[0] + ", " + s_reliableOrderedNr[1] + ", " + s_reliableOrderedNr[2]);
+				bdr.AppendLine("SENT Sequenced: " + s_sequencedNr[0] + ", " + s_sequencedNr[1] + ", " + s_sequencedNr[2]);
 				MainForm.label1.Text = bdr.ToString();
 			}
 		}

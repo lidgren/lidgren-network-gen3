@@ -31,6 +31,8 @@ namespace Lidgren.Network
 	[DebuggerDisplay("Status={m_status}")]
 	public partial class NetPeer
 	{
+		private static int s_threadCount = 0;
+
 		internal const int kMinPacketHeaderSize = 2;
 		internal const int kMaxPacketHeaderSize = 5;
 
@@ -50,6 +52,11 @@ namespace Lidgren.Network
 		/// Gets the status of the NetPeer
 		/// </summary>
 		public NetPeerStatus Status { get { return m_status; } }
+
+		/// <summary>
+		/// Name of the network thread (if NetPeer.Start has been called)
+		/// </summary>
+		public string NetworkThreadName { get { return (m_networkThread == null ? string.Empty : m_networkThread.Name); } }
 
 		/// <summary>
 		/// Gets a copy of the list of connections
@@ -141,10 +148,10 @@ namespace Lidgren.Network
 			m_configuration.VerifyAndLock();
 
 			InitializeNetwork();
-
+		
 			// start network thread
 			m_networkThread = new Thread(new ThreadStart(NetworkLoop));
-			m_networkThread.Name = "Lidgren network thread";
+			m_networkThread.Name = "Lidgren network thread " + Interlocked.Increment(ref s_threadCount).ToString();
 			m_networkThread.IsBackground = true;
 			m_networkThread.Start();
 

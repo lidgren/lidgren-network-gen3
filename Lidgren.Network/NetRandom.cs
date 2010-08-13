@@ -53,7 +53,7 @@ namespace Lidgren.Network
 		private const double c_realUnitUint = 1.0 / ((double)uint.MaxValue + 1.0);
 		private const uint c_y = 842502087, c_z = 3579807591, c_w = 273326509;
 
-		private static int m_extraSeed = 42;
+		private static int s_extraSeed = 42;
 
 		uint m_x, m_y, m_z, m_w;
 
@@ -68,7 +68,7 @@ namespace Lidgren.Network
 			seed ^= (int)(Stopwatch.GetTimestamp());
 			seed ^= (int)(Environment.WorkingSet); // will return 0 on mono
 
-			int extraSeed = Interlocked.Increment(ref m_extraSeed);
+			int extraSeed = Interlocked.Increment(ref s_extraSeed);
 
 			return seed + extraSeed;
 		}
