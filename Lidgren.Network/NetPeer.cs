@@ -31,7 +31,7 @@ namespace Lidgren.Network
 	[DebuggerDisplay("Status={m_status}")]
 	public partial class NetPeer
 	{
-		private static int s_threadCount = 0;
+		private static int s_peerCount = 0;
 
 		internal const int kMinPacketHeaderSize = 2;
 		internal const int kMaxPacketHeaderSize = 5;
@@ -44,6 +44,7 @@ namespace Lidgren.Network
 		internal readonly NetPeerStatistics m_statistics;
 		private Thread m_networkThread;
 		private string m_shutdownReason;
+		private string m_networkThreadName;
 
 		internal readonly List<NetConnection> m_connections;
 		private readonly Dictionary<IPEndPoint, NetConnection> m_connectionLookup;
@@ -54,15 +55,19 @@ namespace Lidgren.Network
 		public NetPeerStatus Status { get { return m_status; } }
 
 		/// <summary>
-		/// Name of the network thread (if NetPeer.Start has been called)
+		/// Name of the network thread for this NetPeer
 		/// </summary>
 		public string NetworkThreadName
 		{
-			get { return (m_networkThread == null ? string.Empty : m_networkThread.Name); }
+			get { return m_networkThreadName; }
 			set
 			{
-				if (m_networkThread != null)
-					m_networkThread.Name = value;
+				if (m_networkThreadName != value)
+				{
+					m_networkThreadName = value;
+					if (m_networkThread != null)
+						m_networkThread.Name = m_networkThreadName;
+				}
 			}
 		}
 
@@ -120,6 +125,9 @@ namespace Lidgren.Network
 			m_connectionLookup = new Dictionary<IPEndPoint, NetConnection>(m_configuration.MaximumConnections);
 			m_senderRemote = (EndPoint)new IPEndPoint(IPAddress.Any, 0);
 			m_statistics = new NetPeerStatistics(this);
+			
+			int pc = Interlocked.Increment(ref s_peerCount);
+			m_networkThreadName = "Lidgren network thread " + pc.ToString();
 		}
 
 		/// <summary>
@@ -159,7 +167,7 @@ namespace Lidgren.Network
 		
 			// start network thread
 			m_networkThread = new Thread(new ThreadStart(NetworkLoop));
-			m_networkThread.Name = "Lidgren network thread " + Interlocked.Increment(ref s_threadCount).ToString();
+			m_networkThread.Name = m_networkThreadName;
 			m_networkThread.IsBackground = true;
 			m_networkThread.Start();
 
