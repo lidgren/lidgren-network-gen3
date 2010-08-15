@@ -56,7 +56,15 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Name of the network thread (if NetPeer.Start has been called)
 		/// </summary>
-		public string NetworkThreadName { get { return (m_networkThread == null ? string.Empty : m_networkThread.Name); } }
+		public string NetworkThreadName
+		{
+			get { return (m_networkThread == null ? string.Empty : m_networkThread.Name); }
+			set
+			{
+				if (m_networkThread != null)
+					m_networkThread.Name = value;
+			}
+		}
 
 		/// <summary>
 		/// Gets a copy of the list of connections
