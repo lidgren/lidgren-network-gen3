@@ -51,8 +51,10 @@ namespace Lidgren.Network
 				case SeekOrigin.End:
 					Position = (LengthBytes - offset) * 8;
 					break;
+				default:
+					throw new NotImplementedException("Bad SeekOrigin");
 			}
-			throw new NotImplementedException("Bad SeekOrigin");
+			return Position;
 		}
 
 		public override void SetLength(long value)
