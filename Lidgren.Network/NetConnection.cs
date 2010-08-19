@@ -204,8 +204,14 @@ namespace Lidgren.Network
 				double frameLength = now - m_lastSentUnsentMessages;
 				if (m_throttleDebt > 0)
 					m_throttleDebt -= (float)(frameLength * throttle);
-				m_lastSentUnsentMessages = now;
 			}
+			else
+			{
+				// 0 = unlimited (but still respect throttlethreshold per iteration)
+				m_throttleDebt = 0;
+			}
+
+			m_lastSentUnsentMessages = now;
 
 			int mtu = m_peerConfiguration.m_maximumTransmissionUnit;
 			bool useCoalescing = m_peerConfiguration.m_useMessageCoalescing;
