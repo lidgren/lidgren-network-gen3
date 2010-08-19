@@ -112,7 +112,7 @@ namespace Lidgren.Network
 
 		internal void VerifyAndLock()
 		{
-			if (m_throttleBytesPerSecond < m_maximumTransmissionUnit)
+			if (m_throttleBytesPerSecond != 0 && m_throttleBytesPerSecond < m_maximumTransmissionUnit)
 				m_throttleBytesPerSecond = m_maximumTransmissionUnit;
 
 			m_isLocked = true;
