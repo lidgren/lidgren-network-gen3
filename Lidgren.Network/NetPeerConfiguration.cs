@@ -343,30 +343,30 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
-		/// Gets or sets the number of allowed bytes to be sent per second per connection; 0 means unlimited
+		/// Gets or sets the number of allowed bytes to be sent per second per connection; 0 means unlimited (throttling disabled)
 		/// </summary>
 		public int ThrottleBytesPerSecond
 		{
 			get { return m_throttleBytesPerSecond; }
 			set
 			{
-				m_throttleBytesPerSecond = value;
-				if (m_throttleBytesPerSecond < m_maximumTransmissionUnit)
+				if (m_throttleBytesPerSecond != 0 && m_throttleBytesPerSecond < m_maximumTransmissionUnit)
 					throw new NetException("ThrottleBytesPerSecond can not be lower than MaximumTransmissionUnit");
+				m_throttleBytesPerSecond = value;
 			}
 		}
 
 		/// <summary>
-		/// Gets or sets the peak number of bytes sent before throttling kicks in
+		/// Gets or sets the peak number of bytes sent before throttling kicks in, if enabled
 		/// </summary>
 		public int ThrottlePeakBytes
 		{
 			get { return m_throttlePeakBytes; }
 			set
 			{
-				m_throttlePeakBytes = value;
 				if (m_throttlePeakBytes < m_maximumTransmissionUnit)
 					throw new NetException("ThrottlePeakBytes can not be lower than MaximumTransmissionUnit");
+				m_throttlePeakBytes = value;
 			}
 		}
 
