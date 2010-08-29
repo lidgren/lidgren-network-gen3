@@ -67,6 +67,8 @@ namespace Lidgren.Network
 			pong.Write((byte)pingNumber);
 			pong.Write(now);
 
+			m_owner.LogDebug("Sending pong for remote ping #" + pingNumber);
+
 			m_owner.SendLibraryImmediately(pong, m_remoteEndpoint);
 		}
 
@@ -137,6 +139,8 @@ namespace Lidgren.Network
 				now = NetTime.Now; // need exact number
 				m_lastSentPingNumber++;
 				m_lastPingSendTime = now;
+
+				m_owner.LogDebug("Sending ping #" + m_lastSentPingNumber);
 
 				// in case of not heard for a while
 				if (m_lastSendRespondedTo > 0 && (now > m_lastSendRespondedTo + (m_owner.Configuration.m_pingFrequency * 1.5f)))
