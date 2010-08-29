@@ -139,7 +139,7 @@ namespace Lidgren.Network
 				m_lastPingSendTime = now;
 
 				// in case of not heard for a while
-				if (now > m_lastSendRespondedTo + (m_owner.Configuration.m_pingFrequency * 1.5f))
+				if (m_lastSendRespondedTo > 0 && (now > m_lastSendRespondedTo + (m_owner.Configuration.m_pingFrequency * 1.5f)))
 					m_nextPing = now + (m_owner.Configuration.m_pingFrequency * 0.5f); // double ping rate
 				else
 					m_nextPing = now + m_owner.Configuration.m_pingFrequency;
@@ -149,7 +149,6 @@ namespace Lidgren.Network
 				ping.Write((byte)m_lastSentPingNumber);
 
 				m_owner.SendLibraryImmediately(ping, m_remoteEndpoint);
-
 			}
 		}
 	}

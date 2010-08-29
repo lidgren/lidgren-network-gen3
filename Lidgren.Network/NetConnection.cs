@@ -93,7 +93,7 @@ namespace Lidgren.Network
 			m_unsentMessages = new NetQueue<NetSending>(8);
 
 			double now = NetTime.Now;
-			m_nextPing = now + 5.0f;
+			m_nextPing = now + 10.0f;
 			m_nextForceAckTime = double.MaxValue;
 			m_lastSentUnsentMessages = now;
 			m_lastSendRespondedTo = now;

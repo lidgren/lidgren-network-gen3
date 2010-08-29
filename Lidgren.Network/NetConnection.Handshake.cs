@@ -177,14 +177,19 @@ namespace Lidgren.Network
 			switch (libType)
 			{
 				case NetMessageLibraryType.Connect:
+		
+					m_owner.LogDebug("Received Connect");
+
 					if (m_status == NetConnectionStatus.Connecting)
 					{
 						// our connectresponse must have been lost, send another one
 						SendConnectResponse();
 						return;
 					}
-
-					m_owner.LogError("NetConnection.HandleIncomingHandshake() passed LibraryConnect but status is " + m_status + "!?");
+					if (m_connectionInitiator)
+						m_owner.LogError("Received Connect; altho we're connect initiator! Status is " + m_status);
+					else
+						m_owner.LogError("NetConnection.HandleIncomingHandshake() passed LibraryConnect but status is " + m_status + "!? now is " + NetTime.Now + " LastHeardFrom is " + m_lastHeardFrom);
 					break;
 				case NetMessageLibraryType.ConnectResponse:
 					if (!m_connectionInitiator)
@@ -193,6 +198,8 @@ namespace Lidgren.Network
 						// weird, just drop it
 						return;
 					}
+
+					m_owner.LogDebug("Received ConnectResponse");
 
 					if (m_status == NetConnectionStatus.Connecting)
 					{
@@ -221,6 +228,9 @@ namespace Lidgren.Network
 					m_owner.LogWarning("NetConnection.HandleIncomingHandshake() passed " + libType + ", but status is " + m_status);
 					break;
 				case NetMessageLibraryType.ConnectionEstablished:
+
+					m_owner.LogDebug("Received ConnectionEstablished");
+
 					if (!m_connectionInitiator && m_status == NetConnectionStatus.Connecting)
 					{
 						float remoteNetTime = BitConverter.ToSingle(m_owner.m_receiveBuffer, ptr);
