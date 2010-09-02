@@ -31,8 +31,6 @@ namespace Lidgren.Network
 
 		internal void SetStatus(NetConnectionStatus status, string reason)
 		{
-			m_owner.VerifyNetworkThread();
-
 			if (status == m_status)
 				return;
 			m_status = status;
