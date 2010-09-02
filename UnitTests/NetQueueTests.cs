@@ -14,6 +14,12 @@ namespace UnitTests
 			queue.Enqueue(2);
 			queue.Enqueue(3);
 
+			if (queue.Contains(4))
+				throw new Exception("NetQueue Contains failure");
+
+			if (!queue.Contains(2))
+				throw new Exception("NetQueue Contains failure 2");
+
 			if (queue.Count != 3)
 				throw new Exception("NetQueue failed");
 			if (queue.TryDequeue() != 1)

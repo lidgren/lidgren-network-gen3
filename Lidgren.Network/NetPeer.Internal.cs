@@ -67,9 +67,6 @@ namespace Lidgren.Network
 				throw new NetException("Executing on wrong thread! Should be library system thread (is " + ct.Name + " mId " + ct.ManagedThreadId + ")");
 		}
 
-		//
-		// Network loop
-		//
 		private void InitializeNetwork()
 		{
 			//
@@ -143,6 +140,9 @@ namespace Lidgren.Network
 			}
 		}
 
+		//
+		// Network loop
+		//
 		private void NetworkLoop()
 		{
 			VerifyNetworkThread();

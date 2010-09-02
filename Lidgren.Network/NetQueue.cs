@@ -173,8 +173,16 @@ namespace Lidgren.Network
 				int ptr = m_head;
 				for (int i = 0; i < m_size; i++)
 				{
-					if (m_items[ptr].Equals(item))
-						return true;
+					if (m_items[ptr] == null)
+					{
+						if (item == null)
+							return true;
+					}
+					else
+					{
+						if (m_items[ptr].Equals(item))
+							return true;
+					}
 					ptr = (ptr + 1) % m_items.Length;
 				}
 			}
@@ -188,6 +196,7 @@ namespace Lidgren.Network
 				for (int i = 0; i < m_items.Length; i++)
 					m_items[i] = default(T);
 				m_head = 0;
+				m_size = 0;
 			}
 		}
 	}
