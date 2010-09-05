@@ -228,8 +228,8 @@ namespace Lidgren.Network
 					if (m_throttleDebt >= throttleThreshold)
 						break;
 
-					NetSending send = m_unsentMessages.TryDequeue();
-					if (send == null)
+					NetSending send;
+					if (!m_unsentMessages.TryDequeue(out send))
 						continue;
 
 					send.NumSends++;

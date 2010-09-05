@@ -14,6 +14,9 @@ namespace UnitTests
 			queue.Enqueue(2);
 			queue.Enqueue(3);
 
+			bool ok;
+			int a;
+
 			if (queue.Contains(4))
 				throw new Exception("NetQueue Contains failure");
 
@@ -22,8 +25,11 @@ namespace UnitTests
 
 			if (queue.Count != 3)
 				throw new Exception("NetQueue failed");
-			if (queue.TryDequeue() != 1)
+
+			ok = queue.TryDequeue(out a);
+			if (ok == false || a != 1)
 				throw new Exception("NetQueue failure");
+
 			if (queue.Count != 2)
 				throw new Exception("NetQueue failed");
 
@@ -31,22 +37,32 @@ namespace UnitTests
 			if (queue.Count != 3)
 				throw new Exception("NetQueue failed");
 
-			if (queue.TryDequeue() != 42)
+			ok = queue.TryDequeue(out a);
+			if (ok == false || a != 42)
 				throw new Exception("NetQueue failed");
-			if (queue.TryDequeue() != 2)
+
+			ok = queue.TryDequeue(out a);
+			if (ok == false || a != 2)
 				throw new Exception("NetQueue failed");
-			if (queue.TryDequeue() != 3)
+	
+			ok = queue.TryDequeue(out a);
+			if (ok == false || a != 3)
 				throw new Exception("NetQueue failed");
-			if (queue.TryDequeue() != 0)
+
+			ok = queue.TryDequeue(out a);
+			if (ok == true)
 				throw new Exception("NetQueue failed");
-			if (queue.TryDequeue() != 0)
+
+			ok = queue.TryDequeue(out a);
+			if (ok == true)
 				throw new Exception("NetQueue failed");
 
 			queue.Enqueue(78);
 			if (queue.Count != 1)
 				throw new Exception("NetQueue failed");
 
-			if (queue.TryDequeue() != 78)
+			ok = queue.TryDequeue(out a);
+			if (ok == false || a != 78)
 				throw new Exception("NetQueue failed");
 
 			queue.Clear();

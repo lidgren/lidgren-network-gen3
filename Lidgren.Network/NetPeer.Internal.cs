@@ -233,7 +233,7 @@ namespace Lidgren.Network
 
 			// send unconnected sends
 			NetSending uncSend;
-			while ((uncSend = m_unsentUnconnectedMessage.TryDequeue()) != null)
+			while (m_unsentUnconnectedMessage.TryDequeue(out uncSend))
 			{
 				//
 				// TODO: use throttling here

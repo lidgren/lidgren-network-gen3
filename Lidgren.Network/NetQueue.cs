@@ -133,23 +133,29 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Gets an item from the head of the queue, or returns default(T) if empty
 		/// </summary>
-		public T TryDequeue()
+		public bool TryDequeue(out T item)
 		{
 			if (m_size == 0)
-				return default(T);
+			{
+				item = default(T);
+				return false;
+			}
 
 			lock (m_lock)
 			{
 				if (m_size == 0)
-					return default(T);
+				{
+					item = default(T);
+					return false;
+				}
 
-				T retval = m_items[m_head];
+				item = m_items[m_head];
 				m_items[m_head] = default(T);
 
 				m_head = (m_head + 1) % m_items.Length;
 				m_size--;
 
-				return retval;
+				return true;
 			}
 		}
 

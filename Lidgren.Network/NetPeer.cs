@@ -196,8 +196,8 @@ namespace Lidgren.Network
 			if (m_status == NetPeerStatus.NotRunning)
 				return null;
 
-			NetIncomingMessage retval = m_releasedIncomingMessages.TryDequeue();
-			if (retval != null)
+			NetIncomingMessage retval;
+			if (m_releasedIncomingMessages.TryDequeue(out retval))
 			{
 				if (retval.MessageType == NetIncomingMessageType.StatusChanged)
 				{
@@ -212,7 +212,9 @@ namespace Lidgren.Network
 		{
 			if (m_messageReceivedEvent != null)
 				m_messageReceivedEvent.WaitOne(maxMillis);
-			return m_releasedIncomingMessages.TryDequeue();
+			NetIncomingMessage retval;
+			m_releasedIncomingMessages.TryDequeue(out retval);
+			return retval;
 		}
 
 		/// <summary>

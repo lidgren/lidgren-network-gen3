@@ -81,11 +81,11 @@ namespace Lidgren.Network
 		/// <param name="initialCapacity">initial capacity in bytes</param>
 		public NetOutgoingMessage CreateMessage(int initialCapacity)
 		{
-			NetOutgoingMessage retval = m_outgoingMessagesPool.TryDequeue();
-			if (retval == null)
-				retval = new NetOutgoingMessage();
-			else
+			NetOutgoingMessage retval;
+			if (m_outgoingMessagesPool.TryDequeue(out retval))
 				retval.Reset();
+			else
+				retval = new NetOutgoingMessage();
 
 			byte[] storage = GetStorage(initialCapacity);
 			retval.m_data = storage;
@@ -228,11 +228,11 @@ namespace Lidgren.Network
 		/// </summary>
 		internal NetIncomingMessage CreateIncomingMessage(NetIncomingMessageType tp, int requiredCapacity)
 		{
-			NetIncomingMessage retval = m_incomingMessagesPool.TryDequeue();
-			if (retval == null)
-				retval = new NetIncomingMessage();
-			else
+			NetIncomingMessage retval;
+			if (m_incomingMessagesPool.TryDequeue(out retval))
 				retval.Reset();
+			else
+				retval = new NetIncomingMessage();
 
 			NetException.Assert(retval.m_status == NetIncomingMessageReleaseStatus.NotReleased);
 
@@ -256,11 +256,11 @@ namespace Lidgren.Network
 
 		internal NetIncomingMessage CreateIncomingMessage(NetIncomingMessageType tp, byte[] copyFrom, int offset, int copyLength)
 		{
-			NetIncomingMessage retval = m_incomingMessagesPool.TryDequeue();
-			if (retval == null)
-				retval = new NetIncomingMessage();
-			else
+			NetIncomingMessage retval;
+			if (m_incomingMessagesPool.TryDequeue(out retval))
 				retval.Reset();
+			else
+				retval = new NetIncomingMessage();
 
 			NetException.Assert(retval.m_status == NetIncomingMessageReleaseStatus.NotReleased);
 
