@@ -34,7 +34,7 @@ namespace Lidgren.Network
 		private static Regex s_regIP;
 
 		/// <summary>
-		/// Get IP endpoint from notation (xxx.xxx.xxx.xxx) or hostname and port number
+		/// Get IPv4 endpoint from notation (xxx.xxx.xxx.xxx) or hostname and port number
 		/// </summary>
 		public static IPEndPoint Resolve(string ipOrHost, int port)
 		{
@@ -43,7 +43,7 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
-		/// Get IP address from notation (xxx.xxx.xxx.xxx) or hostname
+		/// Get IPv4 address from notation (xxx.xxx.xxx.xxx) or hostname
 		/// </summary>
 		public static IPAddress Resolve(string ipOrHost)
 		{
@@ -52,17 +52,13 @@ namespace Lidgren.Network
 
 			ipOrHost = ipOrHost.Trim();
 
-			if (s_regIP == null)
-			{
-				string expression = "\\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\b";
-				RegexOptions options = RegexOptions.Compiled;
-				s_regIP = new Regex(expression, options);
-			}
-
-			// is it an ip number string?
 			IPAddress ipAddress = null;
-			if (s_regIP.Match(ipOrHost).Success && IPAddress.TryParse(ipOrHost, out ipAddress))
-				return ipAddress;
+			if (IPAddress.TryParse(ipOrHost, out ipAddress))
+			{
+				if (ipAddress.AddressFamily == AddressFamily.InterNetwork)
+					return ipAddress;
+				throw new ArgumentException("This method will not currently resolve other than ipv4 addresses");
+			}
 
 			// ok must be a host name
 			IPHostEntry entry;
@@ -75,15 +71,11 @@ namespace Lidgren.Network
 				// check each entry for a valid IP address
 				foreach (IPAddress ipCurrent in entry.AddressList)
 				{
-					string sIP = ipCurrent.ToString();
-					bool isIP = s_regIP.Match(sIP).Success && IPAddress.TryParse(sIP, out ipAddress);
-					if (isIP)
-						break;
+					if (ipCurrent.AddressFamily == AddressFamily.InterNetwork)
+						return ipCurrent;
 				}
-				if (ipAddress == null)
-					return null;
 
-				return ipAddress;
+				return null;
 			}
 			catch (SocketException ex)
 			{
