@@ -195,6 +195,22 @@ namespace Lidgren.Network
 			return false;
 		}
 
+		public T[] ToArray()
+		{
+			lock (m_lock)
+			{
+				T[] retval = new T[m_size];
+				int ptr = m_head;
+				for (int i = 0; i < m_size; i++)
+				{
+					retval[i] = m_items[ptr++];
+					if (ptr >= m_items.Length)
+						ptr = 0;
+				}
+				return retval;
+			}
+		}
+
 		public void Clear()
 		{
 			lock (m_lock)

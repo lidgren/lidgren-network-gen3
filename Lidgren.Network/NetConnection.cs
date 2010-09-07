@@ -82,6 +82,33 @@ namespace Lidgren.Network
 		/// </summary>
 		public NetPeer Owner { get { return m_owner; } }
 
+		/// <summary>
+		/// Gets the number of bytes queued for sending to this connection
+		/// </summary>
+		public int UnsentBytesCount
+		{
+			get
+			{
+				int mtu = m_owner.Configuration.MaximumTransmissionUnit - NetConstants.FragmentHeaderSize;
+				int retval = 0;
+
+				NetSending[] arr = m_unsentMessages.ToArray();
+				foreach (NetSending send in arr)
+				{
+					if (send.FragmentGroupId == 0)
+					{
+						retval += send.Message.LengthBytes;
+					}
+					else
+					{
+						int thisFragmentLength = (send.FragmentNumber == send.FragmentTotalCount - 1 ? (send.Message.LengthBytes - (mtu * (send.FragmentTotalCount - 1))) : mtu);
+						retval += thisFragmentLength;
+					}
+				}
+				return retval;
+			}
+		}
+
 		internal NetConnection(NetPeer owner, IPEndPoint remoteEndpoint)
 		{
 			m_owner = owner;

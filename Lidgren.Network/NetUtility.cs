@@ -31,8 +31,6 @@ namespace Lidgren.Network
 	/// </summary>
 	public static class NetUtility
 	{
-		private static Regex s_regIP;
-
 		/// <summary>
 		/// Get IPv4 endpoint from notation (xxx.xxx.xxx.xxx) or hostname and port number
 		/// </summary>

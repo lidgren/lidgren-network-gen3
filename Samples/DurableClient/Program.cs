@@ -133,6 +133,7 @@ namespace DurableClient
 
 				bdr.AppendLine("SENT Reliable ordered: " + s_reliableOrderedNr[0] + ", " + s_reliableOrderedNr[1] + ", " + s_reliableOrderedNr[2]);
 				bdr.AppendLine("SENT Sequenced: " + s_sequencedNr[0] + ", " + s_sequencedNr[1] + ", " + s_sequencedNr[2]);
+				bdr.AppendLine("Unsent bytes: " + conn.UnsentBytesCount);
 				MainForm.label1.Text = bdr.ToString();
 			}
 		}

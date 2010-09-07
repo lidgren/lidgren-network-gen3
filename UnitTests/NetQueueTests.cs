@@ -8,11 +8,17 @@ namespace UnitTests
 	{
 		public static void Run()
 		{
-			NetQueue<int> queue = new NetQueue<int>(8);
+			NetQueue<int> queue = new NetQueue<int>(4);
 
 			queue.Enqueue(1);
 			queue.Enqueue(2);
 			queue.Enqueue(3);
+
+			int[] arr = queue.ToArray();
+			if (arr.Length != 3)
+				throw new Exception("NetQueue.ToArray failure");
+			if (arr[0] != 1 || arr[1] != 2 || arr[2] != 3)
+				throw new Exception("NetQueue.ToArray failure");
 
 			bool ok;
 			int a;
@@ -68,6 +74,10 @@ namespace UnitTests
 			queue.Clear();
 			if (queue.Count != 0)
 				throw new Exception("NetQueue.Clear failed");
+
+			int[] arr2 = queue.ToArray();
+			if (arr2.Length != 0)
+				throw new Exception("NetQueue.ToArray failure");
 
 			Console.WriteLine("NetQueue tests OK");
 		}
