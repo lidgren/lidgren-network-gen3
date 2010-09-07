@@ -357,7 +357,7 @@ namespace Lidgren.Network
 				// Reliable delivery methods below
 				//
 
-				// queue ack
+				// queue ack; regardless if this is a duplicate or not
 				m_acknowledgesToSend.Enqueue((int)channelSequenceNumber | ((int)mtp << 16));
 				if (m_nextForceAckTime == double.MaxValue)
 					m_nextForceAckTime = now + m_peerConfiguration.m_maxAckDelayTime;

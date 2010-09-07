@@ -113,6 +113,9 @@ namespace Lidgren.Network
 			connectionReset = false;
 			try
 			{
+				if (target.Address == IPAddress.Broadcast)
+					m_socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Broadcast, true);
+
 				int bytesSent = m_socket.SendTo(data, 0, numBytes, SocketFlags.None, target);
 				if (numBytes != bytesSent)
 					LogWarning("Failed to send the full " + numBytes + "; only " + bytesSent + " bytes sent in packet!");
@@ -130,6 +133,11 @@ namespace Lidgren.Network
 			catch (Exception ex)
 			{
 				LogError("Failed to send packet: " + ex);
+			}
+			finally
+			{
+				if (target.Address == IPAddress.Broadcast)
+					m_socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Broadcast, false);
 			}
 		}
 

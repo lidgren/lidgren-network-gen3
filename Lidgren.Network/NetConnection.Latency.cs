@@ -90,7 +90,8 @@ namespace Lidgren.Network
 			double now = NetTime.Now; // need exact number
 
 			m_lastHeardFrom = now;
-			m_lastSendRespondedTo = m_lastPingSendTime;
+			if (m_lastPingSendTime > m_lastSendRespondedTo)
+				m_lastSendRespondedTo = m_lastPingSendTime;
 
 			double rtt = now - m_lastPingSendTime;
 
@@ -126,6 +127,7 @@ namespace Lidgren.Network
 			// timeout
 			if (now > m_lastSendRespondedTo + m_peerConfiguration.m_connectionTimeout)
 			{
+				m_owner.LogDebug(this + " timed out; now is " + now + " last responded to is: " + m_lastSendRespondedTo);
 				Disconnect("Timed out after " + (now - m_lastSendRespondedTo) + " seconds");
 				return;
 			}
