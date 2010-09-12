@@ -185,6 +185,8 @@ namespace Lidgren.Network
 						if (unfin <= 0)
 							m_owner.Recycle(send.Message); // every sent has been acked; free the message
 
+						m_owner.LogVerbose("Received ack for " + tp + "#" + seqNr);
+
 						m_unackedSends.Remove(send);
 
 						// TODO: recycle send

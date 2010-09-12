@@ -46,5 +46,10 @@ namespace Lidgren.Network
 
 			NextResend = NetTime.Now + totalDelay;
 		}
+
+		public override string ToString()
+		{
+			return "[NetSending " + MessageType + "#" + SequenceNumber + " NumSends: " + NumSends + "]";
+		}
 	}
 }

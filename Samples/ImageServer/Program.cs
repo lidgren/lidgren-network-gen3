@@ -32,6 +32,8 @@ namespace ImageServer
 
 			Server = new NetServer(config);
 
+			System.IO.File.Delete("C:\\tmp\\clientlog.txt");
+			System.IO.File.Delete("C:\\tmp\\serverlog.txt");
 
 			Application.Idle += new EventHandler(AppLoop);
 			Application.Run(MainForm);

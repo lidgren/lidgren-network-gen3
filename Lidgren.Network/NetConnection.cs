@@ -176,6 +176,7 @@ namespace Lidgren.Network
 				{
 					if (now > send.NextResend)
 					{
+						m_owner.LogVerbose("Resending " + send);
 						m_unsentMessages.EnqueueFirst(send);
 						send.SetNextResend(this);
 					}
@@ -356,6 +357,7 @@ namespace Lidgren.Network
 		{
 			m_owner.VerifyNetworkThread();
 
+			m_owner.LogVerbose("Received over wire: " + mtp + "#" + channelSequenceNumber);
 			try
 			{
 				NetDeliveryMethod ndm = NetPeer.GetDeliveryMethod(mtp);
@@ -549,7 +551,7 @@ namespace Lidgren.Network
 				im.m_senderEndpoint = m_remoteEndpoint;
 			}
 
-			// m_owner.LogVerbose("Releasing " + im);
+			m_owner.LogVerbose("Releasing " + im);
 			m_owner.ReleaseMessage(im);
 		}
 
@@ -587,6 +589,8 @@ namespace Lidgren.Network
 
 			info.Received[nr] = true;
 			info.TotalReceived++;
+
+			m_owner.LogVerbose("Got fragment " + nr + "/" + info.TotalFragmentCount + " (num received: " + info.TotalReceived + ")");
 
 			return info.TotalReceived >= info.TotalFragmentCount;
 		}
@@ -649,9 +653,9 @@ namespace Lidgren.Network
 			m_unsentMessages.Enqueue(send);
 		}
 
-		public void SendMessage(NetOutgoingMessage msg, NetDeliveryMethod method)
+		public bool SendMessage(NetOutgoingMessage msg, NetDeliveryMethod method)
 		{
-			SendMessage(msg, method, 0);
+			return SendMessage(msg, method, 0);
 		}
 
 		public bool SendMessage(NetOutgoingMessage msg, NetDeliveryMethod method, int sequenceChannel)
