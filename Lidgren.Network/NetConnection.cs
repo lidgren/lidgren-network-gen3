@@ -653,6 +653,23 @@ namespace Lidgren.Network
 			m_unsentMessages.Enqueue(send);
 		}
 
+		/// <summary>
+		/// Creates a new message for sending
+		/// </summary>
+		public NetOutgoingMessage CreateMessage()
+		{
+			return m_owner.CreateMessage();
+		}
+
+		/// <summary>
+		/// Creates a new message for sending
+		/// </summary>
+		/// <param name="initialCapacity">initial capacity in bytes</param>
+		public NetOutgoingMessage CreateMessage(int initialCapacity)
+		{
+			return m_owner.CreateMessage(initialCapacity);
+		}
+
 		public bool SendMessage(NetOutgoingMessage msg, NetDeliveryMethod method)
 		{
 			return SendMessage(msg, method, 0);
