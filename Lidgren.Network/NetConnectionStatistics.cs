@@ -72,6 +72,11 @@ namespace Lidgren.Network
 		/// </summary>
 		public int ReceivedBytes { get { return m_receivedBytes; } }
 
+		/// <summary>
+		/// Gets the number of resent reliable messages for this connection
+		/// </summary>
+		public int ResentMessages { get { return m_resentMessages; } }
+
 		public double LastSendRespondedTo { get { return m_connection.m_lastSendRespondedTo; } }
 
 		public int MostSends
