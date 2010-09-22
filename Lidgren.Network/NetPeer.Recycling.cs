@@ -189,12 +189,15 @@ namespace Lidgren.Network
 				wasStoredBytes = m_storedBytes;
 				reduceTo = m_maxStoredBytes / 2;
 
+				int remove = 0;
 				while (m_storedBytes > reduceTo && m_storagePool.Count > 0)
 				{
 					byte[] arr = m_storagePool[0];
 					m_storedBytes -= arr.Length;
-					m_storagePool.RemoveAt(0);
+					remove++;
 				}
+				if (remove > 0)
+					m_storagePool.RemoveRange(0, remove);
 			}
 
 			// done
