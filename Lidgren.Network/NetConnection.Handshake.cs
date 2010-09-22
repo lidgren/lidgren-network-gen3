@@ -162,6 +162,10 @@ namespace Lidgren.Network
 			// release some held memory
 			m_unackedSends.Clear();
 			m_acknowledgesToSend.Clear();
+			foreach(var wma in m_withheldMessages)
+				if (wma != null)
+					wma.Clear();
+			m_fragmentGroups.Clear();
 
 			SetStatus(NetConnectionStatus.Disconnected, m_disconnectByeMessage);
 			m_disconnectByeMessage = null;
