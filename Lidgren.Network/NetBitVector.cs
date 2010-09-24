@@ -18,35 +18,57 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 */
 using System;
+using System.Text;
 
 namespace Lidgren.Network
 {
 	public sealed class NetBitVector
 	{
 		private readonly int m_capacity;
-		private readonly uint[] m_data;
+		private readonly int[] m_data;
 
 		public int Capacity { get { return m_capacity; } }
 
 		public NetBitVector(int bitsCapacity)
 		{
 			m_capacity = bitsCapacity;
-			m_data = new uint[(bitsCapacity + 31) / 32];
+			m_data = new int[(bitsCapacity + 31) / 32];
 		}
 
 		public bool IsEmpty()
 		{
-			foreach (uint v in m_data)
+			foreach (int v in m_data)
 				if (v != 0)
 					return false;
 			return true;
+		}
+
+		/// <summary>
+		/// Shift all bits one step down, cycling the first bit to the top
+		/// </summary>
+		public void RotateDown()
+		{
+			int lenMinusOne = m_data.Length - 1;
+
+			int firstBit = m_data[0] & 1;
+			for (int i = 0; i < lenMinusOne; i++)
+				m_data[i] = ((m_data[i] >> 1) & ~(1 << 31)) | m_data[i + 1] << 31;
+
+			int lastIndex = m_capacity - 1 - (32 * lenMinusOne);
+
+			// special handling of last int
+			int cur = m_data[lenMinusOne];
+			cur = cur >> 1;
+			cur |= firstBit << lastIndex;
+
+			m_data[lenMinusOne] = cur;
 		}
 
 		public int GetFirstSetIndex()
 		{
 			int idx = 0;
 
-			uint data = m_data[0];
+			int data = m_data[0];
 			while (data == 0)
 			{
 				idx++;
@@ -62,24 +84,20 @@ namespace Lidgren.Network
 
 		public bool Get(int bitIndex)
 		{
-			int idx = bitIndex / 32;
-			uint data = m_data[idx];
-			int bitNr = bitIndex - (idx * 32);
-			return (data & (1 << bitNr)) != 0;
+			return (m_data[bitIndex / 32] & (1 << (bitIndex % 32))) != 0;
 		}
 
 		public void Set(int bitIndex, bool value)
 		{
 			int idx = bitIndex / 32;
-			int bitNr = bitIndex - (idx * 32);
 			if (value)
-				m_data[idx] |= (uint)(1 << bitNr);
+				m_data[idx] |= (1 << (bitIndex % 32));
 			else
-				m_data[idx] &= (uint)(~(1 << bitNr));
+				m_data[idx] &= (~(1 << (bitIndex % 32)));
 		}
 
 		[System.Runtime.CompilerServices.IndexerName("Bit")]
-		public bool this [int index]
+		public bool this[int index]
 		{
 			get { return Get(index); }
 			set { Set(index, value); }
@@ -88,6 +106,16 @@ namespace Lidgren.Network
 		public void Clear()
 		{
 			Array.Clear(m_data, 0, m_data.Length);
+		}
+
+		public override string ToString()
+		{
+			StringBuilder bdr = new StringBuilder(m_capacity + 2);
+			bdr.Append('[');
+			for (int i = 0; i < m_capacity; i++)
+				bdr.Append(Get(m_capacity - i - 1) ? '1' : '0');
+			bdr.Append(']');
+			return bdr.ToString();
 		}
 	}
 }
