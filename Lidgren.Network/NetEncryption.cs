@@ -143,12 +143,16 @@ namespace Lidgren.Network
 	{
 		// TODO: switch to SHA256
 		private static SHA1 m_sha;
+		private static object s_lock = new object();
 
 		public static byte[] Hash(byte[] data)
 		{
-			if (m_sha == null)
-				m_sha = SHA1Managed.Create();
-			return m_sha.ComputeHash(data);
+			lock (s_lock)
+			{
+				if (m_sha == null)
+					m_sha = SHA1Managed.Create();
+				return m_sha.ComputeHash(data);
+			}
 		}
 	}
 
