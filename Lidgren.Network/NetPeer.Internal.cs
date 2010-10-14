@@ -89,6 +89,7 @@ namespace Lidgren.Network
 			}
 #else
 			// random bytes is better than nothing
+			m_macAddressBytes = new byte[6];
 			NetRandom.Instance.NextBytes(m_macAddressBytes);
 #endif
 			LogDebug("Initializing Network");
