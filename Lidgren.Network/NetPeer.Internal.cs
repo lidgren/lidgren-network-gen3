@@ -519,25 +519,46 @@ namespace Lidgren.Network
 					}
 
 					// ok, someone wants to connect to us, and we're accepting connections!
-					if (m_connections.Count >= m_configuration.MaximumConnections)
+					int reservedSlots = m_connections.Count;
+					if (m_pendingConnections != null)
+						reservedSlots += m_pendingConnections.Count;
+					if (reservedSlots >= m_configuration.MaximumConnections)
 					{
 						HandleServerFull(senderEndpoint);
 						break;
 					}
 
-					NetConnection conn = new NetConnection(this, senderEndpoint);
-					conn.m_connectionInitiator = false;
-					conn.m_connectInitationTime = NetTime.Now;
-					conn.m_remoteUniqueIdentifier = remoteUniqueIdentifier;
-
-					if (m_configuration.IsMessageTypeEnabled(NetIncomingMessageType.ConnectionApproval))
+					bool isAlreadyPending = false;
+					if (m_pendingConnections != null)
 					{
-						// do connection approval before accepting this connection
-						AddPendingConnection(conn, approval);
-						break;
+						// check so we don't already have a pending connection to this endpoint
+						foreach (NetConnection conn in m_pendingConnections)
+						{
+							if (conn.RemoteEndpoint.Equals(senderEndpoint))
+							{
+								// Yes, we do.
+								isAlreadyPending = true;
+								break;
+							}
+						}
 					}
 
-					AcceptConnection(conn);
+					if (!isAlreadyPending)
+					{
+						NetConnection conn = new NetConnection(this, senderEndpoint);
+						conn.m_connectionInitiator = false;
+						conn.m_connectInitationTime = NetTime.Now;
+						conn.m_remoteUniqueIdentifier = remoteUniqueIdentifier;
+
+						if (m_configuration.IsMessageTypeEnabled(NetIncomingMessageType.ConnectionApproval))
+						{
+							// do connection approval before accepting this connection
+							AddPendingConnection(conn, approval);
+							break;
+						}
+
+						AcceptConnection(conn);
+					}
 					break;
 				default:
 					LogWarning("Received unconnected library message of type " + libType);
