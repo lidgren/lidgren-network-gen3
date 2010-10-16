@@ -62,7 +62,7 @@ namespace Lidgren.Network
 					string n = mi.Name.Substring(4);
 					foreach (Type it in integralTypes)
 					{
-						if (it.Name == n)
+						if (it.Name == n && mi.ReturnType.Name == it.Name)
 							s_readMethods[it] = mi;
 					}
 				}
