@@ -12,28 +12,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MSServer", "MSServer\MSServer.csproj", "{BBE12F3E-098F-4C13-842F-A52B86E2611A}"
 EndProject
 Global
-	GlobalSection(SourceCodeControl) = preSolution
-		SccNumberOfProjects = 6
-		SccProjectName0 = Perforce\u0020Project
-		SccLocalPath0 = ..\\..
-		SccProvider0 = MSSCCI:Perforce\u0020SCM
-		SccProjectFilePathRelativizedFromConnection0 = Samples\\MasterServerSample\\
-		SccProjectUniqueName1 = ..\\..\\Lidgren.Network\\Lidgren.Network.csproj
-		SccLocalPath1 = ..\\..
-		SccProjectFilePathRelativizedFromConnection1 = Lidgren.Network\\
-		SccProjectUniqueName2 = MasterServer\\MasterServer.csproj
-		SccLocalPath2 = ..\\..
-		SccProjectFilePathRelativizedFromConnection2 = Samples\\MasterServerSample\\MasterServer\\
-		SccProjectUniqueName3 = MSClient\\MSClient.csproj
-		SccLocalPath3 = ..\\..
-		SccProjectFilePathRelativizedFromConnection3 = Samples\\MasterServerSample\\MSClient\\
-		SccProjectUniqueName4 = MSCommon\\MSCommon.csproj
-		SccLocalPath4 = ..\\..
-		SccProjectFilePathRelativizedFromConnection4 = Samples\\MasterServerSample\\MSCommon\\
-		SccProjectUniqueName5 = MSServer\\MSServer.csproj
-		SccLocalPath5 = ..\\..
-		SccProjectFilePathRelativizedFromConnection5 = Samples\\MasterServerSample\\MSServer\\
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU

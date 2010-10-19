@@ -5,13 +5,21 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>9.0.21022</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{FA245447-5F23-4AA1-BD5F-8D2DDF33CFBD}</ProjectGuid>
+    <ProjectGuid>{AE483C29-042E-4226-BA52-D247CE7676DA}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Lidgren.Network</RootNamespace>
     <AssemblyName>Lidgren.Network</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <SccProjectName>
+    </SccProjectName>
+    <SccLocalPath>
+    </SccLocalPath>
+    <SccAuxPath>
+    </SccAuxPath>
+    <SccProvider>
+    </SccProvider>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -21,7 +29,6 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -30,64 +37,76 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Core">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Xml.Linq">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Data.DataSetExtensions">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="NetBigInteger.cs" />
-    <Compile Include="NetBigIntegerBC.cs" />
     <Compile Include="NetBitVector.cs" />
-    <Compile Include="NetConnectionStatistics.cs" />
     <Compile Include="NetBitWriter.cs" />
     <Compile Include="NetClient.cs" />
     <Compile Include="NetConnection.cs" />
     <Compile Include="NetConnection.Handshake.cs" />
     <Compile Include="NetConnection.Latency.cs" />
-    <Compile Include="NetConnection.Reliability.cs" />
+    <Compile Include="NetConnectionStatistics.cs" />
     <Compile Include="NetConnectionStatus.cs" />
     <Compile Include="NetConstants.cs" />
+    <Compile Include="NetDeliveryMethod.cs" />
+    <Compile Include="NetEncryption.cs" />
     <Compile Include="NetException.cs" />
-    <Compile Include="NetFragmentationInfo.cs" />
+    <Compile Include="NetFragmentationHelper.cs" />
     <Compile Include="NetIncomingMessage.cs" />
     <Compile Include="NetIncomingMessage.Peek.cs" />
     <Compile Include="NetIncomingMessage.Read.cs" />
     <Compile Include="NetIncomingMessage.Read.Reflection.cs" />
-    <Compile Include="NetIncomingMessage.Stream.cs" />
     <Compile Include="NetIncomingMessage.Write.cs" />
     <Compile Include="NetIncomingMessageType.cs" />
     <Compile Include="NetMessageType.cs" />
     <Compile Include="NetNatIntroduction.cs" />
     <Compile Include="NetOutgoingMessage.cs" />
-    <Compile Include="NetOutgoingMessage.Stream.cs" />
     <Compile Include="NetOutgoingMessage.Write.cs" />
     <Compile Include="NetOutgoingMessage.Write.Reflection.cs" />
-    <Compile Include="NetPeer.ConnectionApproval.cs" />
     <Compile Include="NetPeer.cs" />
     <Compile Include="NetPeer.Discovery.cs" />
+    <Compile Include="NetPeer.Fragmentation.cs" />
     <Compile Include="NetPeer.Internal.cs" />
     <Compile Include="NetPeer.LatencySimulation.cs" />
     <Compile Include="NetPeer.Logging.cs" />
-    <Compile Include="NetPeer.Recycling.cs" />
+    <Compile Include="NetPeer.MessagePools.cs" />
+    <Compile Include="NetPeer.Send.cs" />
     <Compile Include="NetPeerConfiguration.cs" />
     <Compile Include="NetPeerStatistics.cs" />
     <Compile Include="NetPeerStatus.cs" />
     <Compile Include="NetQueue.cs" />
     <Compile Include="NetRandom.cs" />
-    <Compile Include="NetSending.cs" />
+    <Compile Include="NetReceiverChannelBase.cs" />
+    <Compile Include="NetReliableOrderedReceiver.cs" />
+    <Compile Include="NetReliableSenderChannel.cs" />
+    <Compile Include="NetReliableSequencedReceiver.cs" />
+    <Compile Include="NetReliableUnorderedReceiver.cs" />
+    <Compile Include="NetSenderChannelBase.cs" />
+    <Compile Include="NetSendResult.cs" />
     <Compile Include="NetServer.cs" />
+    <Compile Include="NetStoredReliableMessage.cs" />
     <Compile Include="NetTime.cs" />
+    <Compile Include="NetTuple.cs" />
+    <Compile Include="NetUnreliableSenderChannel.cs" />
+    <Compile Include="NetUnreliableSequencedReceiver.cs" />
+    <Compile Include="NetUnreliableUnorderedReceiver.cs" />
     <Compile Include="NetUtility.cs" />
-    <Compile Include="NetEncryption.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Documentation\ChangedFromV2.txt" />
-    <Content Include="Documentation\PacketLayout.txt" />
-    <Content Include="Documentation\TODO.txt" />
+    <Compile Include="SenderChannelBase.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
