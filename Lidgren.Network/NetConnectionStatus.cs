@@ -27,12 +27,29 @@ namespace Lidgren.Network
 	{
 		None,
 		
-		InitiatedConnect, // we sent Connect
+		/// <summary>
+		/// Connect has been sent; waiting for ConnectResponse
+		/// </summary>
+		InitiatedConnect,
+
+		/// <summary>
+		/// Connect was received and ConnectResponse has been sent; waiting for ConnectionEstablished
+		/// </summary>
 		RespondedConnect, // we got Connect, sent ConnectResponse
-		
+
+		/// <summary>
+		/// Connected
+		/// </summary>
 		Connected,		  // we received ConnectResponse (if initiator) or ConnectionEstablished (if passive)
 
+		/// <summary>
+		/// In the process of disconnecting
+		/// </summary>
 		Disconnecting,
+
+		/// <summary>
+		/// Disconnected
+		/// </summary>
 		Disconnected
 	}
 }

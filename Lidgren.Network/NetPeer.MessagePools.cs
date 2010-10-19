@@ -75,7 +75,6 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Creates a new message for sending
 		/// </summary>
-		/// <param name="initialCapacity">initial capacity in bytes</param>
 		public NetOutgoingMessage CreateMessage()
 		{
 			return CreateMessage(m_configuration.m_defaultOutgoingMessageCapacity);
@@ -84,7 +83,6 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Creates a new message for sending and writes the provided string to it
 		/// </summary>
-		/// <param name="initialCapacity">initial capacity in bytes</param>
 		public NetOutgoingMessage CreateMessage(string content)
 		{
 			byte[] bytes = Encoding.UTF8.GetBytes(content);
