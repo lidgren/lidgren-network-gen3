@@ -62,20 +62,11 @@ namespace Lidgren.Network
 		/// </summary>
 		public void Enqueue(T item)
 		{
-#if DEBUG
-			if (typeof(T) == typeof(NetSending))
-			{
-				NetSending om = item as NetSending;
-				if (om != null)
-					if (om.MessageType == NetMessageType.Error)
-						throw new NetException("Enqueuing NetSending with MessageType.Error!");
-			}
-#endif
 			lock (m_lock)
 			{
 				if (m_size == m_items.Length)
 					SetCapacity(m_items.Length + 8);
-							
+
 				int slot = (m_head + m_size) % m_items.Length;
 				m_items[slot] = item;
 				m_size++;
@@ -91,7 +82,7 @@ namespace Lidgren.Network
 			{
 				if (m_size >= m_items.Length)
 					SetCapacity(m_items.Length + 8);
-			
+
 				m_head--;
 				if (m_head < 0)
 					m_head = m_items.Length - 1;

@@ -235,7 +235,7 @@ namespace Lidgren.Network
 			byte[] bytes = PeekBytes(8);
 			return BitConverter.ToDouble(bytes, 0); // endianness is handled inside BitConverter.ToSingle
 		}
-		
+
 		/// <summary>
 		/// Reads a string
 		/// </summary>

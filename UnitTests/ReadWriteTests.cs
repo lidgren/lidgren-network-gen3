@@ -88,26 +88,7 @@ namespace UnitTests
 			NetException.Assert(readTest.Number == 42);
 			NetException.Assert(readTest.Name == "Hallon");
 			NetException.Assert(readTest.Age == 8.2f);
-
-			msg = peer.CreateMessage();
-
-			System.IO.BinaryWriter br = new System.IO.BinaryWriter(msg);
-
-			br.Write(true);
-			br.Write("hallon");
-			br.Write((byte)42);
-
-			int byteLen = msg.LengthBytes;
-			byte[] rbts = msg.PeekDataBuffer();
-
-			inc = Program.CreateIncomingMessage(rbts, msg.LengthBits);
-
-			System.IO.BinaryReader rdr = new System.IO.BinaryReader(inc);
-
-			bool one = rdr.ReadBoolean();
-			string hallon = rdr.ReadString();
-			byte fourtyTwo = rdr.ReadByte();
-
+			
 			// test aligned WriteBytes/ReadBytes
 			msg = peer.CreateMessage();
 			byte[] tmparr = new byte[] { 5, 6, 7, 8, 9 };

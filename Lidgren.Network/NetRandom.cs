@@ -1,13 +1,11 @@
 ﻿using System;
-using System.Diagnostics;
-using System.Threading;
 
 namespace Lidgren.Network
 {
 	/// <summary>
 	/// A fast random number generator for .NET
 	/// Colin Green, January 2005
-	/// 
+	/// </summary>
 	/// September 4th 2005
 	///	 Added NextBytesUnsafe() - commented out by default.
 	///	 Fixed bug in Reinitialise() - y,z and w variables were not being reset.
@@ -21,7 +19,7 @@ namespace Lidgren.Network
 	///  how this can be easily extened if you need a longer period. At the time of writing I could find no 
 	///  information on the period of System.Random for comparison.
 	/// 
-	///  2) Faster than System.Random. Up to 15x faster, depending on which methods are called.
+	///  2) Faster than System.Random. Up to 8x faster, depending on which methods are called.
 	/// 
 	///  3) Direct replacement for System.Random. This class implements all of the methods that System.Random 
 	///  does plus some additional methods. The like named methods are functionally equivalent.
@@ -37,49 +35,28 @@ namespace Lidgren.Network
 	///  A further performance improvement can be obtained by declaring local variables as static, thus avoiding 
 	///  re-allocation of variables on each call. However care should be taken if multiple instances of
 	///  FastRandom are in use or if being used in a multi-threaded environment.
-	/// 
-	/// </summary>
-	public sealed class NetRandom : Random
+	public class NetRandom
 	{
-		public static NetRandom Instance = new NetRandom();
-
-		protected override double Sample()
-		{
-			return NextDouble();
-		}
+		public static readonly NetRandom Instance = new NetRandom();
 
 		// The +1 ensures NextDouble doesn't generate 1.0
-		private const double c_realUnitInt = 1.0 / ((double)int.MaxValue + 1.0);
-		private const double c_realUnitUint = 1.0 / ((double)uint.MaxValue + 1.0);
-		private const uint c_y = 842502087, c_z = 3579807591, c_w = 273326509;
+		const double REAL_UNIT_INT = 1.0 / ((double)int.MaxValue + 1.0);
+		const double REAL_UNIT_UINT = 1.0 / ((double)uint.MaxValue + 1.0);
+		const uint Y = 842502087, Z = 3579807591, W = 273326509;
 
 		private static int s_extraSeed = 42;
 
-		uint m_x, m_y, m_z, m_w;
+		uint x, y, z, w;
 
-		/// <summary>
-		/// Returns a random seed based on time and working set
-		/// </summary>
-		public static int GetRandomSeed(object forObject)
-		{
-			// mix some semi-random properties
-			int seed = (int)Environment.TickCount;
-			seed ^= forObject.GetHashCode();
-			seed ^= (int)(Stopwatch.GetTimestamp());
-			seed ^= (int)(Environment.WorkingSet); // will return 0 on mono
-
-			int extraSeed = Interlocked.Increment(ref s_extraSeed);
-
-			return seed + extraSeed;
-		}
+		#region Constructors
 
 		/// <summary>
 		/// Initialises a new instance using time dependent seed.
 		/// </summary>
 		public NetRandom()
 		{
-			// Initialise using the system tick count
-			Reinitialise(GetRandomSeed(this));
+			// Initialise using the system tick count.
+			Reinitialise(GetSeed(this));
 		}
 
 		/// <summary>
@@ -92,6 +69,23 @@ namespace Lidgren.Network
 			Reinitialise(seed);
 		}
 
+		public int GetSeed(object forObject)
+		{
+			// mix some semi-random properties
+			int seed = (int)Environment.TickCount;
+			seed ^= forObject.GetHashCode();
+			//seed ^= (int)(Stopwatch.GetTimestamp());
+			//seed ^= (int)(Environment.WorkingSet); // will return 0 on mono
+
+			int extraSeed = System.Threading.Interlocked.Increment(ref s_extraSeed);
+
+			return seed + extraSeed;
+		}
+
+		#endregion
+
+		#region Public Methods [Reinitialisation]
+
 		/// <summary>
 		/// Reinitialises using an int value as a seed.
 		/// </summary>
@@ -101,88 +95,97 @@ namespace Lidgren.Network
 			// The only stipulation stated for the xorshift RNG is that at least one of
 			// the seeds x,y,z,w is non-zero. We fulfill that requirement by only allowing
 			// resetting of the x seed
-			m_x = (uint)seed;
-			m_y = c_y;
-			m_z = c_z;
-			m_w = c_w;
+			x = (uint)seed;
+			y = Y;
+			z = Z;
+			w = W;
 		}
 
-		/// <summary>
-		/// Generates a uint. Values returned are over the full range of a uint, 
-		/// uint.MinValue to uint.MaxValue, including the min and max values.
-		/// </summary>
-		[CLSCompliant(false)]
-		public uint NextUInt()
-		{
-			uint t = (m_x ^ (m_x << 11));
-			m_x = m_y; m_y = m_z; m_z = m_w;
-			return (m_w = (m_w ^ (m_w >> 19)) ^ (t ^ (t >> 8)));
-		}
+		#endregion
+
+		#region Public Methods [System.Random functionally equivalent methods]
 
 		/// <summary>
-		/// Generates a random int. Values returned are over the range 0 to int.MaxValue-1.
-		/// MaxValue is not generated to remain functionally equivalent to System.Random.Next().
-		/// If you require an int from the full range, including negative values then call
-		/// NextUint() and cast the value to an int.
+		/// Generates a random int over the range 0 to int.MaxValue-1.
+		/// MaxValue is not generated in order to remain functionally equivalent to System.Random.Next().
+		/// This does slightly eat into some of the performance gain over System.Random, but not much.
+		/// For better performance see:
+		/// 
+		/// Call NextInt() for an int over the range 0 to int.MaxValue.
+		/// 
+		/// Call NextUInt() and cast the result to an int to generate an int over the full Int32 value range
+		/// including negative values. 
 		/// </summary>
 		/// <returns></returns>
-		public override int Next()
+		public int Next()
 		{
-			uint t = (m_x ^ (m_x << 11));
-			m_x = m_y; m_y = m_z; m_z = m_w;
-			return (int)(0x7FFFFFFF & (m_w = (m_w ^ (m_w >> 19)) ^ (t ^ (t >> 8))));
+			uint t = (x ^ (x << 11));
+			x = y; y = z; z = w;
+			w = (w ^ (w >> 19)) ^ (t ^ (t >> 8));
+
+			// Handle the special case where the value int.MaxValue is generated. This is outside of 
+			// the range of permitted values, so we therefore call Next() to try again.
+			uint rtn = w & 0x7FFFFFFF;
+			if (rtn == 0x7FFFFFFF)
+				return Next();
+			return (int)rtn;
 		}
 
 		/// <summary>
 		/// Generates a random int over the range 0 to upperBound-1, and not including upperBound.
 		/// </summary>
-		public override int Next(int maxValue)
+		/// <param name="upperBound"></param>
+		/// <returns></returns>
+		public int Next(int upperBound)
 		{
-			if (maxValue < 0)
-				throw new ArgumentOutOfRangeException("maxValue", maxValue, "maxValue must be >=0");
+			if (upperBound < 0)
+				throw new ArgumentOutOfRangeException("upperBound", upperBound, "upperBound must be >=0");
 
-			uint t = (m_x ^ (m_x << 11));
-			m_x = m_y; m_y = m_z; m_z = m_w;
+			uint t = (x ^ (x << 11));
+			x = y; y = z; z = w;
 
 			// The explicit int cast before the first multiplication gives better performance.
 			// See comments in NextDouble.
-			return (int)((c_realUnitInt * (int)(0x7FFFFFFF & (m_w = (m_w ^ (m_w >> 19)) ^ (t ^ (t >> 8))))) * maxValue);
+			return (int)((REAL_UNIT_INT * (int)(0x7FFFFFFF & (w = (w ^ (w >> 19)) ^ (t ^ (t >> 8))))) * upperBound);
 		}
 
 		/// <summary>
-		/// Generates a random int over the range minValue to maxValue-1, and not including maxValue.
-		/// maxValue must be >= minValue. minValue may be negative.
+		/// Generates a random int over the range lowerBound to upperBound-1, and not including upperBound.
+		/// upperBound must be >= lowerBound. lowerBound may be negative.
 		/// </summary>
-		public override int Next(int minValue, int maxValue)
+		/// <param name="lowerBound"></param>
+		/// <param name="upperBound"></param>
+		/// <returns></returns>
+		public int Next(int lowerBound, int upperBound)
 		{
-			if (minValue > maxValue)
-				throw new ArgumentOutOfRangeException("maxValue", maxValue, "maxValue must be >=minValue");
+			if (lowerBound > upperBound)
+				throw new ArgumentOutOfRangeException("upperBound", upperBound, "upperBound must be >=lowerBound");
 
-			uint t = (m_x ^ (m_x << 11));
-			m_x = m_y; m_y = m_z; m_z = m_w;
+			uint t = (x ^ (x << 11));
+			x = y; y = z; z = w;
 
 			// The explicit int cast before the first multiplication gives better performance.
 			// See comments in NextDouble.
-			int range = maxValue - minValue;
+			int range = upperBound - lowerBound;
 			if (range < 0)
 			{	// If range is <0 then an overflow has occured and must resort to using long integer arithmetic instead (slower).
 				// We also must use all 32 bits of precision, instead of the normal 31, which again is slower.	
-				return minValue + (int)((c_realUnitUint * (double)(m_w = (m_w ^ (m_w >> 19)) ^ (t ^ (t >> 8)))) * (double)((long)maxValue - (long)minValue));
+				return lowerBound + (int)((REAL_UNIT_UINT * (double)(w = (w ^ (w >> 19)) ^ (t ^ (t >> 8)))) * (double)((long)upperBound - (long)lowerBound));
 			}
 
-			// 31 bits of precision will suffice if range<=int.MaxValue. This allows us to cast to an int anf gain
+			// 31 bits of precision will suffice if range<=int.MaxValue. This allows us to cast to an int and gain
 			// a little more performance.
-			return minValue + (int)((c_realUnitInt * (double)(int)(0x7FFFFFFF & (m_w = (m_w ^ (m_w >> 19)) ^ (t ^ (t >> 8))))) * (double)range);
+			return lowerBound + (int)((REAL_UNIT_INT * (double)(int)(0x7FFFFFFF & (w = (w ^ (w >> 19)) ^ (t ^ (t >> 8))))) * (double)range);
 		}
 
 		/// <summary>
 		/// Generates a random double. Values returned are from 0.0 up to but not including 1.0.
 		/// </summary>
 		/// <returns></returns>
-		public override double NextDouble()
+		public double NextDouble()
 		{
-			uint t = (m_x ^ (m_x << 11));
-			m_x = m_y; m_y = m_z; m_z = m_w;
+			uint t = (x ^ (x << 11));
+			x = y; y = z; z = w;
 
 			// Here we can gain a 2x speed improvement by generating a value that can be cast to 
 			// an int instead of the more easily available uint. If we then explicitly cast to an 
@@ -190,117 +193,45 @@ namespace Lidgren.Network
 			// this final cast is a lot faster than casting from a uint to a double. The extra cast
 			// to an int is very fast (the allocated bits remain the same) and so the overall effect 
 			// of the extra cast is a significant performance improvement.
-			return (c_realUnitInt * (int)(0x7FFFFFFF & (m_w = (m_w ^ (m_w >> 19)) ^ (t ^ (t >> 8)))));
+			//
+			// Also note that the loss of one bit of precision is equivalent to what occurs within 
+			// System.Random.
+			return (REAL_UNIT_INT * (int)(0x7FFFFFFF & (w = (w ^ (w >> 19)) ^ (t ^ (t >> 8)))));
 		}
 
 		/// <summary>
-		/// Generates a random double. Values returned are from 0.0 up to but not including 1.0.
+		/// Generates a random single. Values returned are from 0.0 up to but not including 1.0.
 		/// </summary>
-		/// <returns></returns>
-		public float NextFloat()
+		public float NextSingle()
 		{
-			uint t = (m_x ^ (m_x << 11));
-			m_x = m_y; m_y = m_z; m_z = m_w;
-
-			// Here we can gain a 2x speed improvement by generating a value that can be cast to 
-			// an int instead of the more easily available uint. If we then explicitly cast to an 
-			// int the compiler will then cast the int to a double to perform the multiplication, 
-			// this final cast is a lot faster than casting from a uint to a double. The extra cast
-			// to an int is very fast (the allocated bits remain the same) and so the overall effect 
-			// of the extra cast is a significant performance improvement.
-			return (float)(c_realUnitInt * (int)(0x7FFFFFFF & (m_w = (m_w ^ (m_w >> 19)) ^ (t ^ (t >> 8)))));
-		}
-
-		/// <summary>
-		/// Generates a random double. Values returned are from 0.0 up to but not including roof
-		/// </summary>
-		/// <returns></returns>
-		public float NextFloat(float roof)
-		{
-			uint t = (m_x ^ (m_x << 11));
-			m_x = m_y; m_y = m_z; m_z = m_w;
-
-			// Here we can gain a 2x speed improvement by generating a value that can be cast to 
-			// an int instead of the more easily available uint. If we then explicitly cast to an 
-			// int the compiler will then cast the int to a double to perform the multiplication, 
-			// this final cast is a lot faster than casting from a uint to a double. The extra cast
-			// to an int is very fast (the allocated bits remain the same) and so the overall effect 
-			// of the extra cast is a significant performance improvement.
-			float f = (float)(c_realUnitInt * (int)(0x7FFFFFFF & (m_w = (m_w ^ (m_w >> 19)) ^ (t ^ (t >> 8)))));
-
-			return f * roof;
-		}
-
-		/// <summary>
-		/// Generates a random double. Values returned are from min up to but not including min + variance
-		/// </summary>
-		/// <returns></returns>
-		public float NextFloat(float min, float variance)
-		{
-			uint t = (m_x ^ (m_x << 11));
-			m_x = m_y; m_y = m_z; m_z = m_w;
-
-			// Here we can gain a 2x speed improvement by generating a value that can be cast to 
-			// an int instead of the more easily available uint. If we then explicitly cast to an 
-			// int the compiler will then cast the int to a double to perform the multiplication, 
-			// this final cast is a lot faster than casting from a uint to a double. The extra cast
-			// to an int is very fast (the allocated bits remain the same) and so the overall effect 
-			// of the extra cast is a significant performance improvement.
-			float f = (float)(c_realUnitInt * (int)(0x7FFFFFFF & (m_w = (m_w ^ (m_w >> 19)) ^ (t ^ (t >> 8)))));
-
-			return min + f * variance;
-		}
-
-		/// <summary>
-		/// If passed 0.7f it will return true 7 times out of 10
-		/// </summary>
-		/// <returns></returns>
-		public bool Chance(float percentChance)
-		{
-			uint t = (m_x ^ (m_x << 11));
-			m_x = m_y; m_y = m_z; m_z = m_w;
-
-			// Here we can gain a 2x speed improvement by generating a value that can be cast to 
-			// an int instead of the more easily available uint. If we then explicitly cast to an 
-			// int the compiler will then cast the int to a double to perform the multiplication, 
-			// this final cast is a lot faster than casting from a uint to a double. The extra cast
-			// to an int is very fast (the allocated bits remain the same) and so the overall effect 
-			// of the extra cast is a significant performance improvement.
-			double hit = (c_realUnitInt * (int)(0x7FFFFFFF & (m_w = (m_w ^ (m_w >> 19)) ^ (t ^ (t >> 8)))));
-			return (hit < percentChance);
-		}
-
-		/// <summary>
-		/// Returns a System.Single larger or equal to 0 and smaller than 1.0f - gaussian distributed!
-		/// </summary>
-		public float NextGaussian()
-		{
-			return (float)((NextDouble() + NextDouble() + NextDouble()) / 3.0);
+			return (float)NextDouble();
 		}
 
 		/// <summary>
 		/// Fills the provided byte array with random bytes.
-		/// Increased performance is achieved by dividing and packaging bits directly from the
-		/// random number generator and storing them in 4 byte 'chunks'.
+		/// This method is functionally equivalent to System.Random.NextBytes(). 
 		/// </summary>
 		/// <param name="buffer"></param>
-		public override void NextBytes(byte[] buffer)
+		public void NextBytes(byte[] buffer)
 		{
 			// Fill up the bulk of the buffer in chunks of 4 bytes at a time.
-			uint x = this.m_x, y = this.m_y, z = this.m_z, w = this.m_w;
+			uint x = this.x, y = this.y, z = this.z, w = this.w;
 			int i = 0;
 			uint t;
-			for (; i < buffer.Length - 3; )
+			for (int bound = buffer.Length - 3; i < bound; )
 			{
-				// Generate 4 bytes.
+				// Generate 4 bytes. 
+				// Increased performance is achieved by generating 4 random bytes per loop.
+				// Also note that no mask needs to be applied to zero out the higher order bytes before
+				// casting because the cast ignores thos bytes. Thanks to Stefan Troschütz for pointing this out.
 				t = (x ^ (x << 11));
 				x = y; y = z; z = w;
 				w = (w ^ (w >> 19)) ^ (t ^ (t >> 8));
 
-				buffer[i++] = (byte)(w & 0x000000FF);
-				buffer[i++] = (byte)((w & 0x0000FF00) >> 8);
-				buffer[i++] = (byte)((w & 0x00FF0000) >> 16);
-				buffer[i++] = (byte)((w & 0xFF000000) >> 24);
+				buffer[i++] = (byte)w;
+				buffer[i++] = (byte)(w >> 8);
+				buffer[i++] = (byte)(w >> 16);
+				buffer[i++] = (byte)(w >> 24);
 			}
 
 			// Fill up any remaining bytes in the buffer.
@@ -311,80 +242,126 @@ namespace Lidgren.Network
 				x = y; y = z; z = w;
 				w = (w ^ (w >> 19)) ^ (t ^ (t >> 8));
 
-				buffer[i++] = (byte)(w & 0x000000FF);
+				buffer[i++] = (byte)w;
 				if (i < buffer.Length)
 				{
-					buffer[i++] = (byte)((w & 0x0000FF00) >> 8);
+					buffer[i++] = (byte)(w >> 8);
 					if (i < buffer.Length)
 					{
-						buffer[i++] = (byte)((w & 0x00FF0000) >> 16);
+						buffer[i++] = (byte)(w >> 16);
 						if (i < buffer.Length)
 						{
-							buffer[i] = (byte)((w & 0xFF000000) >> 24);
+							buffer[i] = (byte)(w >> 24);
 						}
 					}
 				}
 			}
-			this.m_x = x; this.m_y = y; this.m_z = z; this.m_w = w;
+			this.x = x; this.y = y; this.z = z; this.w = w;
 		}
 
 
 		//		/// <summary>
 		//		/// A version of NextBytes that uses a pointer to set 4 bytes of the byte buffer in one operation
-		//		/// thus providing a nice speedup. Note that this requires the unsafe compilation flag to be specified
-		//		/// and so is commented out by default.
+		//		/// thus providing a nice speedup. The loop is also partially unrolled to allow out-of-order-execution,
+		//		/// this results in about a x2 speedup on an AMD Athlon. Thus performance may vary wildly on different CPUs
+		//		/// depending on the number of execution units available.
+		//		/// 
+		//		/// Another significant speedup is obtained by setting the 4 bytes by indexing pDWord (e.g. pDWord[i++]=w)
+		//		/// instead of adjusting it dereferencing it (e.g. *pDWord++=w).
+		//		/// 
+		//		/// Note that this routine requires the unsafe compilation flag to be specified and so is commented out by default.
 		//		/// </summary>
 		//		/// <param name="buffer"></param>
 		//		public unsafe void NextBytesUnsafe(byte[] buffer)
 		//		{
-		//			if(buffer.Length % 4 != 0)
-		//				throw new ArgumentException("Buffer length must be divisible by 4", "buffer");
+		//			if(buffer.Length % 8 != 0)
+		//				throw new ArgumentException("Buffer length must be divisible by 8", "buffer");
 		//
 		//			uint x=this.x, y=this.y, z=this.z, w=this.w;
-		//			uint t;
-		//
+		//			
 		//			fixed(byte* pByte0 = buffer)
 		//			{
 		//				uint* pDWord = (uint*)pByte0;
-		//				for(int i = 0, len = buffer.Length>>2; i < len; i++) 
+		//				for(int i=0, len=buffer.Length>>2; i < len; i+=2) 
 		//				{
+		//					uint t=(x^(x<<11));
+		//					x=y; y=z; z=w;
+		//					pDWord[i] = w = (w^(w>>19))^(t^(t>>8));
+		//
 		//					t=(x^(x<<11));
 		//					x=y; y=z; z=w;
-		//					*pDWord++ = w = (w^(w>>19))^(t^(t>>8));
+		//					pDWord[i+1] = w = (w^(w>>19))^(t^(t>>8));
 		//				}
 		//			}
 		//
 		//			this.x=x; this.y=y; this.z=z; this.w=w;
 		//		}
 
+		#endregion
+
+		#region Public Methods [Methods not present on System.Random]
+
+		/// <summary>
+		/// Generates a uint. Values returned are over the full range of a uint, 
+		/// uint.MinValue to uint.MaxValue, inclusive.
+		/// 
+		/// This is the fastest method for generating a single random number because the underlying
+		/// random number generator algorithm generates 32 random bits that can be cast directly to 
+		/// a uint.
+		/// </summary>
+		[CLSCompliant(false)]
+		public uint NextUInt()
+		{
+			uint t = (x ^ (x << 11));
+			x = y; y = z; z = w;
+			return (w = (w ^ (w >> 19)) ^ (t ^ (t >> 8)));
+		}
+
+		/// <summary>
+		/// Generates a random int over the range 0 to int.MaxValue, inclusive. 
+		/// This method differs from Next() only in that the range is 0 to int.MaxValue
+		/// and not 0 to int.MaxValue-1.
+		/// 
+		/// The slight difference in range means this method is slightly faster than Next()
+		/// but is not functionally equivalent to System.Random.Next().
+		/// </summary>
+		/// <returns></returns>
+		public int NextInt()
+		{
+			uint t = (x ^ (x << 11));
+			x = y; y = z; z = w;
+			return (int)(0x7FFFFFFF & (w = (w ^ (w >> 19)) ^ (t ^ (t >> 8))));
+		}
+
+
 		// Buffer 32 bits in bitBuffer, return 1 at a time, keep track of how many have been returned
 		// with bitBufferIdx.
 		uint bitBuffer;
-		int bitBufferIdx = 32;
+		uint bitMask = 1;
 
 		/// <summary>
-		/// Generates random bool. 
-		/// Increased performance is achieved by buffering 32 random bits for 
-		/// future calls. Thus the random number generator is only invoked once
-		/// in every 32 calls.
+		/// Generates a single random bit.
+		/// This method's performance is improved by generating 32 bits in one operation and storing them
+		/// ready for future calls.
 		/// </summary>
 		/// <returns></returns>
 		public bool NextBool()
 		{
-			if (bitBufferIdx == 32)
+			if (bitMask == 1)
 			{
 				// Generate 32 more bits.
-				uint t = (m_x ^ (m_x << 11));
-				m_x = m_y; m_y = m_z; m_z = m_w;
-				bitBuffer = m_w = (m_w ^ (m_w >> 19)) ^ (t ^ (t >> 8));
+				uint t = (x ^ (x << 11));
+				x = y; y = z; z = w;
+				bitBuffer = w = (w ^ (w >> 19)) ^ (t ^ (t >> 8));
 
-				// Reset the idx that tells us which bit to read next.
-				bitBufferIdx = 1;
-				return (bitBuffer & 0x1) == 1;
+				// Reset the bitMask that tells us which bit to read next.
+				bitMask = 0x80000000;
+				return (bitBuffer & bitMask) == 0;
 			}
 
-			bitBufferIdx++;
-			return ((bitBuffer >>= 1) & 0x1) == 1;
+			return (bitBuffer & (bitMask >>= 1)) == 0;
 		}
+
+		#endregion
 	}
 }

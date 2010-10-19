@@ -17,77 +17,40 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 using System;
-using System.Diagnostics;
 using System.Net;
+using System.Diagnostics;
 
 namespace Lidgren.Network
 {
-	internal enum NetIncomingMessageReleaseStatus
-	{
-		NotReleased = 0,
-		ReleasedToApplication,
-		RecycledByApplication
-	}
-
-	[DebuggerDisplay("{m_readPosition} of {m_bitLength} bits ({LengthBytes} bytes) read")]
+	/// <summary>
+	/// Incoming message either sent from a remote peer or generated within the library
+	/// </summary>
+	[DebuggerDisplay("Type={MessageType} LengthBits={LengthBits}")]
 	public partial class NetIncomingMessage
 	{
 		internal byte[] m_data;
 		internal int m_bitLength;
-		internal NetMessageType m_messageType; // NetDeliveryMethod and sequence channel can be derived from this
-		internal ushort m_sequenceNumber;
-		internal NetIncomingMessageReleaseStatus m_status;
-
-		internal NetIncomingMessageType m_incomingType;
+		internal NetIncomingMessageType m_incomingMessageType;
 		internal IPEndPoint m_senderEndpoint;
 		internal NetConnection m_senderConnection;
-
-		internal NetFragmentationInfo m_fragmentationInfo;
-
-		/// <summary>
-		/// Gets the length of the data in number of bytes
-		/// </summary>
-		public int LengthBytes
-		{
-			get { return ((m_bitLength + 7) >> 3); }
-		}
+		internal int m_sequenceNumber;
+		internal NetMessageType m_receivedMessageType;
+		internal bool m_isFragment;
 
 		/// <summary>
-		/// Gets the length of the data in number of bits
+		/// Gets the type of this incoming message
 		/// </summary>
-		public int LengthBits
-		{
-			get { return m_bitLength; }
-		}
+		public NetIncomingMessageType MessageType { get { return m_incomingMessageType; } }
 
 		/// <summary>
-		/// Returns the internal data buffer, don't modify
+		/// Gets the delivery method this message was sent with (if user data)
 		/// </summary>
-		public byte[] PeekDataBuffer()
-		{
-			return m_data;
-		}
+		public NetDeliveryMethod DeliveryMethod { get { return m_receivedMessageType.GetDeliveryMethod(); } }
 
 		/// <summary>
-		/// Gets the NetDeliveryMethod used by this message 
+		/// Gets the sequence channel this message was sent with (if user data)
 		/// </summary>
-		public NetDeliveryMethod DeliveryMethod
-		{
-			get { return NetPeer.GetDeliveryMethod(m_messageType); }
-		}
-
-		/// <summary>
-		/// Gets which sequence channel this message was sent in
-		/// </summary>
-		public int SequenceChannel
-		{
-			get { return (int)m_messageType - (int)NetPeer.GetDeliveryMethod(m_messageType); }
-		}
-
-		/// <summary>
-		/// Type of data contained in this message
-		/// </summary>
-		public NetIncomingMessageType MessageType { get { return m_incomingType; } }
+		public int SequenceChannel { get { return (int)m_receivedMessageType - (int)m_receivedMessageType.GetDeliveryMethod(); } }
 
 		/// <summary>
 		/// IPEndPoint of sender, if any
@@ -99,22 +62,40 @@ namespace Lidgren.Network
 		/// </summary>
 		public NetConnection SenderConnection { get { return m_senderConnection; } }
 
+		/// <summary>
+		/// Gets the length of the message payload in bytes
+		/// </summary>
+		public int LengthBytes
+		{
+			get { return ((m_bitLength + 7) >> 3); }
+		}
+
+		/// <summary>
+		/// Gets the length of the message payload in bits
+		/// </summary>
+		public int LengthBits
+		{
+			get { return m_bitLength; }
+			internal set { m_bitLength = value; }
+		}
+
 		internal NetIncomingMessage()
 		{
 		}
 
-		internal NetIncomingMessage(byte[] data, int dataLength)
+		internal NetIncomingMessage(NetIncomingMessageType tp)
 		{
-			m_data = data;
-			m_bitLength = dataLength * 8;
+			m_incomingMessageType = tp;
 		}
 
 		internal void Reset()
 		{
-			m_bitLength = 0;
+			m_incomingMessageType = NetIncomingMessageType.Error;
 			m_readPosition = 0;
-			m_status = NetIncomingMessageReleaseStatus.NotReleased;
-			m_fragmentationInfo = null;
+			m_receivedMessageType = NetMessageType.LibraryError;
+			m_senderConnection = null;
+			m_bitLength = 0;
+			m_isFragment = false;
 		}
 
 		public void Decrypt(NetXtea tea)
@@ -130,34 +111,9 @@ namespace Lidgren.Network
 			m_data = result;
 		}
 
-		public NetIncomingMessage Clone()
-		{
-			NetIncomingMessage retval = new NetIncomingMessage();
-
-			// copy content
-			retval.m_data = new byte[LengthBytes];
-			Buffer.BlockCopy(m_data, 0, retval.m_data, 0, LengthBytes);
-
-			retval.m_bitLength = m_bitLength;
-			retval.m_messageType = m_messageType;
-			retval.m_sequenceNumber = m_sequenceNumber;
-			retval.m_status = m_status;
-			retval.m_incomingType = m_incomingType;
-			retval.m_senderEndpoint = m_senderEndpoint;
-			retval.m_senderConnection = m_senderConnection;
-			retval.m_fragmentationInfo = m_fragmentationInfo;
-
-			return retval;
-		}
-
 		public override string ToString()
 		{
-			return String.Format("[NetIncomingMessage {0}, {1}|{2}, {3} bits]",
-				m_incomingType,
-				m_messageType,
-				m_sequenceNumber,
-				m_bitLength
-			);
+			return "[NetIncomingMessage #" + m_sequenceNumber + " " + this.LengthBytes + " bytes]";
 		}
 	}
 }

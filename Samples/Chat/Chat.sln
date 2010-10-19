@@ -1,0 +1,57 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SamplesCommon", "..\SamplesCommon\SamplesCommon.csproj", "{773069DA-B66E-4667-ADCB-0D215AD8CF3E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lidgren.Network", "..\..\Lidgren.Network\Lidgren.Network.csproj", "{AE483C29-042E-4226-BA52-D247CE7676DA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatServer", "ChatServer\ChatServer.csproj", "{C5473E52-7601-48CA-BFEB-1AB012F3D4BF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatClient", "ChatClient\ChatClient.csproj", "{B166F0BF-FB75-41F1-A527-B289BDF0FA0C}"
+EndProject
+Global
+	GlobalSection(SourceCodeControl) = preSolution
+		SccNumberOfProjects = 5
+		SccProjectName0 = Perforce\u0020Project
+		SccLocalPath0 = ..\\..
+		SccProvider0 = MSSCCI:Perforce\u0020SCM
+		SccProjectFilePathRelativizedFromConnection0 = Samples\\Chat\\
+		SccProjectUniqueName1 = ..\\..\\Lidgren.Network\\Lidgren.Network.csproj
+		SccLocalPath1 = ..\\..
+		SccProjectFilePathRelativizedFromConnection1 = Lidgren.Network\\
+		SccProjectUniqueName2 = ChatClient\\ChatClient.csproj
+		SccLocalPath2 = ..\\..
+		SccProjectFilePathRelativizedFromConnection2 = Samples\\Chat\\ChatClient\\
+		SccProjectUniqueName3 = ChatServer\\ChatServer.csproj
+		SccLocalPath3 = ..\\..
+		SccProjectFilePathRelativizedFromConnection3 = Samples\\Chat\\ChatServer\\
+		SccProjectUniqueName4 = ..\\SamplesCommon\\SamplesCommon.csproj
+		SccLocalPath4 = ..\\..
+		SccProjectFilePathRelativizedFromConnection4 = Samples\\SamplesCommon\\
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{773069DA-B66E-4667-ADCB-0D215AD8CF3E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{773069DA-B66E-4667-ADCB-0D215AD8CF3E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{773069DA-B66E-4667-ADCB-0D215AD8CF3E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{773069DA-B66E-4667-ADCB-0D215AD8CF3E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AE483C29-042E-4226-BA52-D247CE7676DA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AE483C29-042E-4226-BA52-D247CE7676DA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AE483C29-042E-4226-BA52-D247CE7676DA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AE483C29-042E-4226-BA52-D247CE7676DA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C5473E52-7601-48CA-BFEB-1AB012F3D4BF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C5473E52-7601-48CA-BFEB-1AB012F3D4BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C5473E52-7601-48CA-BFEB-1AB012F3D4BF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C5473E52-7601-48CA-BFEB-1AB012F3D4BF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B166F0BF-FB75-41F1-A527-B289BDF0FA0C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B166F0BF-FB75-41F1-A527-B289BDF0FA0C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B166F0BF-FB75-41F1-A527-B289BDF0FA0C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B166F0BF-FB75-41F1-A527-B289BDF0FA0C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

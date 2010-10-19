@@ -21,6 +21,9 @@ using System.Net;
 
 namespace Lidgren.Network
 {
+	/// <summary>
+	/// Specialized version of NetPeer used for a "client" connection. It does not accept any incoming connections and maintains a ServerConnection property
+	/// </summary>
 	public class NetClient : NetPeer
 	{
 		/// <summary>
@@ -53,9 +56,9 @@ namespace Lidgren.Network
 			config.AcceptIncomingConnections = false;
 		}
 
-		public override NetConnection Connect(IPEndPoint remoteEndpoint, NetOutgoingMessage approvalMessage)
+		public override NetConnection Connect(IPEndPoint remoteEndpoint, NetOutgoingMessage hailMessage)
 		{
-			lock(m_connections)
+			lock (m_connections)
 			{
 				if (m_connections.Count > 0)
 				{
@@ -63,7 +66,7 @@ namespace Lidgren.Network
 					return null;
 				}
 			}
-			return base.Connect(remoteEndpoint, approvalMessage);
+			return base.Connect(remoteEndpoint, hailMessage);
 		}
 
 		/// <summary>
@@ -84,13 +87,13 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Sends message to server
 		/// </summary>
-		public bool SendMessage(NetOutgoingMessage msg, NetDeliveryMethod method)
+		public NetSendResult SendMessage(NetOutgoingMessage msg, NetDeliveryMethod method)
 		{
 			NetConnection serverConnection = ServerConnection;
 			if (serverConnection == null)
 			{
-				//LogError("Cannot send message, no server connection!");
-				return false;
+				LogWarning("Cannot send message, no server connection!");
+				return NetSendResult.Failed;
 			}
 
 			return serverConnection.SendMessage(msg, method, 0);
@@ -99,13 +102,13 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Sends message to server
 		/// </summary>
-		public bool SendMessage(NetOutgoingMessage msg, NetDeliveryMethod method, int sequenceChannel)
+		public NetSendResult SendMessage(NetOutgoingMessage msg, NetDeliveryMethod method, int sequenceChannel)
 		{
 			NetConnection serverConnection = ServerConnection;
 			if (serverConnection == null)
 			{
-				//LogError("Cannot send message, no server connection!");
-				return false;
+				LogWarning("Cannot send message, no server connection!");
+				return NetSendResult.Failed;
 			}
 
 			return serverConnection.SendMessage(msg, method, sequenceChannel);

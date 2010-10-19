@@ -30,28 +30,21 @@ namespace Lidgren.Network
 		private const string c_isLockedMessage = "You may not modify the NetPeerConfiguration after it has been used to initialize a NetPeer";
 
 		private bool m_isLocked;
+		private readonly string m_appIdentifier;
+		private string m_networkThreadName;
+		private IPAddress m_localAddress;
 		internal bool m_acceptIncomingConnections;
-		internal string m_appIdentifier;
-		internal IPAddress m_localAddress;
-		internal int m_port;
-		internal int m_receiveBufferSize, m_sendBufferSize;
-		internal int m_defaultOutgoingMessageCapacity;
-		internal int m_maximumTransmissionUnit;
-		internal bool m_useMessageCoalescing;
 		internal int m_maximumConnections;
-		internal NetIncomingMessageType m_disabledTypes;
-		internal int m_throttleBytesPerSecond;
-		internal int m_throttlePeakBytes;
-		internal int m_maxRecycledBytesKept;
-
-		// handshake, timeout and keepalive
-		internal float m_handshakeAttemptDelay;
-		internal int m_handshakeMaxAttempts;
+		internal int m_maximumTransmissionUnit;
+		internal int m_defaultOutgoingMessageCapacity;
+		internal float m_pingInterval;
+		internal bool m_useMessageRecycling;
 		internal float m_connectionTimeout;
-		internal float m_pingFrequency;
 
-		// reliability
-		internal float m_maxAckDelayTime;
+		internal NetIncomingMessageType m_disabledTypes;
+		internal int m_port;
+		internal int m_receiveBufferSize;
+		internal int m_sendBufferSize;
 
 		// bad network simulation
 		internal float m_loss;
@@ -65,108 +58,47 @@ namespace Lidgren.Network
 				throw new NetException("App identifier must be at least one character long");
 			m_appIdentifier = appIdentifier.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
-			// defaults
-			m_isLocked = false;
-			m_acceptIncomingConnections = true;
+			//
+			// default values
+			//
+			m_disabledTypes = NetIncomingMessageType.ConnectionApproval | NetIncomingMessageType.UnconnectedData | NetIncomingMessageType.VerboseDebugMessage;
+			m_networkThreadName = "Lidgren network thread";
 			m_localAddress = IPAddress.Any;
 			m_port = 0;
 			m_receiveBufferSize = 131071;
 			m_sendBufferSize = 131071;
-			m_connectionTimeout = 25;
-			m_maximumConnections = 16;
-			m_defaultOutgoingMessageCapacity = 8;
-			m_pingFrequency = 6.0f;
-			m_throttleBytesPerSecond = 1024 * 256;
-			m_throttlePeakBytes = 8192;
-			m_maxAckDelayTime = 0.01f;
-			m_handshakeAttemptDelay = 1.0f;
-			m_handshakeMaxAttempts = 7;
-			m_maxRecycledBytesKept = 128 * 1024;
-			m_useMessageCoalescing = true;
+			m_acceptIncomingConnections = false;
+			m_maximumConnections = 32;
+			m_defaultOutgoingMessageCapacity = 16;
+			m_pingInterval = 3.0f;
+			m_connectionTimeout = 25.0f;
+			m_useMessageRecycling = true;
+
+			// Maximum transmission unit
+			// Ethernet can take 1500 bytes of payload, so lets stay below that.
+			// The aim is for a max full packet to be 1440 bytes (30 x 48 bytes, lower than 1468)
+			// -20 bytes IP header
+			//  -8 bytes UDP header
+			//  -4 bytes to be on the safe side and align to 8-byte boundary
+			// Total 1408 bytes
+			// Note that lidgren headers (5 bytes) are not included here; since it's part of the "mtu payload"
+			m_maximumTransmissionUnit = 1408;
 
 			m_loss = 0.0f;
 			m_minimumOneWayLatency = 0.0f;
 			m_randomOneWayLatency = 0.0f;
 			m_duplicates = 0.0f;
 
-			// default disabled types
-			m_disabledTypes = NetIncomingMessageType.ConnectionApproval | NetIncomingMessageType.UnconnectedData | NetIncomingMessageType.VerboseDebugMessage;
-
-			// Maximum transmission unit
-			// Ethernet can take 1500 bytes of payload, so lets stay below that.
-			// The aim is for a max full packet to be 1440 bytes (30 x 48 bytes, lower than 1468)
-			// 20 bytes IP header
-			//  8 bytes UDP header
-			//  5 bytes lidgren header for one message
-			//  1 byte just to be on the safe side
-			// Totals 1440 minus 34 = 1406 bytes free for payload
-			m_maximumTransmissionUnit = 1406;
+			m_isLocked = false;
 		}
 
-		public NetPeerConfiguration Clone()
+		internal void Lock()
 		{
-			NetPeerConfiguration retval = this.MemberwiseClone() as NetPeerConfiguration;
-			retval.m_isLocked = false;
-			return retval;
-		}
-
-		internal void VerifyAndLock()
-		{
-			if (m_throttleBytesPerSecond != 0 && m_throttleBytesPerSecond < m_maximumTransmissionUnit)
-				m_throttleBytesPerSecond = m_maximumTransmissionUnit;
-
 			m_isLocked = true;
 		}
 
-#if DEBUG
 		/// <summary>
-		/// Gets or sets the simulated amount of sent packets lost from 0.0f to 1.0f
-		/// </summary>
-		public float SimulatedLoss
-		{
-			get { return m_loss; }
-			set { m_loss = value; }
-		}
-
-		/// <summary>
-		/// Gets or sets the minimum simulated amount of one way latency for sent packets in seconds
-		/// </summary>
-		public float SimulatedMinimumLatency
-		{
-			get { return m_minimumOneWayLatency; }
-			set { m_minimumOneWayLatency = value; }
-		}
-
-		/// <summary>
-		/// Gets or sets the simulated added random amount of one way latency for sent packets in seconds
-		/// </summary>
-		public float SimulatedRandomLatency
-		{
-			get { return m_randomOneWayLatency; }
-			set { m_randomOneWayLatency = value; }
-		}
-
-		/// <summary>
-		/// Gets the average simulated one way latency in seconds
-		/// </summary>
-		public float SimulatedAverageLatency
-		{
-			get { return m_minimumOneWayLatency + (m_randomOneWayLatency * 0.5f); }
-		}
-
-		/// <summary>
-		/// Gets or sets the simulated amount of duplicated packets from 0.0f to 1.0f
-		/// </summary>
-		public float SimulatedDuplicatesChance
-		{
-			get { return m_duplicates; }
-			set { m_duplicates = value; }
-		}
-
-#endif
-
-		/// <summary>
-		/// Gets or sets the identifier of this application; the library can only connect to matching app identifier peers
+		/// Gets the identifier of this application; the library can only connect to matching app identifier peers
 		/// </summary>
 		public string AppIdentifier
 		{
@@ -209,26 +141,17 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
-		/// Gets or sets the maximum amount of bytes to send in a single packet, excluding ip, udp and lidgren headers
+		/// Gets or sets the name of the library network thread. Cannot be changed once NetPeer is initialized.
 		/// </summary>
-		public int MaximumTransmissionUnit
+		public string NetworkThreadName
 		{
-			get { return m_maximumTransmissionUnit; }
+			get { return m_networkThreadName; }
 			set
 			{
-				if (value < 1 || value >= 4096)
-					throw new NetException("MaximumTransmissionUnit must be between 1 and 4095 bytes");
-				m_maximumTransmissionUnit = value;
+				if (m_isLocked)
+					throw new NetException("NetworkThreadName may not be set after the NetPeer which uses the configuration has been started");
+				m_networkThreadName = value;
 			}
-		}
-
-		/// <summary>
-		/// Gets or sets if message coalescing (sending multiple messages in a single packet) should be used. Normally this should be true.
-		/// </summary>
-		public bool UseMessageCoalescing
-		{
-			get { return m_useMessageCoalescing; }
-			set { m_useMessageCoalescing = value; }
 		}
 
 		/// <summary>
@@ -246,12 +169,17 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
-		/// Gets or sets if the NetPeer should accept incoming connections. This is automatically set to true in NetServer and false in NetClient.
+		/// Gets or sets the maximum amount of bytes to send in a single packet, excluding ip, udp and lidgren headers
 		/// </summary>
-		public bool AcceptIncomingConnections
+		public int MaximumTransmissionUnit
 		{
-			get { return m_acceptIncomingConnections; }
-			set { m_acceptIncomingConnections = value; }
+			get { return m_maximumTransmissionUnit; }
+			set
+			{
+				if (value < 1 || value >= ((ushort.MaxValue + 1) / 8))
+					throw new NetException("MaximumTransmissionUnit must be between 1 and " + (((ushort.MaxValue + 1) / 8) - 1) + " bytes");
+				m_maximumTransmissionUnit = value;
+			}
 		}
 
 		/// <summary>
@@ -261,6 +189,43 @@ namespace Lidgren.Network
 		{
 			get { return m_defaultOutgoingMessageCapacity; }
 			set { m_defaultOutgoingMessageCapacity = value; }
+		}
+
+		/// <summary>
+		/// Gets or sets the time between latency calculating pings
+		/// </summary>
+		public float PingInterval
+		{
+			get { return m_pingInterval; }
+			set { m_pingInterval = value; }
+		}
+
+		/// <summary>
+		/// Gets or sets if the library should recycling messages to avoid excessive garbage collection. Cannot be changed once NetPeer is initialized.
+		/// </summary>
+		public bool UseMessageRecycling
+		{
+			get { return m_useMessageRecycling; }
+			set
+			{
+				if (m_isLocked)
+					throw new NetException(c_isLockedMessage);
+				m_useMessageRecycling = value;
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the number of seconds timeout will be postponed on a successful ping/pong
+		/// </summary>
+		public float ConnectionTimeout
+		{
+			get { return m_connectionTimeout; }
+			set
+			{
+				if (value < m_pingInterval)
+					throw new NetException("Connection timeout cannot be lower than ping interval!");
+				m_connectionTimeout = value;
+			}
 		}
 
 		/// <summary>
@@ -320,86 +285,65 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
-		/// Gets or sets the number of seconds of non-response before disconnecting because of time out. Cannot be changed once NetPeer is initialized.
+		/// Gets or sets if the NetPeer should accept incoming connections. This is automatically set to true in NetServer and false in NetClient.
 		/// </summary>
-		public float ConnectionTimeout
+		public bool AcceptIncomingConnections
 		{
-			get { return m_connectionTimeout; }
-			set
-			{
-				if (m_isLocked)
-					throw new NetException(c_isLockedMessage);
-				m_connectionTimeout = value;
-			}
+			get { return m_acceptIncomingConnections; }
+			set { m_acceptIncomingConnections = value; }
+		}
+
+#if DEBUG
+		/// <summary>
+		/// Gets or sets the simulated amount of sent packets lost from 0.0f to 1.0f
+		/// </summary>
+		public float SimulatedLoss
+		{
+			get { return m_loss; }
+			set { m_loss = value; }
 		}
 
 		/// <summary>
-		/// Gets or sets the number of seconds between latency calculation (rtt) pings
+		/// Gets or sets the minimum simulated amount of one way latency for sent packets in seconds
 		/// </summary>
-		public float PingFrequency
+		public float SimulatedMinimumLatency
 		{
-			get { return m_pingFrequency; }
-			set { m_pingFrequency = value; }
+			get { return m_minimumOneWayLatency; }
+			set { m_minimumOneWayLatency = value; }
 		}
 
 		/// <summary>
-		/// Gets or sets the number of allowed bytes to be sent per second per connection; 0 means unlimited (throttling disabled)
+		/// Gets or sets the simulated added random amount of one way latency for sent packets in seconds
 		/// </summary>
-		public int ThrottleBytesPerSecond
+		public float SimulatedRandomLatency
 		{
-			get { return m_throttleBytesPerSecond; }
-			set
-			{
-				if (m_throttleBytesPerSecond != 0 && m_throttleBytesPerSecond < m_maximumTransmissionUnit)
-					throw new NetException("ThrottleBytesPerSecond can not be lower than MaximumTransmissionUnit");
-				m_throttleBytesPerSecond = value;
-			}
+			get { return m_randomOneWayLatency; }
+			set { m_randomOneWayLatency = value; }
 		}
 
 		/// <summary>
-		/// Gets or sets the peak number of bytes sent before throttling kicks in, if enabled
+		/// Gets the average simulated one way latency in seconds
 		/// </summary>
-		public int ThrottlePeakBytes
+		public float SimulatedAverageLatency
 		{
-			get { return m_throttlePeakBytes; }
-			set
-			{
-				if (m_throttlePeakBytes < m_maximumTransmissionUnit)
-					throw new NetException("ThrottlePeakBytes can not be lower than MaximumTransmissionUnit");
-				m_throttlePeakBytes = value;
-			}
+			get { return m_minimumOneWayLatency + (m_randomOneWayLatency * 0.5f); }
 		}
 
 		/// <summary>
-		/// Gets or sets the number between handshake attempts in seconds
+		/// Gets or sets the simulated amount of duplicated packets from 0.0f to 1.0f
 		/// </summary>
-		public float HandshakeAttemptDelay
+		public float SimulatedDuplicatesChance
 		{
-			get { return m_handshakeAttemptDelay; }
-			set { m_handshakeAttemptDelay = value; }
+			get { return m_duplicates; }
+			set { m_duplicates = value; }
 		}
+#endif
 
-		/// <summary>
-		/// Gets or sets the maximum number of handshake attempts before declaring failure to shake hands
-		/// </summary>
-		public int HandshakeMaxAttempts
+		public NetPeerConfiguration Clone()
 		{
-			get { return m_handshakeMaxAttempts; }
-			set { m_handshakeMaxAttempts = value; }
-		}
-
-		/// <summary>
-		/// Gets or sets the maximum number of bytes kept in the recycle pool. Cannot be changed once NetPeer is initialized.
-		/// </summary>
-		public int MaxRecycledBytesKept
-		{
-			get { return m_maxRecycledBytesKept; }
-			set
-			{
-				if (m_isLocked)
-					throw new NetException(c_isLockedMessage);
-				m_maxRecycledBytesKept = value;
-			}
+			NetPeerConfiguration retval = this.MemberwiseClone() as NetPeerConfiguration;
+			retval.m_isLocked = false;
+			return retval;
 		}
 	}
 }

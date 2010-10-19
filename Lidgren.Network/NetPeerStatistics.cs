@@ -23,6 +23,9 @@ using System.Diagnostics;
 
 namespace Lidgren.Network
 {
+	/// <summary>
+	/// Statistics for a NetPeer instance
+	/// </summary>
 	public sealed class NetPeerStatistics
 	{
 		private readonly NetPeer m_peer;
@@ -96,7 +99,7 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Gets the number of bytes in the recycled pool
 		/// </summary>
-		public int BytesInRecyclePool { get { return m_peer.m_storedBytes; } }
+		public int BytesInRecyclePool { get { return m_peer.m_storagePoolBytes; } }
 
 		[Conditional("DEBUG")]
 		internal void PacketSent(int numBytes, int numMessages)
@@ -113,7 +116,7 @@ namespace Lidgren.Network
 			m_receivedBytes += numBytes;
 			m_receivedMessages += numMessages;
 		}
-		
+
 		public override string ToString()
 		{
 			StringBuilder bdr = new StringBuilder();
@@ -121,7 +124,7 @@ namespace Lidgren.Network
 			bdr.AppendLine("Sent " + m_sentBytes + " bytes in " + m_sentMessages + " messages in " + m_sentPackets + " packets");
 			bdr.AppendLine("Received " + m_receivedBytes + " bytes in " + m_receivedMessages + " messages in " + m_receivedPackets + " packets");
 			bdr.AppendLine("Allocated " + m_bytesAllocated + " bytes");
-			bdr.AppendLine("Recycled pool " + m_peer.m_storedBytes + " bytes");
+			bdr.AppendLine("Recycled pool " + m_peer.m_storagePoolBytes + " bytes");
 			return bdr.ToString();
 		}
 	}

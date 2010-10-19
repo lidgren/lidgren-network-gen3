@@ -23,7 +23,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace Lidgren.Network
 {
 	/// <summary>
-	/// Type of incoming message
+	/// The type of a NetIncomingMessage
 	/// </summary>
 	[SuppressMessage("Microsoft.Design", "CA1027:MarkEnumsWithFlags")]
 	public enum NetIncomingMessageType

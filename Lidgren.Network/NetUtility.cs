@@ -144,7 +144,7 @@ namespace Lidgren.Network
 			}
 			return new string(c);
 		}
-		
+
 		/// <summary>
 		/// Gets my local IP address (not necessarily external) and subnet mask
 		/// </summary>
@@ -260,6 +260,62 @@ namespace Lidgren.Network
 			for (int i = 0; i < hexString.Length; i += 2)
 				retval[i / 2] = Convert.ToByte(hexString.Substring(i, 2), 16);
 			return retval;
+		}
+
+		public static string ToHumanReadable(long bytes)
+		{
+			if (bytes < 4000) // 1-4 kb is printed in bytes
+				return bytes + " bytes";
+			if (bytes < 1000 * 1000) // 4-999 kb is printed in kb
+				return Math.Round(((double)bytes / 1000.0), 2) + " kilobytes";
+			return Math.Round(((double)bytes / (1000.0 * 1000.0)), 2) + " megabytes"; // else megabytes
+		}
+
+		internal static int RelativeSequenceNumber(int nr, int expected)
+		{
+			int retval = ((nr + NetConstants.NumSequenceNumbers) - expected) % NetConstants.NumSequenceNumbers;
+			if (retval > (NetConstants.NumSequenceNumbers / 2))
+				retval -= NetConstants.NumSequenceNumbers;
+			return retval;
+		}
+
+		// shell sort
+		internal static void SortMembersList(System.Reflection.MemberInfo[] list)
+		{
+			int h;
+			int j;
+			System.Reflection.MemberInfo tmp;
+
+			h = 1;
+			while (h * 3 + 1 <= list.Length)
+				h = 3 * h + 1;
+
+			while (h > 0)
+			{
+				for (int i = h - 1; i < list.Length; i++)
+				{
+					tmp = list[i];
+					j = i;
+					while (true)
+					{
+						if (j >= h)
+						{
+							if (string.Compare(list[j - h].Name, tmp.Name, StringComparison.InvariantCulture) > 0)
+							{
+								list[j] = list[j - h];
+								j -= h;
+							}
+							else
+								break;
+						}
+						else
+							break;
+					}
+
+					list[j] = tmp;
+				}
+				h /= 3;
+			}
 		}
 	}
 }

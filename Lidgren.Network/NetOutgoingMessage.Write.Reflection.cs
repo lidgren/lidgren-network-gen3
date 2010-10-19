@@ -41,7 +41,7 @@ namespace Lidgren.Network
 			Type tp = ob.GetType();
 
 			FieldInfo[] fields = tp.GetFields(flags);
-			NetIncomingMessage.SortMembersList(fields);
+			NetUtility.SortMembersList(fields);
 
 			foreach (FieldInfo fi in fields)
 			{
@@ -74,7 +74,7 @@ namespace Lidgren.Network
 			Type tp = ob.GetType();
 
 			PropertyInfo[] fields = tp.GetProperties(flags);
-			NetIncomingMessage.SortMembersList(fields);
+			NetUtility.SortMembersList(fields);
 
 			foreach (PropertyInfo fi in fields)
 			{

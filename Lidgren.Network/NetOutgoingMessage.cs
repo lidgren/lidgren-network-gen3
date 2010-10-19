@@ -15,182 +15,103 @@ PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
 LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 USE OR OTHER DEALINGS IN THE SOFTWARE.
+
 */
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Net;
-using System.Text;
 
 namespace Lidgren.Network
 {
+	/// <summary>
+	/// Outgoing message used to send data to remote peer(s)
+	/// </summary>
 	[DebuggerDisplay("LengthBits={LengthBits}")]
 	public sealed partial class NetOutgoingMessage
 	{
-		// reference count before message can be recycled
-		internal int m_numUnfinishedSendings;
+		internal NetMessageType m_messageType;
+		internal bool m_isSent;
+		internal int m_recyclingCount;
 
-		internal bool m_wasSent; // true is SendMessage() public method has been called
-		internal NetMessageLibraryType m_libType = NetMessageLibraryType.Error;
-
-		//internal int m_fragmentGroupId;
-		//internal int m_fragmentNumber;
-		//internal int m_fragmentTotalCount;
-
-		/// <summary>
-		/// Returns true if this message has been passed to SendMessage() already
-		/// </summary>
-		public bool IsSent { get { return m_wasSent; } }
+		internal int m_fragmentGroup;             // which group of fragments ths belongs to
+		internal int m_fragmentGroupTotalBits;    // total number of bits in this group
+		internal int m_fragmentChunkByteSize;	  // size, in bytes, of every chunk but the last one
+		internal int m_fragmentChunkNumber;       // which number chunk this is, starting with 0
 
 		internal NetOutgoingMessage()
 		{
 		}
 
-		internal void Reset()
+		public void Reset()
 		{
-			NetException.Assert(m_numUnfinishedSendings == 0, "Ouch! Resetting NetOutgoingMessage still in some queue!");
-			NetException.Assert(m_wasSent == true, "Ouch! Resetting unsent message!");
-
+			m_messageType = NetMessageType.LibraryError;
 			m_bitLength = 0;
-			m_libType = NetMessageLibraryType.Error;
-			m_wasSent = false;
+			m_isSent = false;
+			m_recyclingCount = 0;
+			m_fragmentGroup = 0;
 		}
 
-		internal static int EncodeAcksMessage(byte[] buffer, int ptr, NetConnection conn, int maxBytesPayload)
+		internal int Encode(byte[] intoBuffer, int ptr, int sequenceNumber)
 		{
-			// TODO: if appropriate; make bit vector of adjacent acks
+			//  8 bits - NetMessageType
+			//  1 bit  - Fragment?
+			// 15 bits - Sequence number
+			// 16 bits - Payload length in bits
+			
+			intoBuffer[ptr++] = (byte)m_messageType;
 
-			buffer[ptr++] = (byte)NetMessageType.Library;
-			buffer[ptr++] = (byte)NetMessageLibraryType.Acknowledge;
+			byte low = (byte)((sequenceNumber << 1) | (m_fragmentGroup == 0 ? 0 : 1));
+			intoBuffer[ptr++] = low;
+			intoBuffer[ptr++] = (byte)(sequenceNumber >> 7);
 
-			Queue<int> acks = conn.m_acknowledgesToSend;
-
-			int maxAcks = maxBytesPayload / 3;
-			int acksToEncode = (acks.Count < maxAcks ? acks.Count : maxAcks);
-
-			int payloadBitsLength = acksToEncode * 3 * 8;
-			if (payloadBitsLength < 127)
+			if (m_fragmentGroup == 0)
 			{
-				buffer[ptr++] = (byte)payloadBitsLength;
+				intoBuffer[ptr++] = (byte)m_bitLength;
+				intoBuffer[ptr++] = (byte)(m_bitLength >> 8);
+
+				int byteLen = NetUtility.BytesToHoldBits(m_bitLength);
+				if (byteLen > 0)
+				{
+					Buffer.BlockCopy(m_data, 0, intoBuffer, ptr, byteLen);
+					ptr += byteLen;
+				}
 			}
 			else
 			{
-				buffer[ptr++] = (byte)((payloadBitsLength & 127) | 128);
-				buffer[ptr++] = (byte)(payloadBitsLength >> 7);
+				int wasPtr = ptr;
+				intoBuffer[ptr++] = (byte)m_bitLength;
+				intoBuffer[ptr++] = (byte)(m_bitLength >> 8);
+
+				//
+				// write fragmentation header
+				//
+				ptr = NetFragmentationHelper.WriteHeader(intoBuffer, ptr, m_fragmentGroup, m_fragmentGroupTotalBits, m_fragmentChunkByteSize, m_fragmentChunkNumber);
+				int hdrLen = ptr - wasPtr - 2;
+
+				// update length
+				int realBitLength = m_bitLength + (hdrLen * 8);
+				intoBuffer[wasPtr] = (byte)realBitLength;
+				intoBuffer[wasPtr + 1] = (byte)(realBitLength >> 8);
+
+				int byteLen = NetUtility.BytesToHoldBits(m_bitLength);
+				if (byteLen > 0)
+				{
+					Buffer.BlockCopy(m_data, (int)(m_fragmentChunkNumber * m_fragmentChunkByteSize), intoBuffer, ptr, byteLen);
+					ptr += byteLen;
+				}
 			}
 
-			for (int i = 0; i < acksToEncode; i++)
-			{
-				int ack = acks.Dequeue();
-				buffer[ptr++] = (byte)ack; // message type
-				buffer[ptr++] = (byte)(ack >> 8); // seqnr low
-				buffer[ptr++] = (byte)(ack >> 16); // seqnr high
-			}
-
+			NetException.Assert(ptr > 0);
 			return ptr;
 		}
 
-		internal int EncodeUnfragmented(byte[] buffer, int ptr, NetMessageType tp, ushort sequenceNumber)
+		internal int GetEncodedSize()
 		{
-			// message type
-			buffer[ptr++] = (byte)tp; //  | (m_fragmentGroupId == -1 ? 0 : 128));
+			int retval = 5; // regular headers
+			if (m_fragmentGroup != 0)
+				retval += NetFragmentationHelper.GetFragmentationHeaderSize(m_fragmentGroup, m_fragmentGroupTotalBits / 8, m_fragmentChunkByteSize, m_fragmentChunkNumber);
+			retval += this.LengthBytes;
 
-			if (tp == NetMessageType.Library)
-				buffer[ptr++] = (byte)m_libType;
-
-			// channel sequence number
-			if (tp >= NetMessageType.UserSequenced)
-			{
-				ushort seqNr = (ushort)sequenceNumber;
-				buffer[ptr++] = (byte)seqNr;
-				buffer[ptr++] = (byte)(seqNr >> 8);
-			}
-
-			// payload length
-			int payloadBitsLength = LengthBits;
-			int payloadBytesLength = NetUtility.BytesToHoldBits(payloadBitsLength);
-			if (payloadBitsLength < 127)
-			{
-				buffer[ptr++] = (byte)payloadBitsLength;
-			}
-			else if (payloadBitsLength < 32768)
-			{
-				buffer[ptr++] = (byte)((payloadBitsLength & 127) | 128);
-				buffer[ptr++] = (byte)(payloadBitsLength >> 7);
-			}
-			else
-			{
-				throw new NetException("Packet content too large; 4095 bytes maximum");
-			}
-
-			// payload
-			if (payloadBitsLength > 0)
-			{
-				// zero out last byte
-				buffer[ptr + payloadBytesLength] = 0;
-
-				Buffer.BlockCopy(m_data, 0, buffer, ptr, payloadBytesLength);
-				ptr += payloadBytesLength;
-			}
-
-			return ptr;
-		}
-
-		internal int EncodeFragmented(byte[] buffer, int ptr, NetSending send, int mtu)
-		{
-			NetException.Assert(send.MessageType != NetMessageType.Library, "Library messages cant be fragmented");
-
-			// message type
-			buffer[ptr++] = (byte)((int)send.MessageType | 128);
-
-			// channel sequence number
-			if (send.MessageType >= NetMessageType.UserSequenced)
-			{
-				ushort seqNr = (ushort)send.SequenceNumber;
-				buffer[ptr++] = (byte)seqNr;
-				buffer[ptr++] = (byte)(seqNr >> 8);
-			}
-
-			// calculate fragment payload length
-			mtu -= NetConstants.FragmentHeaderSize; // size of fragmentation info
-			int thisFragmentLength = (send.FragmentNumber == send.FragmentTotalCount - 1 ? (send.Message.LengthBytes - (mtu * (send.FragmentTotalCount - 1))) : mtu);
-
-			int payloadBitsLength = thisFragmentLength * 8;
-			if (payloadBitsLength < 127)
-			{
-				buffer[ptr++] = (byte)payloadBitsLength;
-			}
-			else if (payloadBitsLength < 32768)
-			{
-				buffer[ptr++] = (byte)((payloadBitsLength & 127) | 128);
-				buffer[ptr++] = (byte)(payloadBitsLength >> 7);
-			}
-			else
-			{
-				throw new NetException("Packet content too large; 4095 bytes maximum");
-			}
-
-			// fragmentation info
-			buffer[ptr++] = (byte)send.FragmentGroupId;
-			buffer[ptr++] = (byte)(send.FragmentGroupId >> 8);
-			buffer[ptr++] = (byte)send.FragmentTotalCount;
-			buffer[ptr++] = (byte)(send.FragmentTotalCount >> 8);
-			buffer[ptr++] = (byte)send.FragmentNumber;
-			buffer[ptr++] = (byte)(send.FragmentNumber >> 8);
-
-			// payload
-			if (payloadBitsLength > 0)
-			{
-				// zero out last byte
-				buffer[ptr + thisFragmentLength] = 0;
-
-				int offset = (mtu * send.FragmentNumber);
-
-				Buffer.BlockCopy(m_data, offset, buffer, ptr, thisFragmentLength);
-				ptr += thisFragmentLength;
-			}
-
-			return ptr;
+			return retval;
 		}
 
 		public void Encrypt(NetXtea tea)
@@ -204,14 +125,14 @@ namespace Lidgren.Network
 				Write((byte)0);
 
 			byte[] result = new byte[m_data.Length];
-			for(int i=0;i<blocksNeeded;i++)
+			for (int i = 0; i < blocksNeeded; i++)
 				tea.EncryptBlock(m_data, (i * 8), result, (i * 8));
 			m_data = result;
 		}
 
 		public override string ToString()
 		{
-			return "[NetOutgoingMessage " + LengthBytes + " bytes]";
+			return "[NetOutgoingMessage " + m_messageType + " " + this.LengthBytes + " bytes]";
 		}
 	}
 }

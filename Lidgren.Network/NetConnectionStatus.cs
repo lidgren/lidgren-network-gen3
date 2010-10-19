@@ -21,13 +21,17 @@ using System;
 namespace Lidgren.Network
 {
 	/// <summary>
-	/// Status of a connection
+	/// Status for a NetConnection instance
 	/// </summary>
 	public enum NetConnectionStatus
 	{
 		None,
-		Connecting,
-		Connected,
+		
+		InitiatedConnect, // we sent Connect
+		RespondedConnect, // we got Connect, sent ConnectResponse
+		
+		Connected,		  // we received ConnectResponse (if initiator) or ConnectionEstablished (if passive)
+
 		Disconnecting,
 		Disconnected
 	}

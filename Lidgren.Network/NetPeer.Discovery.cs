@@ -11,8 +11,8 @@ namespace Lidgren.Network
 		public void DiscoverLocalPeers(int serverPort)
 		{
 			NetOutgoingMessage om = CreateMessage(0);
-			om.m_libType = NetMessageLibraryType.Discovery;
-			SendUnconnectedLibrary(om, new IPEndPoint(IPAddress.Broadcast, serverPort));
+			om.m_messageType = NetMessageType.Discovery;
+			m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(new IPEndPoint(IPAddress.Broadcast, serverPort), om));
 		}
 
 		/// <summary>
@@ -23,18 +23,35 @@ namespace Lidgren.Network
 			IPAddress address = NetUtility.Resolve(host);
 			if (address == null)
 				return false;
-			return DiscoverKnownPeer(new IPEndPoint(address, serverPort));
+			DiscoverKnownPeer(new IPEndPoint(address, serverPort));
+			return true;
 		}
 
 		/// <summary>
 		/// Emit a discovery signal to a single known host
 		/// </summary>
-		public bool DiscoverKnownPeer(IPEndPoint endpoint)
+		public void DiscoverKnownPeer(IPEndPoint endpoint)
 		{
 			NetOutgoingMessage om = CreateMessage(0);
-			om.m_libType = NetMessageLibraryType.Discovery;
-			SendUnconnectedLibrary(om, endpoint);
-			return true;
+			om.m_messageType = NetMessageType.Discovery;
+			m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(endpoint, om));
+		}
+
+		/// <summary>
+		/// Send a discovery response message
+		/// </summary>
+		public void SendDiscoveryResponse(NetOutgoingMessage msg, IPEndPoint recipient)
+		{
+			if (recipient == null)
+				throw new ArgumentNullException("recipient");
+
+			if (msg == null)
+				msg = CreateMessage(0);
+			else if (msg.m_isSent)
+				throw new NetException("Message has already been sent!");
+
+			msg.m_messageType = NetMessageType.DiscoveryResponse;
+			m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(recipient, msg));
 		}
 	}
 }

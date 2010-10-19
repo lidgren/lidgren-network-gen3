@@ -20,148 +20,175 @@ using System;
 
 namespace Lidgren.Network
 {
-	// publicly visible subset of NetMessageType
-
-	/// <summary>
-	/// How the library deals with dropped and delayed messages
-	/// </summary>
-	public enum NetDeliveryMethod : byte
-	{
-		Unknown = 0,
-		Unreliable = 2,
-		UnreliableSequenced = 3,
-		ReliableUnordered = 35,
-		ReliableSequenced = 36,
-		ReliableOrdered = 68,
-	}
-
-	internal enum NetMessageLibraryType : byte
-	{
-		Error = 0,
-		KeepAlive = 1, // used for piggybacking acks
-		Ping = 2, // used for RTT calculation
-		Pong = 3, // used for RTT calculation
-		Connect = 4,
-		ConnectResponse = 5,
-		ConnectionEstablished = 6,
-		Acknowledge = 7,
-		Disconnect = 8,
-		Discovery = 9,
-		DiscoveryResponse = 10,
-		NatPunchMessage = 11, // send between peers
-		NatIntroduction = 12, // send to master server
-	}
-
 	internal enum NetMessageType : byte
 	{
-		Error = 0,
+		Unconnected = 0,
 
-		Library = 1, // NetMessageLibraryType byte follows
+		UserUnreliable = 1,
 
-		UserUnreliable = 2,
+		UserSequenced1 = 2,
+		UserSequenced2 = 3,
+		UserSequenced3 = 4,
+		UserSequenced4 = 5,
+		UserSequenced5 = 6,
+		UserSequenced6 = 7,
+		UserSequenced7 = 8,
+		UserSequenced8 = 9,
+		UserSequenced9 = 10,
+		UserSequenced10 = 11,
+		UserSequenced11 = 12,
+		UserSequenced12 = 13,
+		UserSequenced13 = 14,
+		UserSequenced14 = 15,
+		UserSequenced15 = 16,
+		UserSequenced16 = 17,
+		UserSequenced17 = 18,
+		UserSequenced18 = 19,
+		UserSequenced19 = 20,
+		UserSequenced20 = 21,
+		UserSequenced21 = 22,
+		UserSequenced22 = 23,
+		UserSequenced23 = 24,
+		UserSequenced24 = 25,
+		UserSequenced25 = 26,
+		UserSequenced26 = 27,
+		UserSequenced27 = 28,
+		UserSequenced28 = 29,
+		UserSequenced29 = 30,
+		UserSequenced30 = 31,
+		UserSequenced31 = 32,
+		UserSequenced32 = 33,
 
-		// 3 to 34 = UserSequenced 0 to 31
-		UserSequenced = 3,
-		UserSequenced1 = 4,
-		UserSequenced2 = 5,
-		UserSequenced3 = 6,
-		UserSequenced4 = 7,
-		UserSequenced5 = 8,
-		UserSequenced6 = 9,
-		UserSequenced7 = 10,
-		UserSequenced8 = 11,
-		UserSequenced9 = 12,
-		UserSequenced10 = 13,
-		UserSequenced11 = 14,
-		UserSequenced12 = 15,
-		UserSequenced13 = 16,
-		UserSequenced14 = 17,
-		UserSequenced15 = 18,
-		UserSequenced16 = 19,
-		UserSequenced17 = 20,
-		UserSequenced18 = 21,
-		UserSequenced19 = 22,
-		UserSequenced20 = 23,
-		UserSequenced21 = 24,
-		UserSequenced22 = 25,
-		UserSequenced23 = 26,
-		UserSequenced24 = 27,
-		UserSequenced25 = 28,
-		UserSequenced26 = 29,
-		UserSequenced27 = 30,
-		UserSequenced28 = 31,
-		UserSequenced29 = 32,
-		UserSequenced30 = 33,
-		UserSequenced31 = 34,
+		UserReliableUnordered = 34,
 
-		UserReliableUnordered = 35,
+		UserReliableSequenced1 = 35,
+		UserReliableSequenced2 = 36,
+		UserReliableSequenced3 = 37,
+		UserReliableSequenced4 = 38,
+		UserReliableSequenced5 = 39,
+		UserReliableSequenced6 = 40,
+		UserReliableSequenced7 = 41,
+		UserReliableSequenced8 = 42,
+		UserReliableSequenced9 = 43,
+		UserReliableSequenced10 = 44,
+		UserReliableSequenced11 = 45,
+		UserReliableSequenced12 = 46,
+		UserReliableSequenced13 = 47,
+		UserReliableSequenced14 = 48,
+		UserReliableSequenced15 = 49,
+		UserReliableSequenced16 = 50,
+		UserReliableSequenced17 = 51,
+		UserReliableSequenced18 = 52,
+		UserReliableSequenced19 = 53,
+		UserReliableSequenced20 = 54,
+		UserReliableSequenced21 = 55,
+		UserReliableSequenced22 = 56,
+		UserReliableSequenced23 = 57,
+		UserReliableSequenced24 = 58,
+		UserReliableSequenced25 = 59,
+		UserReliableSequenced26 = 60,
+		UserReliableSequenced27 = 61,
+		UserReliableSequenced28 = 62,
+		UserReliableSequenced29 = 63,
+		UserReliableSequenced30 = 64,
+		UserReliableSequenced31 = 65,
+		UserReliableSequenced32 = 66,
 
-		// 36 to 67 = UserReliableSequenced 0 to 31
-		UserReliableSequenced = 36,
-		UserReliableSequenced1 = 37,
-		UserReliableSequenced2 = 38,
-		UserReliableSequenced3 = 39,
-		UserReliableSequenced4 = 40,
-		UserReliableSequenced5 = 41,
-		UserReliableSequenced6 = 42,
-		UserReliableSequenced7 = 43,
-		UserReliableSequenced8 = 44,
-		UserReliableSequenced9 = 45,
-		UserReliableSequenced10 = 46,
-		UserReliableSequenced11 = 47,
-		UserReliableSequenced12 = 48,
-		UserReliableSequenced13 = 49,
-		UserReliableSequenced14 = 50,
-		UserReliableSequenced15 = 51,
-		UserReliableSequenced16 = 52,
-		UserReliableSequenced17 = 53,
-		UserReliableSequenced18 = 54,
-		UserReliableSequenced19 = 55,
-		UserReliableSequenced20 = 56,
-		UserReliableSequenced21 = 57,
-		UserReliableSequenced22 = 58,
-		UserReliableSequenced23 = 59,
-		UserReliableSequenced24 = 60,
-		UserReliableSequenced25 = 61,
-		UserReliableSequenced26 = 62,
-		UserReliableSequenced27 = 63,
-		UserReliableSequenced28 = 64,
-		UserReliableSequenced29 = 65,
-		UserReliableSequenced30 = 66,
-		UserReliableSequenced31 = 67,
+		UserReliableOrdered1 = 67,
+		UserReliableOrdered2 = 68,
+		UserReliableOrdered3 = 69,
+		UserReliableOrdered4 = 70,
+		UserReliableOrdered5 = 71,
+		UserReliableOrdered6 = 72,
+		UserReliableOrdered7 = 73,
+		UserReliableOrdered8 = 74,
+		UserReliableOrdered9 = 75,
+		UserReliableOrdered10 = 76,
+		UserReliableOrdered11 = 77,
+		UserReliableOrdered12 = 78,
+		UserReliableOrdered13 = 79,
+		UserReliableOrdered14 = 80,
+		UserReliableOrdered15 = 81,
+		UserReliableOrdered16 = 82,
+		UserReliableOrdered17 = 83,
+		UserReliableOrdered18 = 84,
+		UserReliableOrdered19 = 85,
+		UserReliableOrdered20 = 86,
+		UserReliableOrdered21 = 87,
+		UserReliableOrdered22 = 88,
+		UserReliableOrdered23 = 89,
+		UserReliableOrdered24 = 90,
+		UserReliableOrdered25 = 91,
+		UserReliableOrdered26 = 92,
+		UserReliableOrdered27 = 93,
+		UserReliableOrdered28 = 94,
+		UserReliableOrdered29 = 95,
+		UserReliableOrdered30 = 96,
+		UserReliableOrdered31 = 97,
+		UserReliableOrdered32 = 98,
 
-		// 68 to 99 = UserReliableOrdered 0 to 31
-		UserReliableOrdered = 68,
-		UserReliableOrdered1 = 69,
-		UserReliableOrdered2 = 70,
-		UserReliableOrdered3 = 71,
-		UserReliableOrdered4 = 72,
-		UserReliableOrdered5 = 73,
-		UserReliableOrdered6 = 74,
-		UserReliableOrdered7 = 75,
-		UserReliableOrdered8 = 76,
-		UserReliableOrdered9 = 77,
-		UserReliableOrdered10 = 78,
-		UserReliableOrdered11 = 79,
-		UserReliableOrdered12 = 80,
-		UserReliableOrdered13 = 81,
-		UserReliableOrdered14 = 82,
-		UserReliableOrdered15 = 83,
-		UserReliableOrdered16 = 84,
-		UserReliableOrdered17 = 85,
-		UserReliableOrdered18 = 86,
-		UserReliableOrdered19 = 87,
-		UserReliableOrdered20 = 88,
-		UserReliableOrdered21 = 89,
-		UserReliableOrdered22 = 90,
-		UserReliableOrdered23 = 91,
-		UserReliableOrdered24 = 92,
-		UserReliableOrdered25 = 93,
-		UserReliableOrdered26 = 94,
-		UserReliableOrdered27 = 95,
-		UserReliableOrdered28 = 96,
-		UserReliableOrdered29 = 97,
-		UserReliableOrdered30 = 98,
-		UserReliableOrdered31 = 99,
+		Unused1 = 99,
+		Unused2 = 100,
+		Unused3 = 101,
+		Unused4 = 102,
+		Unused5 = 103,
+		Unused6 = 104,
+		Unused7 = 105,
+		Unused8 = 106,
+		Unused9 = 107,
+		Unused10 = 108,
+		Unused11 = 109,
+		Unused12 = 110,
+		Unused13 = 111,
+		Unused14 = 112,
+		Unused15 = 113,
+		Unused16 = 114,
+		Unused17 = 115,
+		Unused18 = 116,
+		Unused19 = 117,
+		Unused20 = 118,
+		Unused21 = 119,
+		Unused22 = 120,
+		Unused23 = 121,
+		Unused24 = 122,
+		Unused25 = 123,
+		Unused26 = 124,
+		Unused27 = 125,
+		Unused28 = 126,
+		Unused29 = 127,
+
+		LibraryError = 128,
+		Ping = 129, // used for RTT calculation
+		Pong = 130, // used for RTT calculation
+		Connect = 131,
+		ConnectResponse = 132,
+		ConnectionEstablished = 133,
+		Acknowledge = 134,
+		Disconnect = 135,
+		Discovery = 136,
+		DiscoveryResponse = 137,
+		NatPunchMessage = 138, // send between peers
+		NatIntroduction = 139, // send to master server
+	}
+
+	internal static class NetMessageTypeExtensions
+	{
+		internal static bool IsLibrary(this NetMessageType tp)
+		{
+			return tp >= NetMessageType.LibraryError;
+		}
+
+		internal static NetDeliveryMethod GetDeliveryMethod(this NetMessageType mtp)
+		{
+			if (mtp >= NetMessageType.UserReliableOrdered1)
+				return NetDeliveryMethod.ReliableOrdered;
+			else if (mtp >= NetMessageType.UserReliableSequenced1)
+				return NetDeliveryMethod.ReliableSequenced;
+			else if (mtp >= NetMessageType.UserReliableUnordered)
+				return NetDeliveryMethod.ReliableUnordered;
+			else if (mtp >= NetMessageType.UserSequenced1)
+				return NetDeliveryMethod.UnreliableSequenced;
+			return NetDeliveryMethod.Unreliable;
+		}
 	}
 }

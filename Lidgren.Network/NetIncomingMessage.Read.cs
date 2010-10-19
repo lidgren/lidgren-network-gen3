@@ -30,12 +30,12 @@ namespace Lidgren.Network
 
 		private static readonly Dictionary<Type, MethodInfo> s_readMethods;
 
-		private int m_readPosition;
+		internal int m_readPosition;
 
 		/// <summary>
 		/// Gets or sets the read position in the buffer, in bits (not bytes)
 		/// </summary>
-		public override long Position // override of Stream property
+		public long Position
 		{
 			get { return (long)m_readPosition; }
 			set { m_readPosition = (int)value; }
@@ -62,7 +62,7 @@ namespace Lidgren.Network
 					string n = mi.Name.Substring(4);
 					foreach (Type it in integralTypes)
 					{
-						if (it.Name == n && mi.ReturnType.Name == it.Name)
+						if (it.Name == n)
 							s_readMethods[it] = mi;
 					}
 				}
@@ -83,7 +83,7 @@ namespace Lidgren.Network
 		//
 		// 8 bit 
 		//
-		public new byte ReadByte()
+		public byte ReadByte()
 		{
 			NetException.Assert(m_bitLength - m_readPosition >= 8, c_readOverflowError);
 			byte retval = NetBitWriter.ReadByte(m_data, 8, m_readPosition);

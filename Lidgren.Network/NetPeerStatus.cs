@@ -21,6 +21,9 @@ using System;
 
 namespace Lidgren.Network
 {
+	/// <summary>
+	/// Status for a NetPeer instance
+	/// </summary>
 	public enum NetPeerStatus
 	{
 		NotRunning = 0,

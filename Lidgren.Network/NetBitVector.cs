@@ -22,11 +22,18 @@ using System.Text;
 
 namespace Lidgren.Network
 {
+	/// <summary>
+	/// Fixed size vector of booleans
+	/// </summary>
 	public sealed class NetBitVector
 	{
 		private readonly int m_capacity;
 		private readonly int[] m_data;
+		private int m_numBitsSet;
 
+		/// <summary>
+		/// Gets the number of bits/booleans stored in this vector
+		/// </summary>
 		public int Capacity { get { return m_capacity; } }
 
 		public NetBitVector(int bitsCapacity)
@@ -35,12 +42,21 @@ namespace Lidgren.Network
 			m_data = new int[(bitsCapacity + 31) / 32];
 		}
 
+		/// <summary>
+		/// Returns true if all bits/booleans are set to zero/false
+		/// </summary>
 		public bool IsEmpty()
 		{
-			foreach (int v in m_data)
-				if (v != 0)
-					return false;
-			return true;
+			return (m_numBitsSet == 0);
+		}
+
+		/// <summary>
+		/// Returns the number of bits/booleans set to one/true
+		/// </summary>
+		/// <returns></returns>
+		public int Count()
+		{
+			return m_numBitsSet;
 		}
 
 		/// <summary>
@@ -62,6 +78,8 @@ namespace Lidgren.Network
 			cur |= firstBit << lastIndex;
 
 			m_data[lenMinusOne] = cur;
+
+			throw new NetException("TODO: update m_numBitsSet");
 		}
 
 		public int GetFirstSetIndex()
@@ -82,20 +100,41 @@ namespace Lidgren.Network
 			return (idx * 32) + a;
 		}
 
+		/// <summary>
+		/// Gets the bit/bool at the specified index
+		/// </summary>
 		public bool Get(int bitIndex)
 		{
+			NetException.Assert(bitIndex >= 0 && bitIndex < m_capacity);
+
 			return (m_data[bitIndex / 32] & (1 << (bitIndex % 32))) != 0;
 		}
 
+		/// <summary>
+		/// Sets or clears the bit/bool at the specified index
+		/// </summary>
 		public void Set(int bitIndex, bool value)
 		{
+			NetException.Assert(bitIndex >= 0 && bitIndex < m_capacity);
+
 			int idx = bitIndex / 32;
 			if (value)
+			{
+				if ((m_data[idx] & (1 << (bitIndex % 32))) == 0)
+					m_numBitsSet++;
 				m_data[idx] |= (1 << (bitIndex % 32));
+			}
 			else
+			{
+				if ((m_data[idx] & (1 << (bitIndex % 32))) != 0)
+					m_numBitsSet--;
 				m_data[idx] &= (~(1 << (bitIndex % 32)));
+			}
 		}
 
+		/// <summary>
+		/// Gets the bit/bool at the specified index
+		/// </summary>
 		[System.Runtime.CompilerServices.IndexerName("Bit")]
 		public bool this[int index]
 		{
@@ -103,9 +142,13 @@ namespace Lidgren.Network
 			set { Set(index, value); }
 		}
 
+		/// <summary>
+		/// Sets all bits/booleans to zero/false
+		/// </summary>
 		public void Clear()
 		{
 			Array.Clear(m_data, 0, m_data.Length);
+			m_numBitsSet = 0;
 		}
 
 		public override string ToString()

@@ -18,23 +18,23 @@ namespace Lidgren.Network
 		{
 			// send message to client
 			NetOutgoingMessage msg = CreateMessage(10 + token.Length + 1);
-			msg.m_libType = NetMessageLibraryType.NatIntroduction;
+			msg.m_messageType = NetMessageType.NatIntroduction;
 			msg.Write(false);
 			msg.WritePadBits();
 			msg.Write(hostInternal);
 			msg.Write(hostExternal);
 			msg.Write(token);
-			SendUnconnectedLibrary(msg, clientExternal);
+			m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(clientExternal, msg));
 
 			// send message to host
 			msg = CreateMessage(10 + token.Length + 1);
-			msg.m_libType = NetMessageLibraryType.NatIntroduction;
+			msg.m_messageType = NetMessageType.NatIntroduction;
 			msg.Write(true);
 			msg.WritePadBits();
 			msg.Write(clientInternal);
 			msg.Write(clientExternal);
 			msg.Write(token);
-			SendUnconnectedLibrary(msg, hostExternal);
+			m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(hostExternal, msg));
 		}
 
 		/// <summary>
@@ -45,8 +45,8 @@ namespace Lidgren.Network
 			VerifyNetworkThread();
 
 			// read intro
-			NetIncomingMessage tmp = new NetIncomingMessage(m_receiveBuffer, 1000); // never mind length
-			tmp.Position = (ptr * 8);
+			NetIncomingMessage tmp = SetupReadHelperMessage(ptr, 1000); // never mind length
+
 			byte hostByte = tmp.ReadByte();
 			IPEndPoint remoteInternal = tmp.ReadIPEndpoint();
 			IPEndPoint remoteExternal = tmp.ReadIPEndpoint();
@@ -62,17 +62,17 @@ namespace Lidgren.Network
 
 			// send internal punch
 			punch = CreateMessage(1);
-			punch.m_libType = NetMessageLibraryType.NatPunchMessage;
+			punch.m_messageType = NetMessageType.NatPunchMessage;
 			punch.Write(hostByte);
 			punch.Write(token);
-			SendUnconnectedLibrary(punch, remoteInternal);
+			m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(remoteInternal, punch));
 
 			// send external punch
 			punch = CreateMessage(1);
-			punch.m_libType = NetMessageLibraryType.NatPunchMessage;
+			punch.m_messageType = NetMessageType.NatPunchMessage;
 			punch.Write(hostByte);
 			punch.Write(token);
-			SendUnconnectedLibrary(punch, remoteExternal);
+			m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(remoteExternal, punch));
 		}
 
 		/// <summary>
@@ -80,8 +80,7 @@ namespace Lidgren.Network
 		/// </summary>
 		private void HandleNatPunch(int ptr, IPEndPoint senderEndpoint)
 		{
-			NetIncomingMessage tmp = new NetIncomingMessage(m_receiveBuffer, 1000); // never mind length
-			tmp.Position = (ptr * 8);
+			NetIncomingMessage tmp = SetupReadHelperMessage(ptr, 1000); // never mind length
 
 			byte fromHostByte = tmp.ReadByte();
 			if (fromHostByte == 0)

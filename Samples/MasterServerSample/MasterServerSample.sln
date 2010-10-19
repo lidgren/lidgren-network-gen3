@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual Studio 2008
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MasterServer", "MasterServer\MasterServer.csproj", "{47E2AC9A-F375-47A7-A4E6-9814D3A2954B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lidgren.Network", "..\..\Lidgren.Network\Lidgren.Network.csproj", "{FA245447-5F23-4AA1-BD5F-8D2DDF33CFBD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lidgren.Network", "..\..\Lidgren.Network\Lidgren.Network.csproj", "{AE483C29-042E-4226-BA52-D247CE7676DA}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MSClient", "MSClient\MSClient.csproj", "{E4FBEFAB-0D5F-4108-BAA9-E796E14AD6B2}"
 EndProject
@@ -12,6 +12,28 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MSServer", "MSServer\MSServer.csproj", "{BBE12F3E-098F-4C13-842F-A52B86E2611A}"
 EndProject
 Global
+	GlobalSection(SourceCodeControl) = preSolution
+		SccNumberOfProjects = 6
+		SccProjectName0 = Perforce\u0020Project
+		SccLocalPath0 = ..\\..
+		SccProvider0 = MSSCCI:Perforce\u0020SCM
+		SccProjectFilePathRelativizedFromConnection0 = Samples\\MasterServerSample\\
+		SccProjectUniqueName1 = ..\\..\\Lidgren.Network\\Lidgren.Network.csproj
+		SccLocalPath1 = ..\\..
+		SccProjectFilePathRelativizedFromConnection1 = Lidgren.Network\\
+		SccProjectUniqueName2 = MasterServer\\MasterServer.csproj
+		SccLocalPath2 = ..\\..
+		SccProjectFilePathRelativizedFromConnection2 = Samples\\MasterServerSample\\MasterServer\\
+		SccProjectUniqueName3 = MSClient\\MSClient.csproj
+		SccLocalPath3 = ..\\..
+		SccProjectFilePathRelativizedFromConnection3 = Samples\\MasterServerSample\\MSClient\\
+		SccProjectUniqueName4 = MSCommon\\MSCommon.csproj
+		SccLocalPath4 = ..\\..
+		SccProjectFilePathRelativizedFromConnection4 = Samples\\MasterServerSample\\MSCommon\\
+		SccProjectUniqueName5 = MSServer\\MSServer.csproj
+		SccLocalPath5 = ..\\..
+		SccProjectFilePathRelativizedFromConnection5 = Samples\\MasterServerSample\\MSServer\\
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
@@ -21,10 +43,10 @@ Global
 		{47E2AC9A-F375-47A7-A4E6-9814D3A2954B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{47E2AC9A-F375-47A7-A4E6-9814D3A2954B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{47E2AC9A-F375-47A7-A4E6-9814D3A2954B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{FA245447-5F23-4AA1-BD5F-8D2DDF33CFBD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{FA245447-5F23-4AA1-BD5F-8D2DDF33CFBD}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{FA245447-5F23-4AA1-BD5F-8D2DDF33CFBD}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FA245447-5F23-4AA1-BD5F-8D2DDF33CFBD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AE483C29-042E-4226-BA52-D247CE7676DA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AE483C29-042E-4226-BA52-D247CE7676DA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AE483C29-042E-4226-BA52-D247CE7676DA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AE483C29-042E-4226-BA52-D247CE7676DA}.Release|Any CPU.Build.0 = Release|Any CPU
 		{E4FBEFAB-0D5F-4108-BAA9-E796E14AD6B2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{E4FBEFAB-0D5F-4108-BAA9-E796E14AD6B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E4FBEFAB-0D5F-4108-BAA9-E796E14AD6B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
