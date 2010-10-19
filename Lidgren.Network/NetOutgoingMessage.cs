@@ -41,7 +41,7 @@ namespace Lidgren.Network
 		{
 		}
 
-		public void Reset()
+		internal void Reset()
 		{
 			m_messageType = NetMessageType.LibraryError;
 			m_bitLength = 0;
@@ -114,6 +114,9 @@ namespace Lidgren.Network
 			return retval;
 		}
 
+		/// <summary>
+		/// Encrypt this message using the XTEA algorithm; no more writing can be done before sending it
+		/// </summary>
 		public void Encrypt(NetXtea tea)
 		{
 			// need blocks of 8 bytes
@@ -130,6 +133,9 @@ namespace Lidgren.Network
 			m_data = result;
 		}
 
+		/// <summary>
+		/// Returns a string that represents this object
+		/// </summary>
 		public override string ToString()
 		{
 			return "[NetOutgoingMessage " + m_messageType + " " + this.LengthBytes + " bytes]";

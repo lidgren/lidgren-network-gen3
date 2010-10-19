@@ -117,6 +117,9 @@ namespace Lidgren.Network
 			m_receivedMessages += numMessages;
 		}
 
+		/// <summary>
+		/// Returns a string that represents this object
+		/// </summary>
 		public override string ToString()
 		{
 			StringBuilder bdr = new StringBuilder();

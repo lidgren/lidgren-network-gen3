@@ -151,6 +151,9 @@ namespace Lidgren.Network
 			m_numBitsSet = 0;
 		}
 
+		/// <summary>
+		/// Returns a string that represents this object
+		/// </summary>
 		public override string ToString()
 		{
 			StringBuilder bdr = new StringBuilder(m_capacity + 2);

@@ -23,7 +23,7 @@ using System.Diagnostics;
 namespace Lidgren.Network
 {
 	/// <summary>
-	/// Thread safe (blocking) queue with TryDequeue() and EnqueueFirst()
+	/// Thread safe (blocking) expanding queue with TryDequeue() and EnqueueFirst()
 	/// </summary>
 	[DebuggerDisplay("Count={Count} Capacity={Capacity}")]
 	public sealed class NetQueue<T>
@@ -47,18 +47,22 @@ namespace Lidgren.Network
 		private int m_size;
 		private int m_head;
 
+		/// <summary>
+		/// Gets the number of items in the queue
+		/// </summary>
 		public int Count { get { return m_size; } }
 
 		public int Capacity { get { return m_items.Length; } }
 
 		public NetQueue(int initialCapacity)
 		{
+			System.Collections.Generic.Queue<int> a;
 			m_lock = new object();
 			m_items = new T[initialCapacity];
 		}
 
 		/// <summary>
-		/// Places an item last/tail of the queue
+		/// Adds an item last/tail of the queue
 		/// </summary>
 		public void Enqueue(T item)
 		{
@@ -163,6 +167,9 @@ namespace Lidgren.Network
 			}
 		}
 
+		/// <summary>
+		/// Determines whether an item is in the queue
+		/// </summary>
 		public bool Contains(T item)
 		{
 			lock (m_lock)
@@ -186,6 +193,9 @@ namespace Lidgren.Network
 			return false;
 		}
 
+		/// <summary>
+		/// Copies the queue items to a new array
+		/// </summary>
 		public T[] ToArray()
 		{
 			lock (m_lock)
@@ -202,6 +212,9 @@ namespace Lidgren.Network
 			}
 		}
 
+		/// <summary>
+		/// Removes all objects from the queue
+		/// </summary>
 		public void Clear()
 		{
 			lock (m_lock)

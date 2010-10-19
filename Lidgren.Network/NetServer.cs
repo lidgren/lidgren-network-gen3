@@ -12,5 +12,13 @@ namespace Lidgren.Network
 		{
 			config.AcceptIncomingConnections = true;
 		}
+
+		/// <summary>
+		/// Returns a string that represents this object
+		/// </summary>
+		public override string ToString()
+		{
+			return "[NetServer " + ConnectionsCount + " connections]";
+		}
 	}
 }

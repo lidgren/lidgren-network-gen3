@@ -23,6 +23,9 @@ using System.Security;
 
 namespace Lidgren.Network
 {
+	/// <summary>
+	/// Methods to encrypt and decrypt data using the XTEA algorith
+	/// </summary>
 	public sealed class NetXtea
 	{
 		private const int m_blockSize = 8;

@@ -343,6 +343,10 @@ namespace Lidgren.Network
 			return true;
 		}
 		
+		/// <summary>
+		/// Disconnect from the remote peer
+		/// </summary>
+		/// <param name="byeMessage">the message to send with the disconnect message</param>
 		public void Disconnect(string byeMessage)
 		{
 			// user or library thread

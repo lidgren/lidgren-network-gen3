@@ -46,6 +46,9 @@ namespace Lidgren.Network
 		public static double Now { get { return (double)Environment.TickCount / 1000.0; } }
 #endif
 
+		/// <summary>
+		/// Given seconds it will output a human friendly readable string (milliseconds if less than 60 seconds)
+		/// </summary>
 		public static string ToReadable(double seconds)
 		{
 			if (seconds > 60)

@@ -54,6 +54,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="NamespaceDoc.cs" />
     <Compile Include="NetBitVector.cs" />
     <Compile Include="NetBitWriter.cs" />
     <Compile Include="NetClient.cs" />

@@ -114,6 +114,9 @@ namespace Lidgren.Network
 			return serverConnection.SendMessage(msg, method, sequenceChannel);
 		}
 
+		/// <summary>
+		/// Returns a string that represents this object
+		/// </summary>
 		public override string ToString()
 		{
 			return "[NetClient " + ServerConnection + "]";

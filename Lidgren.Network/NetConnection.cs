@@ -416,6 +416,9 @@ namespace Lidgren.Network
 			ExecuteDisconnect(reason, true);
 		}
 
+		/// <summary>
+		/// Returns a string that represents this object
+		/// </summary>
 		public override string ToString()
 		{
 			return "[NetConnection to " + m_remoteEndpoint + "]";
