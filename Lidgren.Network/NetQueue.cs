@@ -52,11 +52,13 @@ namespace Lidgren.Network
 		/// </summary>
 		public int Count { get { return m_size; } }
 
+		/// <summary>
+		/// Gets the current capacity for the queue
+		/// </summary>
 		public int Capacity { get { return m_items.Length; } }
 
 		public NetQueue(int initialCapacity)
 		{
-			System.Collections.Generic.Queue<int> a;
 			m_lock = new object();
 			m_items = new T[initialCapacity];
 		}

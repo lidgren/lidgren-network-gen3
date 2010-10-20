@@ -45,12 +45,12 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Gets the delivery method this message was sent with (if user data)
 		/// </summary>
-		public NetDeliveryMethod DeliveryMethod { get { return m_receivedMessageType.GetDeliveryMethod(); } }
+		public NetDeliveryMethod DeliveryMethod { get { return NetUtility.GetDeliveryMethod(m_receivedMessageType); } }
 
 		/// <summary>
 		/// Gets the sequence channel this message was sent with (if user data)
 		/// </summary>
-		public int SequenceChannel { get { return (int)m_receivedMessageType - (int)m_receivedMessageType.GetDeliveryMethod(); } }
+		public int SequenceChannel { get { return (int)m_receivedMessageType - (int)NetUtility.GetDeliveryMethod(m_receivedMessageType); } }
 
 		/// <summary>
 		/// IPEndPoint of sender, if any

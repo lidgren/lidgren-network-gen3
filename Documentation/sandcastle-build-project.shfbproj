@@ -14,11 +14,11 @@
     <RootNamespace>Documentation</RootNamespace>
     <Name>Documentation</Name>
     <!-- SHFB properties -->
-    <OutputPath>.\Help\</OutputPath>
+    <OutputPath>.\</OutputPath>
     <HtmlHelpName>Documentation</HtmlHelpName>
     <Language>en-US</Language>
     <DocumentationSources>
-      <DocumentationSource sourceFile="..\Lidgren.Network\Lidgren.Network.csproj" />
+      <DocumentationSource sourceFile="..\Lidgren.Network\Lidgren.Network.csproj" configuration="Release" />
     </DocumentationSources>
     <HelpTitle>Lidgren Network Library documentation</HelpTitle>
     <BuildLogFile>

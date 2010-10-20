@@ -9,6 +9,9 @@ namespace Lidgren.Network
 		private float m_averageRoundtripTime;
 		private float m_timeoutDeadline = float.MaxValue;
 
+		/// <summary>
+		/// Gets the current average roundtrip time in seconds
+		/// </summary>
 		public float AverageRoundtripTime { get { return m_averageRoundtripTime; } }
 
 		internal void SendPing()

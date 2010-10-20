@@ -20,7 +20,7 @@ namespace Lidgren.Network
 		private string m_shutdownReason;
 
 		/// <summary>
-		/// Gets the status of the NetPeer
+		/// Gets the NetPeerStatus of the NetPeer
 		/// </summary>
 		public NetPeerStatus Status { get { return m_status; } }
 
@@ -33,12 +33,12 @@ namespace Lidgren.Network
 		public AutoResetEvent MessageReceivedEvent { get { return m_messageReceivedEvent; } }
 
 		/// <summary>
-		/// Gets a unique identifier for this NetPeer based on Mac address and ip/port. Note! Not available until Start has been called!
+		/// Gets a unique identifier for this NetPeer based on Mac address and ip/port. Note! Not available until Start() has been called!
 		/// </summary>
 		public long UniqueIdentifier { get { return m_uniqueIdentifier; } }
 
 		/// <summary>
-		/// Gets the port number this NetPeer is listening and sending on
+		/// Gets the port number this NetPeer is listening and sending on, if Start() has been called
 		/// </summary>
 		public int Port { get { return m_listenPort; } }
 
@@ -55,7 +55,7 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
-		/// Returns the number of active connections
+		/// Gets the number of active connections
 		/// </summary>
 		public int ConnectionsCount
 		{
@@ -71,7 +71,7 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
-		/// Gets the configuration of the netpeer
+		/// Gets the configuration used to instanciate this NetPeer
 		/// </summary>
 		public NetPeerConfiguration Configuration { get { return m_configuration; } }
 
@@ -90,7 +90,7 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
-		/// Binds to socket and spawns networking thread
+		/// Binds to socket and spawns the networking thread
 		/// </summary>
 		public void Start()
 		{

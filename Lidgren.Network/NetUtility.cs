@@ -220,8 +220,7 @@ namespace Lidgren.Network
 			return (numBits + 7) / 8;
 		}
 
-		[CLSCompliant(false)]
-		public static UInt32 SwapByteOrder(UInt32 value)
+		internal static UInt32 SwapByteOrder(UInt32 value)
 		{
 			return
 				((value & 0xff000000) >> 24) |
@@ -230,8 +229,7 @@ namespace Lidgren.Network
 				((value & 0x000000ff) << 24);
 		}
 
-		[CLSCompliant(false)]
-		public static UInt64 SwapByteOrder(UInt64 value)
+		internal static UInt64 SwapByteOrder(UInt64 value)
 		{
 			return
 				((value & 0xff00000000000000L) >> 56) |
@@ -244,7 +242,7 @@ namespace Lidgren.Network
 				((value & 0x00000000000000ffL) << 56);
 		}
 
-		public static bool CompareElements(byte[] one, byte[] two)
+		internal static bool CompareElements(byte[] one, byte[] two)
 		{
 			if (one.Length != two.Length)
 				return false;
@@ -254,6 +252,9 @@ namespace Lidgren.Network
 			return true;
 		}
 
+		/// <summary>
+		/// Convert a hexadecimal string to a byte array
+		/// </summary>
 		public static byte[] ToByteArray(String hexString)
 		{
 			byte[] retval = new byte[hexString.Length / 2];
@@ -262,6 +263,9 @@ namespace Lidgren.Network
 			return retval;
 		}
 
+		/// <summary>
+		/// Converts a number of bytes to a shorter, more readable string representation
+		/// </summary>
 		public static string ToHumanReadable(long bytes)
 		{
 			if (bytes < 4000) // 1-4 kb is printed in bytes
@@ -316,6 +320,19 @@ namespace Lidgren.Network
 				}
 				h /= 3;
 			}
+		}
+
+		internal static NetDeliveryMethod GetDeliveryMethod(NetMessageType mtp)
+		{
+			if (mtp >= NetMessageType.UserReliableOrdered1)
+				return NetDeliveryMethod.ReliableOrdered;
+			else if (mtp >= NetMessageType.UserReliableSequenced1)
+				return NetDeliveryMethod.ReliableSequenced;
+			else if (mtp >= NetMessageType.UserReliableUnordered)
+				return NetDeliveryMethod.ReliableUnordered;
+			else if (mtp >= NetMessageType.UserSequenced1)
+				return NetDeliveryMethod.UnreliableSequenced;
+			return NetDeliveryMethod.Unreliable;
 		}
 	}
 }

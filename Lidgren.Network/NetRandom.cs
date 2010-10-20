@@ -37,6 +37,9 @@ namespace Lidgren.Network
 	///  FastRandom are in use or if being used in a multi-threaded environment.
 	public class NetRandom
 	{
+		/// <summary>
+		/// Gets a global NetRandom instance
+		/// </summary>
 		public static readonly NetRandom Instance = new NetRandom();
 
 		// The +1 ensures NextDouble doesn't generate 1.0

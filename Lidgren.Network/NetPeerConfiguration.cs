@@ -339,6 +339,9 @@ namespace Lidgren.Network
 		}
 #endif
 
+		/// <summary>
+		/// Creates a memberwise shallow clone of this configuration
+		/// </summary>
 		public NetPeerConfiguration Clone()
 		{
 			NetPeerConfiguration retval = this.MemberwiseClone() as NetPeerConfiguration;

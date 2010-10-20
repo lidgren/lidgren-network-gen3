@@ -266,7 +266,7 @@ namespace Lidgren.Network
 		private NetSenderChannelBase CreateSenderChannel(NetMessageType tp)
 		{
 			NetSenderChannelBase chan;
-			NetDeliveryMethod method = tp.GetDeliveryMethod();
+			NetDeliveryMethod method = NetUtility.GetDeliveryMethod(tp);
 			int sequenceChannel = (int)tp - (int)method;
 			switch (method)
 			{
@@ -357,7 +357,7 @@ namespace Lidgren.Network
 
 			// create receiver channel
 			NetReceiverChannelBase chan;
-			NetDeliveryMethod method = tp.GetDeliveryMethod();
+			NetDeliveryMethod method = NetUtility.GetDeliveryMethod(tp);
 			switch (method)
 			{
 				case NetDeliveryMethod.Unreliable:

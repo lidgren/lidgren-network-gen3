@@ -78,8 +78,6 @@ namespace Lidgren.Network
 			cur |= firstBit << lastIndex;
 
 			m_data[lenMinusOne] = cur;
-
-			throw new NetException("TODO: update m_numBitsSet");
 		}
 
 		public int GetFirstSetIndex()
@@ -149,6 +147,7 @@ namespace Lidgren.Network
 		{
 			Array.Clear(m_data, 0, m_data.Length);
 			m_numBitsSet = 0;
+			NetException.Assert(this.IsEmpty());
 		}
 
 		/// <summary>

@@ -161,7 +161,7 @@ namespace Lidgren.Network
 			msg.m_data = null;
 			
 			// message fragments cannot be recycled
-			// TODO: find a way to recycle large message after all fragments has been acknowledged
+			// TODO: find a way to recycle large message after all fragments has been acknowledged; or? possibly better just to garbage collect them
 			if (msg.m_fragmentGroup == 0)
 				Recycle(storage);
 	

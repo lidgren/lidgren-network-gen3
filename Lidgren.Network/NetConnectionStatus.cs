@@ -25,6 +25,9 @@ namespace Lidgren.Network
 	/// </summary>
 	public enum NetConnectionStatus
 	{
+		/// <summary>
+		/// No connection, or attempt, in place
+		/// </summary>
 		None,
 		
 		/// <summary>

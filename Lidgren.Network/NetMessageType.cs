@@ -170,25 +170,4 @@ namespace Lidgren.Network
 		NatPunchMessage = 138, // send between peers
 		NatIntroduction = 139, // send to master server
 	}
-
-	internal static class NetMessageTypeExtensions
-	{
-		internal static bool IsLibrary(this NetMessageType tp)
-		{
-			return tp >= NetMessageType.LibraryError;
-		}
-
-		internal static NetDeliveryMethod GetDeliveryMethod(this NetMessageType mtp)
-		{
-			if (mtp >= NetMessageType.UserReliableOrdered1)
-				return NetDeliveryMethod.ReliableOrdered;
-			else if (mtp >= NetMessageType.UserReliableSequenced1)
-				return NetDeliveryMethod.ReliableSequenced;
-			else if (mtp >= NetMessageType.UserReliableUnordered)
-				return NetDeliveryMethod.ReliableUnordered;
-			else if (mtp >= NetMessageType.UserSequenced1)
-				return NetDeliveryMethod.UnreliableSequenced;
-			return NetDeliveryMethod.Unreliable;
-		}
-	}
 }

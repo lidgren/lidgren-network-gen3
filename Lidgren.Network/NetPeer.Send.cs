@@ -31,8 +31,15 @@ namespace Lidgren.Network
 				throw new ArgumentNullException("msg");
 			if (recipient == null)
 				throw new ArgumentNullException("recipient");
-			if (method == NetDeliveryMethod.Unreliable || method == NetDeliveryMethod.ReliableUnordered)
-				NetException.Assert(sequenceChannel == 0, "Delivery method " + method + " cannot use sequence channels other than 0!");
+	
+			NetException.Assert(
+				((method != NetDeliveryMethod.Unreliable && method != NetDeliveryMethod.ReliableUnordered) ||
+				((method == NetDeliveryMethod.Unreliable || method == NetDeliveryMethod.ReliableUnordered) && sequenceChannel == 0)),
+				"Delivery method " + method + " cannot use sequence channels other than 0!"
+			);
+
+			NetException.Assert(method != NetDeliveryMethod.Unknown, "Bad delivery method!");
+
 			if (msg.m_isSent)
 				throw new NetException("This message has already been sent! Use NetPeer.SendMessage() to send to multiple recipients efficiently");
 
@@ -106,7 +113,7 @@ namespace Lidgren.Network
 
 			msg.m_messageType = NetMessageType.Unconnected;
 
-			// TODO: Interlocked.Add(ref msg.m_recyclingCount, recipients.Count); ? 
+			Interlocked.Increment(ref msg.m_recyclingCount);
 			m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(new IPEndPoint(adr, port), msg));
 		}
 
@@ -126,7 +133,7 @@ namespace Lidgren.Network
 
 			msg.m_messageType = NetMessageType.Unconnected;
 
-			// TODO: Interlocked.Add(ref msg.m_recyclingCount, recipients.Count); ? 
+			Interlocked.Increment(ref msg.m_recyclingCount);
 			m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(recipient, msg));
 		}
 

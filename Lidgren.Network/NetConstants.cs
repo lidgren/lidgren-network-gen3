@@ -23,21 +23,21 @@ namespace Lidgren.Network
 	/// <summary>
 	/// All the constants used when compiling the library
 	/// </summary>
-	public static class NetConstants
+	internal static class NetConstants
 	{
-		public const int NumTotalChannels = 99;
+		internal const int NumTotalChannels = 99;
 
-		public const int NetChannelsPerDeliveryMethod = 32;
+		internal const int NetChannelsPerDeliveryMethod = 32;
 
-		public const int NumSequenceNumbers = 1024;
+		internal const int NumSequenceNumbers = 1024;
 
-		public const int HeaderByteSize = 5;
+		internal const int HeaderByteSize = 5;
 
-		public const int UnreliableWindowSize = 128;
-		public const int ReliableOrderedWindowSize = 64;
-		public const int ReliableSequencedWindowSize = 64;
+		internal const int UnreliableWindowSize = 128;
+		internal const int ReliableOrderedWindowSize = 64;
+		internal const int ReliableSequencedWindowSize = 64;
 
-		public const int MaxFragmentationGroups = ushort.MaxValue - 1;
+		internal const int MaxFragmentationGroups = ushort.MaxValue - 1;
 
 		/// <summary>
 		/// Number of channels which needs a sequence number to work
