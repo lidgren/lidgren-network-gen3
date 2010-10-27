@@ -259,22 +259,11 @@ namespace Lidgren.Network
 			}
 			catch (SocketException sx)
 			{
-				// no good response to this yet
 				if (sx.SocketErrorCode == SocketError.ConnectionReset)
 				{
 					// connection reset by peer, aka connection forcibly closed aka "ICMP port unreachable" 
 					// we should shut down the connection; but m_senderRemote seemingly cannot be trusted, so which connection should we shut down?!
-					//LogWarning("Connection reset by peer, seemingly from " + m_senderRemote);
-					lock (m_connections)
-					{
-						if (m_connections.Count + m_handshakes.Count == 1)
-						{
-							foreach (var kvp in m_handshakes)
-								kvp.Value.ExecuteDisconnect("Connection forcibly closed", true);
-							foreach (var conn in m_connections)
-								conn.ExecuteDisconnect("Connection forcibly closed", true);
-						}
-					}
+					// So, what to do?
 					return;
 				}
 
