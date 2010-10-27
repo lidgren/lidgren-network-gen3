@@ -23,7 +23,17 @@ namespace Lidgren.Network
 		internal NetQueue<NetTuple<NetMessageType, int>> m_queuedAcks;
 		private int m_sendBufferWritePtr;
 		private int m_sendBufferNumMessages;
+		private object m_tag;
 		internal NetConnectionStatistics m_statistics;
+
+		/// <summary>
+		/// Gets or sets the application defined object containing data about the connection
+		/// </summary>
+		public object Tag
+		{
+			get { return m_tag; }
+			set { m_tag = value; }
+		}
 
 		/// <summary>
 		/// Gets the peer which holds this connection
