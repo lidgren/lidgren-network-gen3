@@ -7,8 +7,8 @@
       <Importer>TextureImporter</Importer>
       <Processor>TextureProcessor</Processor>
       <Options>None</Options>
-      <Output>D:\dev\GoogleCode\lidgren-network\Generation3\Samples\XNA sample\XnaGameClient\bin\x86\Debug\Content\c1.xnb</Output>
-      <Time>2010-05-05T10:15:53.0056562+02:00</Time>
+      <Output>F:\dev\GoogleCode\lidgren-network-gen3\Samples\XNA sample\XnaGameClient\bin\x86\Debug\Content\c1.xnb</Output>
+      <Time>2010-10-19T20:01:33.7036561+02:00</Time>
     </Item>
     <Item>
       <Source>c2.png</Source>
@@ -16,8 +16,8 @@
       <Importer>TextureImporter</Importer>
       <Processor>TextureProcessor</Processor>
       <Options>None</Options>
-      <Output>D:\dev\GoogleCode\lidgren-network\Generation3\Samples\XNA sample\XnaGameClient\bin\x86\Debug\Content\c2.xnb</Output>
-      <Time>2010-05-05T10:15:53.0066562+02:00</Time>
+      <Output>F:\dev\GoogleCode\lidgren-network-gen3\Samples\XNA sample\XnaGameClient\bin\x86\Debug\Content\c2.xnb</Output>
+      <Time>2010-10-19T20:01:33.7036561+02:00</Time>
     </Item>
     <Item>
       <Source>c3.png</Source>
@@ -25,8 +25,8 @@
       <Importer>TextureImporter</Importer>
       <Processor>TextureProcessor</Processor>
       <Options>None</Options>
-      <Output>D:\dev\GoogleCode\lidgren-network\Generation3\Samples\XNA sample\XnaGameClient\bin\x86\Debug\Content\c3.xnb</Output>
-      <Time>2010-05-05T10:15:53.0076563+02:00</Time>
+      <Output>F:\dev\GoogleCode\lidgren-network-gen3\Samples\XNA sample\XnaGameClient\bin\x86\Debug\Content\c3.xnb</Output>
+      <Time>2010-10-19T20:01:33.7036561+02:00</Time>
     </Item>
     <Item>
       <Source>c4.png</Source>
@@ -34,8 +34,8 @@
       <Importer>TextureImporter</Importer>
       <Processor>TextureProcessor</Processor>
       <Options>None</Options>
-      <Output>D:\dev\GoogleCode\lidgren-network\Generation3\Samples\XNA sample\XnaGameClient\bin\x86\Debug\Content\c4.xnb</Output>
-      <Time>2010-05-05T10:15:53.0086563+02:00</Time>
+      <Output>F:\dev\GoogleCode\lidgren-network-gen3\Samples\XNA sample\XnaGameClient\bin\x86\Debug\Content\c4.xnb</Output>
+      <Time>2010-10-19T20:01:33.7036561+02:00</Time>
     </Item>
     <Item>
       <Source>c5.png</Source>
@@ -43,47 +43,48 @@
       <Importer>TextureImporter</Importer>
       <Processor>TextureProcessor</Processor>
       <Options>None</Options>
-      <Output>D:\dev\GoogleCode\lidgren-network\Generation3\Samples\XNA sample\XnaGameClient\bin\x86\Debug\Content\c5.xnb</Output>
-      <Time>2010-05-05T10:15:53.0096564+02:00</Time>
+      <Output>F:\dev\GoogleCode\lidgren-network-gen3\Samples\XNA sample\XnaGameClient\bin\x86\Debug\Content\c5.xnb</Output>
+      <Time>2010-10-19T20:01:33.7036561+02:00</Time>
     </Item>
     <BuildSuccessful>true</BuildSuccessful>
     <Settings>
       <TargetPlatform>Windows</TargetPlatform>
+      <TargetProfile>HiDef</TargetProfile>
       <BuildConfiguration>Debug</BuildConfiguration>
       <CompressContent>false</CompressContent>
-      <RootDirectory>D:\dev\GoogleCode\lidgren-network\Generation3\Samples\XNA sample\XnaGameClient\Content\</RootDirectory>
-      <LoggerRootDirectory>D:\dev\GoogleCode\lidgren-network\Generation3\Samples\XNA sample\XnaGameClient\</LoggerRootDirectory>
-      <IntermediateDirectory>D:\dev\GoogleCode\lidgren-network\Generation3\Samples\XNA sample\XnaGameClient\Content\obj\x86\Debug\</IntermediateDirectory>
-      <OutputDirectory>D:\dev\GoogleCode\lidgren-network\Generation3\Samples\XNA sample\XnaGameClient\bin\x86\Debug\Content\</OutputDirectory>
+      <RootDirectory>F:\dev\GoogleCode\lidgren-network-gen3\Samples\XNA sample\XnaGameClient\Content\</RootDirectory>
+      <LoggerRootDirectory>F:\dev\GoogleCode\lidgren-network-gen3\Samples\XNA sample\XnaGameClient\</LoggerRootDirectory>
+      <IntermediateDirectory>F:\dev\GoogleCode\lidgren-network-gen3\Samples\XNA sample\XnaGameClient\Content\obj\x86\Debug\</IntermediateDirectory>
+      <OutputDirectory>F:\dev\GoogleCode\lidgren-network-gen3\Samples\XNA sample\XnaGameClient\bin\x86\Debug\Content\</OutputDirectory>
     </Settings>
     <Assemblies>
       <Assembly>
-        <Key>C:\Program Files (x86)\Microsoft XNA\XNA Game Studio\v3.1\References\Windows\x86\Microsoft.Xna.Framework.Content.Pipeline.XImporter.dll</Key>
-        <Value>2009-05-28T01:16:14+02:00</Value>
+        <Key>C:\Program Files (x86)\Microsoft XNA\XNA Game Studio\v4.0\References\Windows\x86\Microsoft.Xna.Framework.Content.Pipeline.XImporter.dll</Key>
+        <Value>2010-08-23T12:41:18+02:00</Value>
       </Assembly>
       <Assembly>
-        <Key>C:\Program Files (x86)\Microsoft XNA\XNA Game Studio\v3.1\References\Windows\x86\Microsoft.Xna.Framework.Content.Pipeline.VideoImporters.dll</Key>
-        <Value>2009-05-28T01:16:06+02:00</Value>
+        <Key>C:\Program Files (x86)\Microsoft XNA\XNA Game Studio\v4.0\References\Windows\x86\Microsoft.Xna.Framework.Content.Pipeline.VideoImporters.dll</Key>
+        <Value>2010-08-23T12:41:18+02:00</Value>
       </Assembly>
       <Assembly>
-        <Key>C:\Program Files (x86)\Microsoft XNA\XNA Game Studio\v3.1\References\Windows\x86\Microsoft.Xna.Framework.Content.Pipeline.TextureImporter.dll</Key>
-        <Value>2009-05-28T01:16:16+02:00</Value>
+        <Key>C:\Program Files (x86)\Microsoft XNA\XNA Game Studio\v4.0\References\Windows\x86\Microsoft.Xna.Framework.Content.Pipeline.TextureImporter.dll</Key>
+        <Value>2010-08-23T12:41:18+02:00</Value>
       </Assembly>
       <Assembly>
-        <Key>C:\Program Files (x86)\Microsoft XNA\XNA Game Studio\v3.1\References\Windows\x86\Microsoft.Xna.Framework.Content.Pipeline.FBXImporter.dll</Key>
-        <Value>2009-05-28T01:16:26+02:00</Value>
+        <Key>C:\Program Files (x86)\Microsoft XNA\XNA Game Studio\v4.0\References\Windows\x86\Microsoft.Xna.Framework.Content.Pipeline.FBXImporter.dll</Key>
+        <Value>2010-08-23T12:41:18+02:00</Value>
       </Assembly>
       <Assembly>
-        <Key>C:\Program Files (x86)\Microsoft XNA\XNA Game Studio\v3.1\References\Windows\x86\Microsoft.Xna.Framework.Content.Pipeline.EffectImporter.dll</Key>
-        <Value>2009-05-28T01:16:12+02:00</Value>
+        <Key>C:\Program Files (x86)\Microsoft XNA\XNA Game Studio\v4.0\References\Windows\x86\Microsoft.Xna.Framework.Content.Pipeline.EffectImporter.dll</Key>
+        <Value>2010-08-23T12:41:18+02:00</Value>
       </Assembly>
       <Assembly>
-        <Key>C:\Program Files (x86)\Microsoft XNA\XNA Game Studio\v3.1\References\Windows\x86\Microsoft.Xna.Framework.Content.Pipeline.AudioImporters.dll</Key>
-        <Value>2009-05-28T01:16:06+02:00</Value>
+        <Key>C:\Program Files (x86)\Microsoft XNA\XNA Game Studio\v4.0\References\Windows\x86\Microsoft.Xna.Framework.Content.Pipeline.AudioImporters.dll</Key>
+        <Value>2010-08-23T12:41:18+02:00</Value>
       </Assembly>
       <Assembly>
-        <Key>C:\Windows\assembly\GAC_32\Microsoft.Xna.Framework.Content.Pipeline\3.1.0.0__6d5c3888ef60e27d\Microsoft.Xna.Framework.Content.Pipeline.dll</Key>
-        <Value>2010-01-22T07:58:48.0196058+01:00</Value>
+        <Key>C:\Windows\Microsoft.Net\assembly\GAC_32\Microsoft.Xna.Framework.Content.Pipeline\v4.0_4.0.0.0__842cf8be1de50553\Microsoft.Xna.Framework.Content.Pipeline.dll</Key>
+        <Value>2010-10-29T20:35:38.8804757+02:00</Value>
       </Assembly>
     </Assemblies>
   </Asset>

@@ -108,16 +108,16 @@ namespace XnaGameClient
 		{
 			GraphicsDevice.Clear(Color.CornflowerBlue);
 
-			spriteBatch.Begin(SpriteBlendMode.AlphaBlend);
+			spriteBatch.Begin(SpriteSortMode.Texture, BlendState.AlphaBlend);
 
 			// draw all players
-			foreach (long who in positions.Keys)
+			foreach (var kvp in positions)
 			{
 				// use player unique identifier to choose an image
-				int num = (int)Math.Abs(who) % 5;
+                int num = ((int)Math.Abs(kvp.Key)) % textures.Length;
 
 				// draw player
-				spriteBatch.Draw(textures[num], positions[who], Color.White);
+				spriteBatch.Draw(textures[num], kvp.Value, Color.White);
 			}
 
 			spriteBatch.End();
