@@ -1,0 +1,38 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lidgren.Network", "..\..\..\Lidgren.Network\Lidgren.Network.csproj", "{AE483C29-042E-4226-BA52-D247CE7676DA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DurableServer", "DurableServer\DurableServer.csproj", "{034984CA-FB37-44AF-BBF9-EC58ED75F5F3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DurableClient", "DurableClient\DurableClient.csproj", "{0B4B02BB-0F43-4466-A369-0682281AF60E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SamplesCommon", "..\..\SamplesCommon\SamplesCommon.csproj", "{773069DA-B66E-4667-ADCB-0D215AD8CF3E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{AE483C29-042E-4226-BA52-D247CE7676DA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AE483C29-042E-4226-BA52-D247CE7676DA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AE483C29-042E-4226-BA52-D247CE7676DA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AE483C29-042E-4226-BA52-D247CE7676DA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{034984CA-FB37-44AF-BBF9-EC58ED75F5F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{034984CA-FB37-44AF-BBF9-EC58ED75F5F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{034984CA-FB37-44AF-BBF9-EC58ED75F5F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{034984CA-FB37-44AF-BBF9-EC58ED75F5F3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0B4B02BB-0F43-4466-A369-0682281AF60E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0B4B02BB-0F43-4466-A369-0682281AF60E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0B4B02BB-0F43-4466-A369-0682281AF60E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0B4B02BB-0F43-4466-A369-0682281AF60E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{773069DA-B66E-4667-ADCB-0D215AD8CF3E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{773069DA-B66E-4667-ADCB-0D215AD8CF3E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{773069DA-B66E-4667-ADCB-0D215AD8CF3E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{773069DA-B66E-4667-ADCB-0D215AD8CF3E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
