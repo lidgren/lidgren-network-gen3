@@ -130,6 +130,16 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
+		/// Read a pending message from any connection, blocking up to maxMillis if needed
+		/// </summary>
+		public NetIncomingMessage WaitMessage(int maxMillis)
+		{
+			if (m_messageReceivedEvent != null)
+				m_messageReceivedEvent.WaitOne(maxMillis);
+			return ReadMessage();
+		}
+
+		/// <summary>
 		/// Read a pending message from any connection, if any
 		/// </summary>
 		public NetIncomingMessage ReadMessage()
