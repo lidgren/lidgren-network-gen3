@@ -114,7 +114,7 @@ namespace XnaGameClient
 			foreach (var kvp in positions)
 			{
 				// use player unique identifier to choose an image
-                int num = ((int)Math.Abs(kvp.Key)) % textures.Length;
+                int num = Math.Abs((int)kvp.Key) % textures.Length;
 
 				// draw player
 				spriteBatch.Draw(textures[num], kvp.Value, Color.White);
