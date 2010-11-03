@@ -69,7 +69,11 @@ namespace ManyServer
 
 							NetOutgoingMessage outMsg = Server.CreateMessage();
 							outMsg.Write(dstr);
-							Server.SendMessage(outMsg, Server.Connections, NetDeliveryMethod.ReliableOrdered, 0);
+
+							var conns = Server.Connections;
+
+							// resend to ONE random connection
+							Server.SendMessage(outMsg, conns[NetRandom.Instance.Next(0, conns.Count)], NetDeliveryMethod.ReliableOrdered, 0);
 							break;
 					}
 				}
