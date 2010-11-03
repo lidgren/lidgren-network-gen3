@@ -21,6 +21,7 @@ namespace Lidgren.Network
 		private EndPoint m_senderRemote;
 		private object m_initializeLock = new object();
 		private uint m_frameCounter;
+		private double m_lastHeartbeat;
 
 		internal readonly NetPeerConfiguration m_configuration;
 		private readonly NetQueue<NetIncomingMessage> m_releasedIncomingMessages;
@@ -196,56 +197,66 @@ namespace Lidgren.Network
 		{
 			VerifyNetworkThread();
 
-			float now = (float)NetTime.Now;
+			double dnow = NetTime.Now;
+			float now = (float)dnow;
 
-			m_frameCounter++;
+			double delta = dnow - m_lastHeartbeat;
 
-			// do handshake heartbeats
-			if ((m_frameCounter % 3) == 0)
+			int maxCHBpS = 1250 - m_connections.Count;
+			if (maxCHBpS < 250)
+				maxCHBpS = 250;
+			if (delta > (1.0 / (double)maxCHBpS)) // max connection heartbeats/second max
 			{
-				foreach (NetConnection conn in m_handshakes.Values)
+				m_frameCounter++;
+				m_lastHeartbeat = dnow;
+
+				// do handshake heartbeats
+				if ((m_frameCounter % 3) == 0)
 				{
-					conn.UnconnectedHeartbeat(now);
-					if (conn.m_status == NetConnectionStatus.Connected || conn.m_status == NetConnectionStatus.Disconnected)
-						break; // collection has been modified
+					foreach (NetConnection conn in m_handshakes.Values)
+					{
+						conn.UnconnectedHeartbeat(now);
+						if (conn.m_status == NetConnectionStatus.Connected || conn.m_status == NetConnectionStatus.Disconnected)
+							break; // collection has been modified
+					}
 				}
-			}
 
 #if DEBUG
 			SendDelayedPackets();
 #endif
 
-			// do connection heartbeats
-			lock (m_connections)
-			{
-				foreach (NetConnection conn in m_connections)
+				// do connection heartbeats
+				lock (m_connections)
 				{
-					conn.Heartbeat(now, m_frameCounter);
-					if (conn.m_status == NetConnectionStatus.Disconnected)
+					foreach (NetConnection conn in m_connections)
 					{
-						//
-						// remove connection
-						//
-						m_connections.Remove(conn);
-						m_connectionLookup.Remove(conn.RemoteEndpoint);
-						break; // can't continue iteration here
+						conn.Heartbeat(now, m_frameCounter);
+						if (conn.m_status == NetConnectionStatus.Disconnected)
+						{
+							//
+							// remove connection
+							//
+							m_connections.Remove(conn);
+							m_connectionLookup.Remove(conn.RemoteEndpoint);
+							break; // can't continue iteration here
+						}
 					}
 				}
-			}
 
-			// send unsent unconnected messages
-			NetTuple<IPEndPoint, NetOutgoingMessage> unsent;
-			while (m_unsentUnconnectedMessages.TryDequeue(out unsent))
-			{
-				NetOutgoingMessage om = unsent.Item2;
+				// send unsent unconnected messages
+				NetTuple<IPEndPoint, NetOutgoingMessage> unsent;
+				while (m_unsentUnconnectedMessages.TryDequeue(out unsent))
+				{
+					NetOutgoingMessage om = unsent.Item2;
 
-				bool connReset;
-				int len = om.Encode(m_sendBuffer, 0, 0);
-				SendPacket(len, unsent.Item1, 1, out connReset);
+					bool connReset;
+					int len = om.Encode(m_sendBuffer, 0, 0);
+					SendPacket(len, unsent.Item1, 1, out connReset);
 
-				Interlocked.Decrement(ref om.m_recyclingCount);
-				if (om.m_recyclingCount <= 0)
-					Recycle(om);
+					Interlocked.Decrement(ref om.m_recyclingCount);
+					if (om.m_recyclingCount <= 0)
+						Recycle(om);
+				}
 			}
 
 			//

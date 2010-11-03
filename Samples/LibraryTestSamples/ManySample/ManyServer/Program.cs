@@ -26,7 +26,7 @@ namespace ManyServer
 #else
 			// throw new Exception("Sample not relevant in RELEASE; statistics needed to make sense!");
 #endif
-			config.MaximumConnections = 64;
+			config.MaximumConnections = 256;
 
 			Server = new NetServer(config);
 			Server.Start();
