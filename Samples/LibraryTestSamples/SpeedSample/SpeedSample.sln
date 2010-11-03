@@ -1,0 +1,38 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpeedTestClient", "SpeedClient\SpeedTestClient.csproj", "{838DA9DF-D162-4CD7-A427-3399BD76FF1F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpeedTestServer", "SpeedServer\SpeedTestServer.csproj", "{A994C246-8EEC-452D-ACA6-554463B2892B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SamplesCommon", "..\..\SamplesCommon\SamplesCommon.csproj", "{773069DA-B66E-4667-ADCB-0D215AD8CF3E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lidgren.Network", "..\..\..\Lidgren.Network\Lidgren.Network.csproj", "{AE483C29-042E-4226-BA52-D247CE7676DA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{838DA9DF-D162-4CD7-A427-3399BD76FF1F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{838DA9DF-D162-4CD7-A427-3399BD76FF1F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{838DA9DF-D162-4CD7-A427-3399BD76FF1F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{838DA9DF-D162-4CD7-A427-3399BD76FF1F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A994C246-8EEC-452D-ACA6-554463B2892B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A994C246-8EEC-452D-ACA6-554463B2892B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A994C246-8EEC-452D-ACA6-554463B2892B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A994C246-8EEC-452D-ACA6-554463B2892B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{773069DA-B66E-4667-ADCB-0D215AD8CF3E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{773069DA-B66E-4667-ADCB-0D215AD8CF3E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{773069DA-B66E-4667-ADCB-0D215AD8CF3E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{773069DA-B66E-4667-ADCB-0D215AD8CF3E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AE483C29-042E-4226-BA52-D247CE7676DA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AE483C29-042E-4226-BA52-D247CE7676DA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AE483C29-042E-4226-BA52-D247CE7676DA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AE483C29-042E-4226-BA52-D247CE7676DA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
