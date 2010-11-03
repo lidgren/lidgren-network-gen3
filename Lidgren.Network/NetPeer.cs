@@ -236,6 +236,7 @@ namespace Lidgren.Network
 							LogWarning("Weird situation; Connect() already in progress to remote endpoint; but hs status is " + hs.Status);
 							break;
 					}
+					return hs;
 				}
 
 				NetConnection conn = new NetConnection(this, remoteEndpoint);
