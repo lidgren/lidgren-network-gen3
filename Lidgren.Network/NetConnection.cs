@@ -138,6 +138,12 @@ namespace Lidgren.Network
 					if (now > m_sentPingTime + m_peer.m_configuration.m_pingInterval)
 						SendPing();
 				}
+
+				if (m_disconnectRequested)
+				{
+					ExecuteDisconnect(m_disconnectMessage, true);
+					return;
+				}
 			}
 
 			bool connectionReset; // TODO: handle connection reset
