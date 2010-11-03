@@ -51,8 +51,6 @@ namespace Lidgren.Network
 
 		private void InitializeNetwork()
 		{
-			VerifyNetworkThread();
-
 			lock (m_initializeLock)
 			{
 				m_configuration.Lock();
