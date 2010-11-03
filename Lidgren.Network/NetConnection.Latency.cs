@@ -68,6 +68,15 @@ namespace Lidgren.Network
 				m_peer.LogVerbose("Updated average roundtrip time to " + NetTime.ToReadable(m_averageRoundtripTime));
 			}
 
+			// update resend delay for all channels
+			float resendDelay = GetResendDelay();
+			foreach (var chan in m_sendChannels)
+			{
+				var rchan = chan as NetReliableSenderChannel;
+				if (rchan != null)
+					rchan.m_resendDelay = resendDelay;
+			}
+
 			m_peer.LogVerbose("Timeout deadline pushed to  " + m_timeoutDeadline);
 		}
 	}

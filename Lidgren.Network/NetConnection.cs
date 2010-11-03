@@ -115,26 +115,29 @@ namespace Lidgren.Network
 			}
 		}
 
-		internal void Heartbeat(float now)
+		internal void Heartbeat(float now, uint frameCounter)
 		{
 			m_peer.VerifyNetworkThread();
 
 			NetException.Assert(m_status != NetConnectionStatus.InitiatedConnect && m_status != NetConnectionStatus.RespondedConnect);
 
-			if (now > m_timeoutDeadline)
+			if ((frameCounter % 5) == 0)
 			{
-				//
-				// connection timed out
-				//
-				m_peer.LogVerbose("Connection timed out at " + now + " deadline was " + m_timeoutDeadline);
-				ExecuteDisconnect("Connection timed out", true);
-			}
+				if (now > m_timeoutDeadline)
+				{
+					//
+					// connection timed out
+					//
+					m_peer.LogVerbose("Connection timed out at " + now + " deadline was " + m_timeoutDeadline);
+					ExecuteDisconnect("Connection timed out", true);
+				}
 
-			// send ping?
-			if (m_status == NetConnectionStatus.Connected)
-			{
-				if (now > m_sentPingTime + m_peer.m_configuration.m_pingInterval)
-					SendPing();
+				// send ping?
+				if (m_status == NetConnectionStatus.Connected)
+				{
+					if (now > m_sentPingTime + m_peer.m_configuration.m_pingInterval)
+						SendPing();
+				}
 			}
 
 			bool connectionReset; // TODO: handle connection reset
@@ -146,48 +149,51 @@ namespace Lidgren.Network
 			byte[] sendBuffer = m_peer.m_sendBuffer;
 			int mtu = m_peerConfiguration.m_maximumTransmissionUnit;
 
-			//
-			// send ack messages
-			//
-			while (m_queuedAcks.Count > 0)
+			if ((frameCounter % 3) == 0) // coalesce a few frames
 			{
-				int acks = (mtu - (m_sendBufferWritePtr + 5)) / 3; // 3 bytes per actual ack
-				if (acks > m_queuedAcks.Count)
-					acks = m_queuedAcks.Count;
-
-				NetException.Assert(acks > 0);
-
-				m_sendBufferNumMessages++;
-
-				// write acks header
-				sendBuffer[m_sendBufferWritePtr++] = (byte)NetMessageType.Acknowledge;
-				sendBuffer[m_sendBufferWritePtr++] = 0; // no sequence number
-				sendBuffer[m_sendBufferWritePtr++] = 0; // no sequence number
-				int len = (acks * 3) * 8; // bits
-				sendBuffer[m_sendBufferWritePtr++] = (byte)len;
-				sendBuffer[m_sendBufferWritePtr++] = (byte)(len >> 8);
-
-				// write acks
-				for(int i=0;i<acks;i++)
+				//
+				// send ack messages
+				//
+				while (m_queuedAcks.Count > 0)
 				{
-					NetTuple<NetMessageType, int> tuple;
-					m_queuedAcks.TryDequeue(out tuple);
+					int acks = (mtu - (m_sendBufferWritePtr + 5)) / 3; // 3 bytes per actual ack
+					if (acks > m_queuedAcks.Count)
+						acks = m_queuedAcks.Count;
 
-					//m_peer.LogVerbose("Sending ack for " + tuple.Item1 + "#" + tuple.Item2);
+					NetException.Assert(acks > 0);
 
-					sendBuffer[m_sendBufferWritePtr++] = (byte)tuple.Item1;
-					sendBuffer[m_sendBufferWritePtr++] = (byte)tuple.Item2;
-					sendBuffer[m_sendBufferWritePtr++] = (byte)(tuple.Item2 >> 8);
-				}
+					m_sendBufferNumMessages++;
 
-				if (m_queuedAcks.Count > 0)
-				{
-					// send packet and go for another round of acks
-					NetException.Assert(m_sendBufferWritePtr > 0 && m_sendBufferNumMessages > 0);
-					m_peer.SendPacket(m_sendBufferWritePtr, m_remoteEndpoint, m_sendBufferNumMessages, out connectionReset);
-					m_statistics.PacketSent(m_sendBufferWritePtr, 1);
-					m_sendBufferWritePtr = 0;
-					m_sendBufferNumMessages = 0;
+					// write acks header
+					sendBuffer[m_sendBufferWritePtr++] = (byte)NetMessageType.Acknowledge;
+					sendBuffer[m_sendBufferWritePtr++] = 0; // no sequence number
+					sendBuffer[m_sendBufferWritePtr++] = 0; // no sequence number
+					int len = (acks * 3) * 8; // bits
+					sendBuffer[m_sendBufferWritePtr++] = (byte)len;
+					sendBuffer[m_sendBufferWritePtr++] = (byte)(len >> 8);
+
+					// write acks
+					for (int i = 0; i < acks; i++)
+					{
+						NetTuple<NetMessageType, int> tuple;
+						m_queuedAcks.TryDequeue(out tuple);
+
+						//m_peer.LogVerbose("Sending ack for " + tuple.Item1 + "#" + tuple.Item2);
+
+						sendBuffer[m_sendBufferWritePtr++] = (byte)tuple.Item1;
+						sendBuffer[m_sendBufferWritePtr++] = (byte)tuple.Item2;
+						sendBuffer[m_sendBufferWritePtr++] = (byte)(tuple.Item2 >> 8);
+					}
+
+					if (m_queuedAcks.Count > 0)
+					{
+						// send packet and go for another round of acks
+						NetException.Assert(m_sendBufferWritePtr > 0 && m_sendBufferNumMessages > 0);
+						m_peer.SendPacket(m_sendBufferWritePtr, m_remoteEndpoint, m_sendBufferNumMessages, out connectionReset);
+						m_statistics.PacketSent(m_sendBufferWritePtr, 1);
+						m_sendBufferWritePtr = 0;
+						m_sendBufferNumMessages = 0;
+					}
 				}
 			}
 

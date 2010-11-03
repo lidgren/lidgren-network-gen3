@@ -228,7 +228,7 @@ namespace Lidgren.Network
 						SendConnectResponse(true);
 						return;
 					}
-					m_peer.LogDebug("Unhandled handshake: " + tp + ", status is " + m_status + " length: " + payloadLength);
+					m_peer.LogDebug("Unhandled Connect: " + tp + ", status is " + m_status + " length: " + payloadLength);
 					break;
 				case NetMessageType.ConnectResponse:
 					switch (m_status)
@@ -303,7 +303,7 @@ namespace Lidgren.Network
 					SetStatus(NetConnectionStatus.Disconnected, reason);
 					break;
 				default:
-					m_peer.LogDebug("Unhandled handshake: " + tp + " length: " + payloadLength);
+					m_peer.LogDebug("Unhandled type during handshake: " + tp + " length: " + payloadLength);
 					break;
 			}
 		}

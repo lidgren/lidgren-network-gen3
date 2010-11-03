@@ -70,7 +70,7 @@ namespace Lidgren.Network
 			m_acceptIncomingConnections = false;
 			m_maximumConnections = 32;
 			m_defaultOutgoingMessageCapacity = 16;
-			m_pingInterval = 3.0f;
+			m_pingInterval = 4.0f;
 			m_connectionTimeout = 25.0f;
 			m_useMessageRecycling = true;
 

@@ -16,6 +16,8 @@ namespace Lidgren.Network
 		private NetBitVector m_receivedAcks;
 		internal NetStoredReliableMessage[] m_storedMessages;
 
+		internal float m_resendDelay;
+
 		internal override int WindowSize { get { return m_windowSize; } }
 
 		internal NetReliableSenderChannel(NetConnection connection, int windowSize)
@@ -27,6 +29,7 @@ namespace Lidgren.Network
 			m_receivedAcks = new NetBitVector(NetConstants.NumSequenceNumbers);
 			m_storedMessages = new NetStoredReliableMessage[m_windowSize];
 			m_queuedSends = new NetQueue<NetOutgoingMessage>(8);
+			m_resendDelay = m_connection.GetResendDelay();
 		}
 
 		internal override int GetAllowedSends()
@@ -60,8 +63,9 @@ namespace Lidgren.Network
 		// call this regularely
 		internal override void SendQueuedMessages(float now)
 		{
+			//
 			// resends
-			float resendDelay = m_connection.GetResendDelay();
+			//
 			for (int i = 0; i < m_storedMessages.Length; i++)
 			{
 				NetOutgoingMessage om = m_storedMessages[i].Message;
@@ -69,7 +73,7 @@ namespace Lidgren.Network
 					continue;
 
 				float t = m_storedMessages[i].LastSent;
-				if (t > 0 && (now - t) > resendDelay)
+				if (t > 0 && (now - t) > m_resendDelay)
 				{
 					// deduce sequence number
 					int startSlot = m_windowStart % m_windowSize;

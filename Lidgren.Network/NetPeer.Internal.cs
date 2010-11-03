@@ -20,6 +20,7 @@ namespace Lidgren.Network
 		internal NetIncomingMessage m_readHelperMessage;
 		private EndPoint m_senderRemote;
 		private object m_initializeLock = new object();
+		private uint m_frameCounter;
 
 		internal readonly NetPeerConfiguration m_configuration;
 		private readonly NetQueue<NetIncomingMessage> m_releasedIncomingMessages;
@@ -195,12 +196,17 @@ namespace Lidgren.Network
 
 			float now = (float)NetTime.Now;
 
+			m_frameCounter++;
+
 			// do handshake heartbeats
-			foreach (NetConnection conn in m_handshakes.Values)
+			if ((m_frameCounter % 3) == 0)
 			{
-				conn.UnconnectedHeartbeat(now);
-				if (conn.m_status == NetConnectionStatus.Connected || conn.m_status == NetConnectionStatus.Disconnected)
-					break; // collection is modified
+				foreach (NetConnection conn in m_handshakes.Values)
+				{
+					conn.UnconnectedHeartbeat(now);
+					if (conn.m_status == NetConnectionStatus.Connected || conn.m_status == NetConnectionStatus.Disconnected)
+						break; // collection has been modified
+				}
 			}
 
 #if DEBUG
@@ -212,7 +218,7 @@ namespace Lidgren.Network
 			{
 				foreach (NetConnection conn in m_connections)
 				{
-					conn.Heartbeat(now);
+					conn.Heartbeat(now, m_frameCounter);
 					if (conn.m_status == NetConnectionStatus.Disconnected)
 					{
 						//
@@ -246,7 +252,7 @@ namespace Lidgren.Network
 			if (m_socket == null)
 				return;
 
-			if (!m_socket.Poll(500, SelectMode.SelectRead)) // wait up to 1/2 ms for data to arrive
+			if (!m_socket.Poll(1000, SelectMode.SelectRead)) // wait up to 1 ms for data to arrive
 				return;
 
 			//if (m_socket == null || m_socket.Available < 1)
@@ -359,7 +365,7 @@ namespace Lidgren.Network
 				}
 				catch (Exception ex)
 				{
-					LogError("Packet parsing error: " + ex.Message);
+					LogError("Packet parsing error: " + ex.Message + " from " + ipsender);
 				}
 				ptr += payloadByteLength;
 			}
