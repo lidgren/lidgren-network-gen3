@@ -13,6 +13,7 @@ namespace Lidgren.Network
 		private static int s_initializedPeersCount;
 
 		private int m_listenPort;
+		private object m_tag;
 
 		internal readonly List<NetConnection> m_connections;
 		private readonly Dictionary<IPEndPoint, NetConnection> m_connectionLookup;
@@ -41,6 +42,15 @@ namespace Lidgren.Network
 		/// Gets the port number this NetPeer is listening and sending on, if Start() has been called
 		/// </summary>
 		public int Port { get { return m_listenPort; } }
+
+		/// <summary>
+		/// Gets or sets the application defined object containing data about the peer
+		/// </summary>
+		public object Tag
+		{
+			get { return m_tag; }
+			set { m_tag = value; }
+		}
 
 		/// <summary>
 		/// Gets a copy of the list of connections
