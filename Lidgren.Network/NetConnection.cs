@@ -206,8 +206,9 @@ namespace Lidgren.Network
 			//
 			// send queued messages
 			//
-			foreach (NetSenderChannelBase channel in m_sendChannels)
+			for (int i = m_sendChannels.Length - 1; i >= 0; i--)    // Reverse order so reliable messages are sent first
 			{
+				var channel = m_sendChannels[i];
 				NetException.Assert(m_sendBufferWritePtr < 1 || m_sendBufferNumMessages > 0);
 				if (channel != null)
 					channel.SendQueuedMessages(now);
