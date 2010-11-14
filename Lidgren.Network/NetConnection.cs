@@ -295,10 +295,10 @@ namespace Lidgren.Network
 			{
 				case NetDeliveryMethod.Unreliable:
 				case NetDeliveryMethod.UnreliableSequenced:
-					chan = new NetUnreliableSenderChannel(this, NetConstants.UnreliableWindowSize);
+					chan = new NetUnreliableSenderChannel(this, NetUtility.GetWindowSize(method));
 					break;
 				case NetDeliveryMethod.ReliableOrdered:
-					chan = new NetReliableSenderChannel(this, NetConstants.ReliableOrderedWindowSize);
+					chan = new NetReliableSenderChannel(this, NetUtility.GetWindowSize(method));
 					break;
 				case NetDeliveryMethod.ReliableSequenced:
 				case NetDeliveryMethod.ReliableUnordered:
@@ -306,7 +306,7 @@ namespace Lidgren.Network
 					//
 					// TODO: this is placeholder!
 					//
-					chan = new NetReliableSenderChannel(this, 64);
+					chan = new NetReliableSenderChannel(this, NetUtility.GetWindowSize(method));
 					break;
 			}
 
@@ -424,8 +424,8 @@ namespace Lidgren.Network
 			var chan = m_sendChannels[channelSlot];
 			if (chan == null)
 			{
-				windowSize = 0;
-				freeWindowSlots = 0;
+				windowSize = NetUtility.GetWindowSize(method);
+				freeWindowSlots = windowSize;
 				return;
 			}
 

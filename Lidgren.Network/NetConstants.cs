@@ -36,6 +36,7 @@ namespace Lidgren.Network
 		internal const int UnreliableWindowSize = 128;
 		internal const int ReliableOrderedWindowSize = 64;
 		internal const int ReliableSequencedWindowSize = 64;
+		internal const int DefaultWindowSize = 64;
 
 		internal const int MaxFragmentationGroups = ushort.MaxValue - 1;
 

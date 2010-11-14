@@ -283,6 +283,27 @@ namespace Lidgren.Network
 			return retval;
 		}
 
+		public static int GetWindowSize(NetDeliveryMethod method)
+		{
+			switch (method)
+			{
+				case NetDeliveryMethod.Unknown:
+					return 0;
+
+				case NetDeliveryMethod.Unreliable:
+				case NetDeliveryMethod.UnreliableSequenced:
+					return NetConstants.UnreliableWindowSize;
+
+				case NetDeliveryMethod.ReliableOrdered:
+					return NetConstants.ReliableOrderedWindowSize;
+
+				case NetDeliveryMethod.ReliableSequenced:
+				case NetDeliveryMethod.ReliableUnordered:
+				default:
+					return NetConstants.DefaultWindowSize;
+			}
+		}
+
 		// shell sort
 		internal static void SortMembersList(System.Reflection.MemberInfo[] list)
 		{

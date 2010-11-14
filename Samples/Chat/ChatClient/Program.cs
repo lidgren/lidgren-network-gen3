@@ -27,6 +27,8 @@ namespace ChatClient
 			Application.Idle += new EventHandler(Application_Idle);
 
 			Application.Run(s_form);
+
+			s_client.Shutdown("Bye");
 		}
 
 		private static void Output(string text)
@@ -87,7 +89,8 @@ namespace ChatClient
 		// called by the UI
 		public static void Shutdown()
 		{
-			s_client.Shutdown("Requested by user");
+			s_client.Disconnect("Requested by user");
+			// s_client.Shutdown("Requested by user");
 		}
 
 		public static void Send(string text)

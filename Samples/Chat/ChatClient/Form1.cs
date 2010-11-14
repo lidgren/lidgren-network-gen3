@@ -49,7 +49,7 @@ namespace ChatClient
 				int port;
 				Int32.TryParse(textBox3.Text, out port);
 				Program.Connect(textBox2.Text, port);
-				button2.Text = "Shut down";
+				button2.Text = "Disconnect";
 			}
 			else
 			{
