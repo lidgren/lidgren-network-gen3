@@ -210,10 +210,11 @@ namespace Lidgren.Network
 							if (m_peerConfiguration.IsMessageTypeEnabled(NetIncomingMessageType.ConnectionApproval))
 							{
 								// ok, let's not add connection just yet
-								NetIncomingMessage appMsg = m_peer.CreateIncomingMessage(NetIncomingMessageType.ConnectionApproval, m_remoteHailMessage.LengthBytes);
+								NetIncomingMessage appMsg = m_peer.CreateIncomingMessage(NetIncomingMessageType.ConnectionApproval, (m_remoteHailMessage == null ? 0 : m_remoteHailMessage.LengthBytes));
 								appMsg.m_senderConnection = this;
 								appMsg.m_senderEndpoint = this.m_remoteEndpoint;
-								appMsg.Write(m_remoteHailMessage.m_data, 0, m_remoteHailMessage.LengthBytes);
+								if (m_remoteHailMessage != null)
+									appMsg.Write(m_remoteHailMessage.m_data, 0, m_remoteHailMessage.LengthBytes);
 								m_peer.ReleaseMessage(appMsg);
 								return;
 							}
