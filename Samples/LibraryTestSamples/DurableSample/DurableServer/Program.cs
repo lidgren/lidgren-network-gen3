@@ -24,6 +24,7 @@ namespace DurableServer
 			NetPeerConfiguration config = new NetPeerConfiguration("durable");
 			config.Port = 14242;
 			config.EnableMessageType(NetIncomingMessageType.ConnectionApproval);
+			config.EnableMessageType(NetIncomingMessageType.DiscoveryRequest);
 			Server = new NetServer(config);
 			Server.Start();
 
@@ -71,6 +72,10 @@ namespace DurableServer
 						case NetIncomingMessageType.WarningMessage:
 						case NetIncomingMessageType.ErrorMessage:
 							Display(msg.ReadString());
+							break;
+						case NetIncomingMessageType.DiscoveryRequest:
+							// just send a no-info response
+							Server.SendDiscoveryResponse(null, msg.SenderEndpoint);
 							break;
 						case NetIncomingMessageType.ConnectionApproval:
 							string ok = msg.ReadString();

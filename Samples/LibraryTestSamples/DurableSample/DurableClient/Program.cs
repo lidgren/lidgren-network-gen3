@@ -24,6 +24,7 @@ namespace DurableClient
 			MainForm = new Form1();
 
 			NetPeerConfiguration config = new NetPeerConfiguration("durable");
+			config.EnableMessageType(NetIncomingMessageType.DiscoveryResponse);
 			Client = new NetClient(config);
 			Client.Start();
 
@@ -65,6 +66,13 @@ namespace DurableClient
 						case NetIncomingMessageType.Data:
 							Display("Received data?!");
 							break;
+						case NetIncomingMessageType.DiscoveryResponse:
+							Display("Got discovery response from " + msg.SenderEndpoint);
+							NetOutgoingMessage approval = Client.CreateMessage();
+							approval.Write("durableschmurable");
+							Client.Connect(msg.SenderEndpoint, approval);
+							break;
+
 						case NetIncomingMessageType.StatusChanged:
 							NetConnectionStatus status = (NetConnectionStatus)msg.ReadByte();
 							string reason = msg.ReadString();
@@ -140,10 +148,10 @@ namespace DurableClient
 
 		public static void Connect(string host)
 		{
-			NetOutgoingMessage approval = Client.CreateMessage();
-			approval.Write("durableschmurable");
-
-			Client.Connect(host, 14242, approval);
+			//NetOutgoingMessage approval = Client.CreateMessage();
+			//approval.Write("durableschmurable");
+			// Client.Connect(host, 14242, approval);
+			Client.DiscoverKnownPeer(host, 14242);
 		}
 	}
 }
