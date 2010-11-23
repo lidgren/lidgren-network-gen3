@@ -132,10 +132,10 @@ namespace Lidgren.Network
 			Thread.Sleep(10);
 		}
 
-		internal NetConnection GetConnection(IPEndPoint ep)
+		public NetConnection GetConnection(IPEndPoint ep)
 		{
 			NetConnection retval;
-			m_connectionLookup.TryGetValue(ep, out retval);
+			m_connectionLookup.TryGetValue(ep, out retval); // this should not pose a threading problem, afaict
 			return retval;
 		}
 
