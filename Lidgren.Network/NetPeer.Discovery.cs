@@ -50,6 +50,9 @@ namespace Lidgren.Network
 			else if (msg.m_isSent)
 				throw new NetException("Message has already been sent!");
 
+			if (msg.LengthBytes >= m_configuration.MaximumTransmissionUnit)
+				throw new NetException("Cannot send discovery message larger than MTU (currently " + m_configuration.MaximumTransmissionUnit + " bytes)");
+
 			msg.m_messageType = NetMessageType.DiscoveryResponse;
 			m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(recipient, msg));
 		}
