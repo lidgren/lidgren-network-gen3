@@ -138,7 +138,7 @@ namespace Lidgren.Network
 			om.m_messageType = NetMessageType.ConnectionEstablished;
 			m_peer.SendLibrary(om, m_remoteEndpoint);
 
-			m_sentPingTime = (float)NetTime.Now - (m_peerConfiguration.PingInterval / 2.0f); // delay ping for a little while
+			InitializePing();
 			if (m_status != NetConnectionStatus.Connected)
 				SetStatus(NetConnectionStatus.Connected, "Connected to " + NetUtility.ToHexString(m_remoteUniqueIdentifier));
 		}
@@ -285,7 +285,7 @@ namespace Lidgren.Network
 						case NetConnectionStatus.RespondedConnect:
 							// awesome
 							m_peer.AcceptConnection(this);
-							m_sentPingTime = (float)NetTime.Now - (m_peerConfiguration.PingInterval / 2.0f); // delay ping for a little while
+							InitializePing();
 							SetStatus(NetConnectionStatus.Connected, "Connected to " + NetUtility.ToHexString(m_remoteUniqueIdentifier));
 							return;
 					}

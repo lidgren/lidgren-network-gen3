@@ -144,6 +144,7 @@ namespace DurableServer
 			else
 			{
 				StringBuilder bdr = new StringBuilder();
+				bdr.AppendLine("Uptime: " + (NetTime.ToReadable(NetTime.Now)));
 				bdr.Append(Server.Statistics.ToString());
 				bdr.Append(Server.Connections[0].Statistics.ToString());
 				bdr.AppendLine("RECEIVED Reliable ordered: " + 

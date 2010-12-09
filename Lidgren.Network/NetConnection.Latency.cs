@@ -14,6 +14,14 @@ namespace Lidgren.Network
 		/// </summary>
 		public float AverageRoundtripTime { get { return m_averageRoundtripTime; } }
 
+		internal void InitializePing()
+		{
+			// randomize ping sent time (0.25 - 1.0 x ping interval)
+			m_sentPingTime = (float)NetTime.Now;
+			m_sentPingTime -= (m_peerConfiguration.PingInterval * 0.25f); // delay ping for a little while
+			m_sentPingTime -= (NetRandom.Instance.NextSingle() * (m_peerConfiguration.PingInterval * 0.75f));
+		}
+
 		internal void SendPing()
 		{
 			m_peer.VerifyNetworkThread();

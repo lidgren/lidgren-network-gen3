@@ -156,6 +156,9 @@ namespace Lidgren.Network
 			}
 		}
 
+		/// <summary>
+		/// Returns default(T) if queue is empty
+		/// </summary>
 		public T TryPeek(int offset)
 		{
 			if (m_size == 0)
