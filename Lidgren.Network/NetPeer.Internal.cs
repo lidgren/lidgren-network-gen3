@@ -34,6 +34,11 @@ namespace Lidgren.Network
 
 		private AutoResetEvent m_messageReceivedEvent = new AutoResetEvent(false);
 
+		/// <summary>
+		/// Gets the socket, if Start() has been called
+		/// </summary>
+		public Socket Socket { get { return m_socket; } }
+
 		internal void ReleaseMessage(NetIncomingMessage msg)
 		{
 			NetException.Assert(msg.m_incomingMessageType != NetIncomingMessageType.Error);

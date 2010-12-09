@@ -303,9 +303,6 @@ namespace Lidgren.Network
 				case NetDeliveryMethod.ReliableSequenced:
 				case NetDeliveryMethod.ReliableUnordered:
 				default:
-					//
-					// TODO: this is placeholder!
-					//
 					chan = new NetReliableSenderChannel(this, NetUtility.GetWindowSize(method));
 					break;
 			}
