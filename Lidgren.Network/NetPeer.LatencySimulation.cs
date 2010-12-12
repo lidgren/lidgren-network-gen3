@@ -121,6 +121,8 @@ namespace Lidgren.Network
 				int bytesSent = m_socket.SendTo(data, 0, numBytes, SocketFlags.None, target);
 				if (numBytes != bytesSent)
 					LogWarning("Failed to send the full " + numBytes + "; only " + bytesSent + " bytes sent in packet!");
+
+				// LogDebug("Sent " + numBytes + " bytes");
 			}
 			catch (SocketException sx)
 			{
@@ -150,7 +152,76 @@ namespace Lidgren.Network
 			return true;
 		}
 
+		internal bool SendMTUPacket(int numBytes, IPEndPoint target)
+		{
+			try
+			{
+				m_socket.DontFragment = true;
+				int bytesSent = m_socket.SendTo(m_sendBuffer, 0, numBytes, SocketFlags.None, target);
+				if (numBytes != bytesSent)
+					LogWarning("Failed to send the full " + numBytes + "; only " + bytesSent + " bytes sent in packet!");
+			
+				m_statistics.PacketSent(numBytes, 1);
+			}
+			catch (SocketException sx)
+			{
+				if (sx.SocketErrorCode == SocketError.MessageSize)
+					return false;
+				if (sx.SocketErrorCode == SocketError.WouldBlock)
+				{
+					// send buffer full?
+					LogWarning("Socket threw exception; would block - send buffer full? Increase in NetPeerConfiguration");
+					return true;
+				}
+				if (sx.SocketErrorCode == SocketError.ConnectionReset)
+					return true;
+				LogError("Failed to send packet: (" + sx.SocketErrorCode + ") " + sx);
+			}
+			catch (Exception ex)
+			{
+				LogError("Failed to send packet: " + ex);
+			}
+			finally
+			{
+				m_socket.DontFragment = false;
+			}
+			return true;
+		}
 #else
+		internal bool SendMTUPacket(int numBytes, IPEndPoint target)
+		{
+			try
+			{
+				m_socket.DontFragment = true;
+				int bytesSent = m_socket.SendTo(m_sendBuffer, 0, numBytes, SocketFlags.None, target);
+				if (numBytes != bytesSent)
+					LogWarning("Failed to send the full " + numBytes + "; only " + bytesSent + " bytes sent in packet!");
+			}
+			catch (SocketException sx)
+			{
+				if (sx.SocketErrorCode == SocketError.MessageSize)
+					return false;
+				if (sx.SocketErrorCode == SocketError.WouldBlock)
+				{
+					// send buffer full?
+					LogWarning("Socket threw exception; would block - send buffer full? Increase in NetPeerConfiguration");
+					return true;
+				}
+				if (sx.SocketErrorCode == SocketError.ConnectionReset)
+					return true;
+				LogError("Failed to send packet: (" + sx.SocketErrorCode + ") " + sx);
+			}
+			catch (Exception ex)
+			{
+				LogError("Failed to send packet: " + ex);
+			}
+			finally
+			{
+				m_socket.DontFragment = false;
+			}
+			return true;
+		}
+
 		//
 		// Release - just send the packet straight away
 		//

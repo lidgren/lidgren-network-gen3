@@ -33,8 +33,9 @@ namespace Lidgren.Network
 
 			// create fragmentation specifics
 			int totalBytes = msg.LengthBytes;
-			int mtu = m_configuration.MaximumTransmissionUnit;
-			
+
+			// determine minimum mtu for all recipients
+			int mtu = GetMTU(recipients);
 			int bytesPerChunk = NetFragmentationHelper.GetBestChunkSize(group, totalBytes, mtu);
 
 			int numChunks = totalBytes / bytesPerChunk;

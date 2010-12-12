@@ -35,7 +35,6 @@ namespace Lidgren.Network
 		private IPAddress m_localAddress;
 		internal bool m_acceptIncomingConnections;
 		internal int m_maximumConnections;
-		internal int m_maximumTransmissionUnit;
 		internal int m_defaultOutgoingMessageCapacity;
 		internal float m_pingInterval;
 		internal bool m_useMessageRecycling;
@@ -51,6 +50,13 @@ namespace Lidgren.Network
 		internal float m_duplicates;
 		internal float m_minimumOneWayLatency;
 		internal float m_randomOneWayLatency;
+
+		// MTU
+		internal int m_maximumTransmissionUnit;
+		internal bool m_autoExpandMTU;
+		internal float m_expandMTUFrequency;
+		internal float m_expandMTUFactor;
+		internal int m_expandMTUFailAttempts;
 
 		public NetPeerConfiguration(string appIdentifier)
 		{
@@ -83,6 +89,9 @@ namespace Lidgren.Network
 			// Total 1408 bytes
 			// Note that lidgren headers (5 bytes) are not included here; since it's part of the "mtu payload"
 			m_maximumTransmissionUnit = 1408;
+			m_autoExpandMTU = true;
+			m_expandMTUFrequency = 2.0f;
+			m_expandMTUFailAttempts = 5;
 
 			m_loss = 0.0f;
 			m_minimumOneWayLatency = 0.0f;
@@ -291,6 +300,38 @@ namespace Lidgren.Network
 		{
 			get { return m_acceptIncomingConnections; }
 			set { m_acceptIncomingConnections = value; }
+		}
+
+		/// <summary>
+		/// Gets or sets if the NetPeer should send large messages to try to expand the maximum transmission unit size
+		/// </summary>
+		public bool AutoExpandMTU
+		{
+			get { return m_autoExpandMTU; }
+			set
+			{
+				if (m_isLocked)
+					throw new NetException(c_isLockedMessage);
+				m_autoExpandMTU = value;
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets how often to send large messages to expand MTU if AutoExpandMTU is enabled
+		/// </summary>
+		public float ExpandMTUFrequency
+		{
+			get { return m_expandMTUFrequency; }
+			set { m_expandMTUFrequency = value; }
+		}
+
+		/// <summary>
+		/// Gets or sets the number of failed expand mtu attempts to perform before setting final MTU
+		/// </summary>
+		public int ExpandMTUFailAttempts
+		{
+			get { return m_expandMTUFailAttempts; }
+			set { m_expandMTUFailAttempts = value; }
 		}
 
 #if DEBUG

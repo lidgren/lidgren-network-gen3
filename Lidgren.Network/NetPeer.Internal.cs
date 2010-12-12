@@ -43,6 +43,9 @@ namespace Lidgren.Network
 		{
 			NetException.Assert(msg.m_incomingMessageType != NetIncomingMessageType.Error);
 
+			if (msg.MessageType == NetIncomingMessageType.UnconnectedData)
+				Console.WriteLine("x");
+
 			if (msg.m_isFragment)
 			{
 				HandleReleasedFragment(msg);
@@ -465,6 +468,7 @@ namespace Lidgren.Network
 		internal void AcceptConnection(NetConnection conn)
 		{
 			// LogDebug("Accepted connection " + conn);
+			conn.InitExpandMTU(NetTime.Now);
 
 			if (m_handshakes.Remove(conn.m_remoteEndpoint) == false)
 				LogWarning("AcceptConnection called but m_handshakes did not contain it!");

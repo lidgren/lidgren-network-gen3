@@ -62,6 +62,7 @@
     <Compile Include="NetDeliveryMethod.cs" />
     <Compile Include="NetEncryption.cs" />
     <Compile Include="NetException.cs" />
+    <Compile Include="NetConnection.MTU.cs" />
     <Compile Include="NetFragmentationHelper.cs" />
     <Compile Include="NetIncomingMessage.cs" />
     <Compile Include="NetIncomingMessage.Peek.cs" />

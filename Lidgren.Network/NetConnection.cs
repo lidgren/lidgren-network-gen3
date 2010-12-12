@@ -81,6 +81,7 @@ namespace Lidgren.Network
 			m_queuedAcks = new NetQueue<NetTuple<NetMessageType, int>>(4);
 			m_statistics = new NetConnectionStatistics(this);
 			m_averageRoundtripTime = -1.0f;
+			m_currentMTU = m_peerConfiguration.MaximumTransmissionUnit;
 		}
 
 		internal void SetStatus(NetConnectionStatus status, string reason)
@@ -139,6 +140,9 @@ namespace Lidgren.Network
 						SendPing();
 				}
 
+				// handle expand mtu
+				MTUExpansionHeartbeat(now);
+
 				if (m_disconnectRequested)
 				{
 					ExecuteDisconnect(m_disconnectMessage, true);
@@ -153,7 +157,7 @@ namespace Lidgren.Network
 			//
 
 			byte[] sendBuffer = m_peer.m_sendBuffer;
-			int mtu = m_peerConfiguration.m_maximumTransmissionUnit;
+			int mtu = m_currentMTU;
 
 			if ((frameCounter % 3) == 0) // coalesce a few frames
 			{
@@ -236,10 +240,10 @@ namespace Lidgren.Network
 			m_peer.VerifyNetworkThread();
 
 			int sz = om.GetEncodedSize();
-			if (sz > m_peerConfiguration.m_maximumTransmissionUnit)
+			if (sz > m_currentMTU)
 				m_peer.LogWarning("Message larger than MTU! Fragmentation must have failed!");
 
-			if (m_sendBufferWritePtr + sz > m_peerConfiguration.m_maximumTransmissionUnit)
+			if (m_sendBufferWritePtr + sz > m_currentMTU)
 			{
 				bool connReset; // TODO: handle connection reset
 				NetException.Assert(m_sendBufferWritePtr > 0 && m_sendBufferNumMessages > 0); // or else the message should have been fragmented earlier
@@ -279,7 +283,7 @@ namespace Lidgren.Network
 			if (chan == null)
 				chan = CreateSenderChannel(tp);
 
-			if (msg.GetEncodedSize() > m_peerConfiguration.m_maximumTransmissionUnit)
+			if (msg.GetEncodedSize() > m_currentMTU)
 				throw new NetException("Message too large! Fragmentation failure?");
 
 			return chan.Enqueue(msg);
@@ -350,6 +354,14 @@ namespace Lidgren.Network
 				case NetMessageType.Pong:
 					int pongNr = m_peer.m_receiveBuffer[ptr++];
 					ReceivedPong(now, pongNr);
+					break;
+				case NetMessageType.ExpandMTURequest:
+					SendMTUSuccess(payloadLength);
+					break;
+				case NetMessageType.ExpandMTUSuccess:
+					NetIncomingMessage emsg = m_peer.SetupReadHelperMessage(ptr, payloadLength);
+					int size = emsg.ReadInt32();
+					HandleExpandMTUSuccess(now, size);
 					break;
 				default:
 					m_peer.LogWarning("Connection received unhandled library message: " + tp);

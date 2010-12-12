@@ -169,5 +169,7 @@ namespace Lidgren.Network
 		DiscoveryResponse = 137,
 		NatPunchMessage = 138, // send between peers
 		NatIntroduction = 139, // send to master server
+		ExpandMTURequest = 140,
+		ExpandMTUSuccess = 141,
 	}
 }

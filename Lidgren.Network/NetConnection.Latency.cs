@@ -37,6 +37,8 @@ namespace Lidgren.Network
 			int len = om.Encode(m_peer.m_sendBuffer, 0, 0);
 			bool connectionReset;
 			m_peer.SendPacket(len, m_remoteEndpoint, 1, out connectionReset);
+
+			m_statistics.PacketSent(len, 1);
 		}
 
 		internal void SendPong(int pingNumber)
@@ -50,6 +52,8 @@ namespace Lidgren.Network
 			int len = om.Encode(m_peer.m_sendBuffer, 0, 0);
 			bool connectionReset;
 			m_peer.SendPacket(len, m_remoteEndpoint, 1, out connectionReset);
+
+			m_statistics.PacketSent(len, 1);
 		}
 
 		internal void ReceivedPong(float now, int pongNumber)

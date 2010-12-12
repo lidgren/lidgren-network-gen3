@@ -77,7 +77,7 @@ namespace ChatServer
 							s_server.SendMessage(om, all, NetDeliveryMethod.ReliableOrdered, 0);
 							break;
 						default:
-							Output("Unhandled type: " + im.MessageType);
+							Output("Unhandled type: " + im.MessageType + " " + im.LengthBytes + " bytes " + im.DeliveryMethod + "|" + im.SequenceChannel);
 							break;
 					}
 				}

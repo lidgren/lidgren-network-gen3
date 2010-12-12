@@ -69,7 +69,7 @@ namespace ChatClient
 							Output(chat);
 							break;
 						default:
-							Output("Unhandled type: " + im.MessageType);
+							Output("Unhandled type: " + im.MessageType + " " + im.LengthBytes + " bytes");
 							break;
 					}
 				}

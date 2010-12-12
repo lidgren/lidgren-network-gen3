@@ -44,7 +44,7 @@ namespace Lidgren.Network
 				throw new NetException("This message has already been sent! Use NetPeer.SendMessage() to send to multiple recipients efficiently");
 
 			int len = msg.LengthBytes;
-			if (len <= m_configuration.MaximumTransmissionUnit)
+			if (len <= recipient.m_currentMTU)
 			{
 				Interlocked.Increment(ref msg.m_recyclingCount);
 				return recipient.EnqueueMessage(msg, method, sequenceChannel);
@@ -57,6 +57,18 @@ namespace Lidgren.Network
 			}
 		}
 
+		internal int GetMTU(IList<NetConnection> recipients)
+		{
+			int mtu = int.MaxValue;
+			foreach (NetConnection conn in recipients)
+			{
+				int cmtu = conn.m_currentMTU;
+				if (cmtu < mtu)
+					mtu = cmtu;
+			}
+			return mtu;
+		}
+
 		public void SendMessage(NetOutgoingMessage msg, IList<NetConnection> recipients, NetDeliveryMethod method, int sequenceChannel)
 		{
 			if (msg == null)
@@ -67,6 +79,8 @@ namespace Lidgren.Network
 				NetException.Assert(sequenceChannel == 0, "Delivery method " + method + " cannot use sequence channels other than 0!");
 			if (msg.m_isSent)
 				throw new NetException("This message has already been sent! Use NetPeer.SendMessage() to send to multiple recipients efficiently");
+
+			int mtu = GetMTU(recipients);
 
 			int len = msg.LengthBytes;
 			if (len <= m_configuration.MaximumTransmissionUnit)
