@@ -36,6 +36,7 @@ namespace Lidgren.Network
 		internal int m_sequenceNumber;
 		internal NetMessageType m_receivedMessageType;
 		internal bool m_isFragment;
+		internal double m_receiveTime;
 
 		/// <summary>
 		/// Gets the type of this incoming message
@@ -61,6 +62,11 @@ namespace Lidgren.Network
 		/// NetConnection of sender, if any
 		/// </summary>
 		public NetConnection SenderConnection { get { return m_senderConnection; } }
+
+		/// <summary>
+		/// What local time the message was received from the network
+		/// </summary>
+		public double ReceiveTime { get { return m_receiveTime; } }
 
 		/// <summary>
 		/// Gets the length of the message payload in bytes

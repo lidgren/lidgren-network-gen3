@@ -466,6 +466,20 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
+		/// Reads a value, in local time comparable to NetTime.Now, written using WriteTime()
+		/// Must have a connected sender
+		/// </summary>
+		public double ReadTime(bool highPrecision)
+		{
+			double remoteTime = (highPrecision ? ReadDouble() : (double)ReadSingle());
+
+			if (m_senderConnection == null)
+				throw new NetException("Cannot call ReadTime() on message without a connected sender (ie. unconnected messages)");
+
+			return remoteTime - m_senderConnection.m_remoteTimeOffset;
+		}
+
+		/// <summary>
 		/// Pads data with enough bits to reach a full byte. Decreases cpu usage for subsequent byte writes.
 		/// </summary>
 		public void SkipPadBits()

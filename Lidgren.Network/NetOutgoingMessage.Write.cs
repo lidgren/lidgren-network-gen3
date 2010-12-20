@@ -535,6 +535,17 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
+		/// Writes the local time to a message; readable (and convertable to local time) by the remote host using ReadTime()
+		/// </summary>
+		public void WriteTime(double localTime, bool highPrecision)
+		{
+			if (highPrecision)
+				Write(localTime);
+			else
+				Write((float)localTime);
+		}
+
+		/// <summary>
 		/// Pads data with enough bits to reach a full byte. Decreases cpu usage for subsequent byte writes.
 		/// </summary>
 		public void WritePadBits()

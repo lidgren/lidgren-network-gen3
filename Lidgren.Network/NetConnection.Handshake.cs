@@ -183,7 +183,7 @@ namespace Lidgren.Network
 			m_peer.m_handshakes.Remove(m_remoteEndpoint); // TODO: make this more thread safe? we're on user thread
 		}
 
-		internal void ReceivedHandshake(NetMessageType tp, int ptr, int payloadLength)
+		internal void ReceivedHandshake(double now, NetMessageType tp, int ptr, int payloadLength)
 		{
 			m_peer.VerifyNetworkThread();
 
@@ -211,6 +211,7 @@ namespace Lidgren.Network
 							{
 								// ok, let's not add connection just yet
 								NetIncomingMessage appMsg = m_peer.CreateIncomingMessage(NetIncomingMessageType.ConnectionApproval, (m_remoteHailMessage == null ? 0 : m_remoteHailMessage.LengthBytes));
+								appMsg.m_receiveTime = now;
 								appMsg.m_senderConnection = this;
 								appMsg.m_senderEndpoint = this.m_remoteEndpoint;
 								if (m_remoteHailMessage != null)

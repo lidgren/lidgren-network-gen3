@@ -138,10 +138,10 @@ namespace Lidgren.Network
 				{
 					if (now > m_sentPingTime + m_peer.m_configuration.m_pingInterval)
 						SendPing();
-				}
 
-				// handle expand mtu
-				MTUExpansionHeartbeat(now);
+					// handle expand mtu
+					MTUExpansionHeartbeat(now);
+				}
 
 				if (m_disconnectRequested)
 				{
@@ -352,8 +352,10 @@ namespace Lidgren.Network
 					SendPong(pingNr);
 					break;
 				case NetMessageType.Pong:
-					int pongNr = m_peer.m_receiveBuffer[ptr++];
-					ReceivedPong(now, pongNr);
+					NetIncomingMessage pmsg = m_peer.SetupReadHelperMessage(ptr, payloadLength);
+					int pongNr = pmsg.ReadByte();
+					float remoteSendTime = pmsg.ReadSingle();
+					ReceivedPong(now, pongNr, remoteSendTime);
 					break;
 				case NetMessageType.ExpandMTURequest:
 					SendMTUSuccess(payloadLength);

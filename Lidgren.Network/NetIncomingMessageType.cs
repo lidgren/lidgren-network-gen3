@@ -42,5 +42,6 @@ namespace Lidgren.Network
 		WarningMessage = 1 << 9,		// Data (string)
 		ErrorMessage = 1 << 10,			// Data (string)
 		NatIntroductionSuccess = 1 << 11, // Data (as passed to master server)
+		ConnectionLatencyUpdated = 1 << 12, // Seconds as a Single
 	}
 }

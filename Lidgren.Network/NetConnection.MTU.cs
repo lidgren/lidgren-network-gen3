@@ -26,7 +26,7 @@ namespace Lidgren.Network
 
 		internal void InitExpandMTU(double now)
 		{
-			m_lastSentMTUAttemptTime = now + m_peerConfiguration.m_expandMTUFrequency + 1.0f; // wait a tiny bit before starting to expand mtu
+			m_lastSentMTUAttemptTime = now + m_peerConfiguration.m_expandMTUFrequency + 1.5f + m_averageRoundtripTime; // wait a tiny bit before starting to expand mtu
 			m_largestSuccessfulMTU = 512;
 			m_smallestFailedMTU = -1;
 			m_currentMTU = m_peerConfiguration.MaximumTransmissionUnit;

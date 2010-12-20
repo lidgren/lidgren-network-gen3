@@ -43,9 +43,6 @@ namespace Lidgren.Network
 		{
 			NetException.Assert(msg.m_incomingMessageType != NetIncomingMessageType.Error);
 
-			if (msg.MessageType == NetIncomingMessageType.UnconnectedData)
-				Console.WriteLine("x");
-
 			if (msg.m_isFragment)
 			{
 				HandleReleasedFragment(msg);
@@ -306,6 +303,7 @@ namespace Lidgren.Network
 			NetConnection sender = null;
 			m_connectionLookup.TryGetValue(ipsender, out sender);
 
+			double receiveTime = NetTime.Now;
 			//
 			// parse packet into messages
 			//
@@ -344,7 +342,7 @@ namespace Lidgren.Network
 						if (sender != null)
 							sender.ReceivedLibraryMessage(tp, ptr, payloadByteLength);
 						else
-							ReceivedUnconnectedLibraryMessage(ipsender, tp, ptr, payloadByteLength);
+							ReceivedUnconnectedLibraryMessage(receiveTime, ipsender, tp, ptr, payloadByteLength);
 					}
 					else
 					{
@@ -353,6 +351,7 @@ namespace Lidgren.Network
 
 						NetIncomingMessage msg = CreateIncomingMessage(NetIncomingMessageType.Data, payloadByteLength);
 						msg.m_isFragment = isFragment;
+						msg.m_receiveTime = receiveTime;
 						msg.m_sequenceNumber = sequenceNumber;
 						msg.m_receivedMessageType = tp;
 						msg.m_senderConnection = sender;
@@ -390,12 +389,12 @@ namespace Lidgren.Network
 			}
 		}
 
-		private void ReceivedUnconnectedLibraryMessage(IPEndPoint senderEndpoint, NetMessageType tp, int ptr, int payloadByteLength)
+		private void ReceivedUnconnectedLibraryMessage(double now, IPEndPoint senderEndpoint, NetMessageType tp, int ptr, int payloadByteLength)
 		{
 			NetConnection shake;
 			if (m_handshakes.TryGetValue(senderEndpoint, out shake))
 			{
-				shake.ReceivedHandshake(tp, ptr, payloadByteLength);
+				shake.ReceivedHandshake(now, tp, ptr, payloadByteLength);
 				return;
 			}
 
@@ -410,6 +409,7 @@ namespace Lidgren.Network
 						NetIncomingMessage dm = CreateIncomingMessage(NetIncomingMessageType.DiscoveryRequest, payloadByteLength);
 						if (payloadByteLength > 0)
 							Buffer.BlockCopy(m_receiveBuffer, ptr, dm.m_data, 0, payloadByteLength);
+						dm.m_receiveTime = now;
 						dm.m_bitLength = payloadByteLength * 8;
 						dm.m_senderEndpoint = senderEndpoint;
 						ReleaseMessage(dm);
@@ -422,6 +422,7 @@ namespace Lidgren.Network
 						NetIncomingMessage dr = CreateIncomingMessage(NetIncomingMessageType.DiscoveryResponse, payloadByteLength);
 						if (payloadByteLength > 0)
 							Buffer.BlockCopy(m_receiveBuffer, ptr, dr.m_data, 0, payloadByteLength);
+						dr.m_receiveTime = now;
 						dr.m_bitLength = payloadByteLength * 8;
 						dr.m_senderEndpoint = senderEndpoint;
 						ReleaseMessage(dr);
@@ -460,7 +461,7 @@ namespace Lidgren.Network
 			// Ok, start handshake!
 			NetConnection conn = new NetConnection(this, senderEndpoint);
 			m_handshakes.Add(senderEndpoint, conn);
-			conn.ReceivedHandshake(tp, ptr, payloadByteLength);
+			conn.ReceivedHandshake(now, tp, ptr, payloadByteLength);
 
 			return;
 		}
