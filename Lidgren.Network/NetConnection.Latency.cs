@@ -17,9 +17,14 @@ namespace Lidgren.Network
 		/// </summary>
 		public float AverageRoundtripTime { get { return m_averageRoundtripTime; } }
 
-		internal double GetLocalTime(double remoteTimeStamp)
+		public double GetLocalTime(double remoteTimestamp)
 		{
-			return remoteTimeStamp - m_remoteTimeOffset;
+			return remoteTimestamp - m_remoteTimeOffset;
+		}
+
+		public double GetRemoteTime(double localTimestamp)
+		{
+			return localTimestamp + m_remoteTimeOffset;
 		}
 
 		internal void InitializePing()

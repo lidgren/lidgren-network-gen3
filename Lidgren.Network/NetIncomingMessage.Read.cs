@@ -476,6 +476,7 @@ namespace Lidgren.Network
 			if (m_senderConnection == null)
 				throw new NetException("Cannot call ReadTime() on message without a connected sender (ie. unconnected messages)");
 
+			// lets bypass NetConnection.GetLocalTime for speed
 			return remoteTime - m_senderConnection.m_remoteTimeOffset;
 		}
 
