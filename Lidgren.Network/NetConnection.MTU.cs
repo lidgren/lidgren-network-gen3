@@ -157,7 +157,7 @@ namespace Lidgren.Network
 
 		private void HandleExpandMTUSuccess(double now, int size)
 		{
-			if (m_largestSuccessfulMTU < size)
+			if (size > m_largestSuccessfulMTU)
 				m_largestSuccessfulMTU = size;
 
 			if (size < m_currentMTU)
@@ -168,7 +168,6 @@ namespace Lidgren.Network
 
 			//m_peer.LogDebug("Expanding MTU to " + size);
 			m_currentMTU = size;
-			m_largestSuccessfulMTU = size;
 
 			ExpandMTU(now, true);
 		}
