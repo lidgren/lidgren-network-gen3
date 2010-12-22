@@ -66,7 +66,7 @@ namespace Lidgren.Network
 			float avgRtt = m_averageRoundtripTime;
 			if (avgRtt <= 0)
 				avgRtt = 0.1f; // "default" resend is based on 100 ms roundtrip time
-			return 0.01f + (avgRtt * 2); // 10 ms + double rtt
+			return 0.02f + (avgRtt * 2.0f); // 20 ms + double rtt
 		}
 
 		internal NetConnection(NetPeer peer, IPEndPoint remoteEndpoint)

@@ -23,6 +23,12 @@ using System.Diagnostics;
 
 namespace Lidgren.Network
 {
+	internal enum MessageResendReason
+	{
+		Delay,
+		HoleInSequence
+	}
+
 	/// <summary>
 	/// Statistics for a NetConnection instance
 	/// </summary>
@@ -39,7 +45,8 @@ namespace Lidgren.Network
 		internal int m_sentBytes;
 		internal int m_receivedBytes;
 
-		internal int m_resentMessages;
+		internal int m_resentMessagesDueToDelay;
+		internal int m_resentMessagesDueToHole;
 
 		internal NetConnectionStatistics(NetConnection conn)
 		{
@@ -78,7 +85,7 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Gets the number of resent reliable messages for this connection
 		/// </summary>
-		public int ResentMessages { get { return m_resentMessages; } }
+		public int ResentMessages { get { return m_resentMessagesDueToHole + m_resentMessagesDueToDelay; } }
 
 		// public double LastSendRespondedTo { get { return m_connection.m_lastSendRespondedTo; } }
 
@@ -101,9 +108,12 @@ namespace Lidgren.Network
 		}
 
 		[Conditional("DEBUG")]
-		internal void MessageResent()
+		internal void MessageResent(MessageResendReason reason)
 		{
-			m_resentMessages++;
+			if (reason == MessageResendReason.Delay)
+				m_resentMessagesDueToDelay++;
+			else
+				m_resentMessagesDueToHole++;
 		}
 
 		/// <summary>
@@ -116,8 +126,10 @@ namespace Lidgren.Network
 			bdr.AppendLine("Sent " + m_sentBytes + " bytes in " + m_sentMessages + " messages in " + m_sentPackets + " packets");
 			bdr.AppendLine("Received " + m_receivedBytes + " bytes in " + m_receivedMessages + " messages in " + m_receivedPackets + " packets");
 
-			if (m_resentMessages > 0)
-				bdr.AppendLine("Resent messages: " + m_resentMessages);
+			if (m_resentMessagesDueToDelay > 0)
+				bdr.AppendLine("Resent messages (delay): " + m_resentMessagesDueToDelay);
+			if (m_resentMessagesDueToDelay > 0)
+				bdr.AppendLine("Resent messages (holes): " + m_resentMessagesDueToHole);
 
 			int numUnsent = 0;
 			int numStored = 0;

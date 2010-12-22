@@ -89,7 +89,7 @@ namespace Lidgren.Network
 			// Total 1408 bytes
 			// Note that lidgren headers (5 bytes) are not included here; since it's part of the "mtu payload"
 			m_maximumTransmissionUnit = 1408;
-			m_autoExpandMTU = true;
+			m_autoExpandMTU = false;
 			m_expandMTUFrequency = 2.0f;
 			m_expandMTUFailAttempts = 5;
 

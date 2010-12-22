@@ -127,7 +127,6 @@ namespace Lidgren.Network
 			m_lastSentMTUAttemptSize = size;
 			m_lastSentMTUAttemptTime = now;
 
-			//m_peer.LogDebug("Requesting MTU expand " + size + " bytes");
 			m_statistics.PacketSent(len, 1);
 		}
 
@@ -137,7 +136,8 @@ namespace Lidgren.Network
 				return;
 			m_expandMTUStatus = ExpandMTUStatus.Finished;
 			m_currentMTU = size;
-			m_peer.LogVerbose("Maximum Transmission Unit set to: " + m_currentMTU + " bytes");
+			if (m_currentMTU != m_peerConfiguration.m_maximumTransmissionUnit)
+				m_peer.LogDebug("Expanded Maximum Transmission Unit to: " + m_currentMTU + " bytes");
 			return;
 		}
 

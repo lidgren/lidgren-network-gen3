@@ -88,7 +88,7 @@ namespace Lidgren.Network
 			if (m_averageRoundtripTime < 0)
 			{
 				m_remoteTimeOffset = diff;
-				m_averageRoundtripTime = rtt; // initial estimate
+				m_averageRoundtripTime = rtt * 1.15f; // initially over-estimate
 				m_peer.LogDebug("Initiated average roundtrip time to " + NetTime.ToReadable(m_averageRoundtripTime) + " Server time is: " + (now + diff));
 			}
 			else

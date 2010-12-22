@@ -95,7 +95,10 @@ namespace Lidgren.Network
 					}
 					NetSendResult res = conn.EnqueueMessage(msg, method, sequenceChannel);
 					if (res == NetSendResult.Dropped)
+					{
+						LogDebug(msg + " dropped immediately due to full queues");
 						Interlocked.Decrement(ref msg.m_recyclingCount);
+					}
 				}
 			}
 			else

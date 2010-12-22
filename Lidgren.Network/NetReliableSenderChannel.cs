@@ -86,8 +86,8 @@ namespace Lidgren.Network
 						seqNr--;
 					}
 
-					m_connection.m_peer.LogVerbose("Resending due to delay #" + seqNr + " " + om.ToString());
-					m_connection.m_statistics.MessageResent();
+					//m_connection.m_peer.LogVerbose("Resending due to delay #" + seqNr + " " + om.ToString());
+					m_connection.m_statistics.MessageResent(MessageResendReason.Delay);
 
 					m_connection.QueueSendMessage(om, seqNr);
 
@@ -165,7 +165,7 @@ namespace Lidgren.Network
 				m_windowStart = (m_windowStart + 1) % NetConstants.NumSequenceNumbers;
 
 				// advance window if we already have early acks
-				while (m_receivedAcks[m_windowStart])
+				while (m_receivedAcks.Get(m_windowStart))
 				{
 					//m_connection.m_peer.LogDebug("Using early ack for #" + m_windowStart + "...");
 					m_receivedAcks[m_windowStart] = false;
@@ -226,11 +226,19 @@ namespace Lidgren.Network
 					{
 						// just sent once; resend immediately since we found gap in ack sequence
 						NetOutgoingMessage rmsg = m_storedMessages[slot].Message;
-						m_connection.m_peer.LogVerbose("Resending #" + rnr + " (" + rmsg + ")");
-						m_storedMessages[slot].LastSent = now;
-						m_storedMessages[slot].NumSent++;
-						m_connection.m_statistics.MessageResent(); 
-						m_connection.QueueSendMessage(rmsg, rnr);
+						//m_connection.m_peer.LogVerbose("Resending #" + rnr + " (" + rmsg + ")");
+
+						if (now - m_storedMessages[slot].LastSent < (m_resendDelay * 0.35f))
+						{
+							// already resent recently
+						}
+						else
+						{
+							m_storedMessages[slot].LastSent = now;
+							m_storedMessages[slot].NumSent++;
+							m_connection.m_statistics.MessageResent(MessageResendReason.HoleInSequence);
+							m_connection.QueueSendMessage(rmsg, rnr);
+						}
 					}
 				}
 
