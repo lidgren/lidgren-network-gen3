@@ -77,7 +77,7 @@ namespace SpeedTestServer
 									break;
 								case NetDeliveryMethod.UnreliableSequenced:
 								case NetDeliveryMethod.ReliableSequenced:
-									if (expected < nr)
+									if (nr < expected)
 										throw new NetException(im.DeliveryMethod.ToString() + " failed! Expected " + expected + " received " + nr);
 									s_nextNumber[slot] = nr + 1;
 									break;

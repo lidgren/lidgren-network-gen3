@@ -17,6 +17,8 @@ namespace ImageClient
 		public bool[] ReceivedSegments;
 		public int NumReceivedSegments;
 
+		private double m_startedFetching;
+
 		public ImageGetter(string host, NetPeerConfiguration copyConfig)
 		{
 			InitializeComponent();
@@ -27,7 +29,23 @@ namespace ImageClient
 			Client = new NetClient(config);
 			Client.Start();
 
-			Client.DiscoverLocalPeers(14242);
+			if (!string.IsNullOrEmpty(host))
+			{
+				Client.Connect(host, 14242, GetApproveData());
+			}
+			else
+			{
+				Client.DiscoverLocalPeers(14242);
+			}
+		}
+
+		private NetOutgoingMessage GetApproveData()
+		{
+			// create approval data
+			NetOutgoingMessage approval = Client.CreateMessage();
+			approval.Write(42);
+			approval.Write("secret");
+			return approval;
 		}
 
 		public void Heartbeat()
@@ -39,15 +57,8 @@ namespace ImageClient
 				{
 					case NetIncomingMessageType.DiscoveryResponse:
 						// found server! just connect...
-
 						string serverResponseHello = inc.ReadString();
-
-						// create approval data
-						NetOutgoingMessage approval = Client.CreateMessage();
-						approval.Write(42);
-						approval.Write("secret");
-
-						Client.Connect(inc.SenderEndpoint, approval);
+						Client.Connect(inc.SenderEndpoint, GetApproveData());
 						break;
 					case NetIncomingMessageType.DebugMessage:
 					case NetIncomingMessageType.VerboseDebugMessage:
@@ -55,12 +66,14 @@ namespace ImageClient
 					case NetIncomingMessageType.ErrorMessage:
 						string str = inc.ReadString();
 						NativeMethods.AppendText(richTextBox1, str);
-						System.IO.File.AppendAllText("C:\\tmp\\clientlog.txt", str + Environment.NewLine);
+						//System.IO.File.AppendAllText("C:\\tmp\\clientlog.txt", str + Environment.NewLine);
 						break;
 					case NetIncomingMessageType.StatusChanged:
 						NetConnectionStatus status = (NetConnectionStatus)inc.ReadByte();
 						string reason = inc.ReadString();
 						NativeMethods.AppendText(richTextBox1, "New status: " + status + " (" + reason + ")");
+						if (status == NetConnectionStatus.Connected)
+							m_startedFetching = NetTime.Now;
 						break;
 					case NetIncomingMessageType.Data:
 						// image data, whee!
@@ -139,6 +152,10 @@ namespace ImageClient
 									bm.SetPixel(x, y, col);
 								}
 							}
+
+							double span = NetTime.Now - m_startedFetching;
+							double bytesPerSecond = (double)totalBytes / span;
+							NativeMethods.AppendText(richTextBox1, "Fetched at " + NetUtility.ToHumanReadable((long)bytesPerSecond) + " per second");
 
 							Client.Disconnect("So long and thanks for all the fish!");
 						}

@@ -26,6 +26,7 @@ namespace ImageServer
 			NetPeerConfiguration config = new NetPeerConfiguration("ImageTransfer");
 			config.EnableMessageType(NetIncomingMessageType.ConnectionApproval);
 			config.EnableMessageType(NetIncomingMessageType.DiscoveryRequest);
+			config.AutoExpandMTU = true;
 
 			// listen on port 14242
 			config.Port = 14242;
@@ -57,7 +58,7 @@ namespace ImageServer
 							// just print any message
 							string str = inc.ReadString();
 							NativeMethods.AppendText(MainForm.richTextBox1, str);
-							System.IO.File.AppendAllText("C:\\tmp\\serverlog.txt", str + Environment.NewLine);
+							//System.IO.File.AppendAllText("C:\\tmp\\serverlog.txt", str + Environment.NewLine);
 							break;
 						case NetIncomingMessageType.DiscoveryRequest:
 							NetOutgoingMessage dom = Server.CreateMessage();

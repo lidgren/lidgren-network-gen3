@@ -19,8 +19,15 @@ namespace ImageClient
 			Application.SetCompatibleTextRenderingDefault(false);
 			MainForm = new Form1();
 
-			Application.Idle += new EventHandler(AppLoop);
-			Application.Run(MainForm);
+			try
+			{
+				Application.Idle += new EventHandler(AppLoop);
+				Application.Run(MainForm);
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show("Ouch: " + ex);
+			}
 		}
 
 		static void AppLoop(object sender, EventArgs e)
