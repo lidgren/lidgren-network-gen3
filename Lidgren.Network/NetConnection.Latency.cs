@@ -29,10 +29,13 @@ namespace Lidgren.Network
 
 		internal void InitializePing()
 		{
+			float now = (float)NetTime.Now;
+
 			// randomize ping sent time (0.25 - 1.0 x ping interval)
-			m_sentPingTime = (float)NetTime.Now;
+			m_sentPingTime = now;
 			m_sentPingTime -= (m_peerConfiguration.PingInterval * 0.25f); // delay ping for a little while
 			m_sentPingTime -= (NetRandom.Instance.NextSingle() * (m_peerConfiguration.PingInterval * 0.75f));
+			m_timeoutDeadline = now + (m_peerConfiguration.m_connectionTimeout * 2.0f); // initially allow a little more time
 		}
 
 		internal void SendPing()
