@@ -16,12 +16,24 @@ namespace Lidgren.Network
 		/// Gets the current average roundtrip time in seconds
 		/// </summary>
 		public float AverageRoundtripTime { get { return m_averageRoundtripTime; } }
-
+		
+		// this might happen more than once
+		internal void InitializeRemoteTimeOffset(float remoteSendTime)
+		{
+			m_remoteTimeOffset = (remoteSendTime + (m_averageRoundtripTime / 2.0)) - NetTime.Now;
+		}
+		
+		/// <summary>
+		/// Gets local time value comparable to NetTime.Now from a remote value
+		/// </summary>
 		public double GetLocalTime(double remoteTimestamp)
 		{
 			return remoteTimestamp - m_remoteTimeOffset;
 		}
 
+		/// <summary>
+		/// Gets the remote time value for a local time value produced by NetTime.Now
+		/// </summary>
 		public double GetRemoteTime(double localTimestamp)
 		{
 			return localTimestamp + m_remoteTimeOffset;
@@ -92,14 +104,14 @@ namespace Lidgren.Network
 			{
 				m_remoteTimeOffset = diff;
 				m_averageRoundtripTime = rtt * 1.15f; // initially over-estimate
-				m_peer.LogDebug("Initiated average roundtrip time to " + NetTime.ToReadable(m_averageRoundtripTime) + " Server time is: " + (now + diff));
+				m_peer.LogDebug("Initiated average roundtrip time to " + NetTime.ToReadable(m_averageRoundtripTime) + " Remote time is: " + (now + diff));
 			}
 			else
 			{
 				m_averageRoundtripTime = (m_averageRoundtripTime * 0.7f) + (float)(rtt * 0.3f);
 
 				m_remoteTimeOffset = ((m_remoteTimeOffset * (double)(m_sentPingNumber - 1)) + diff) / (double)m_sentPingNumber;
-				m_peer.LogVerbose("Updated average roundtrip time to " + NetTime.ToReadable(m_averageRoundtripTime) + ", server time to " + (now + m_remoteTimeOffset) + " (ie. diff " + m_remoteTimeOffset + ")");
+				m_peer.LogVerbose("Updated average roundtrip time to " + NetTime.ToReadable(m_averageRoundtripTime) + ", remote time to " + (now + m_remoteTimeOffset) + " (ie. diff " + m_remoteTimeOffset + ")");
 			}
 
 			// update resend delay for all channels

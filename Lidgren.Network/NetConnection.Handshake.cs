@@ -82,6 +82,7 @@ namespace Lidgren.Network
 			om.m_messageType = NetMessageType.Connect;
 			om.Write(m_peerConfiguration.AppIdentifier);
 			om.Write(m_peer.m_uniqueIdentifier);
+			om.Write((float)NetTime.Now);
 
 			WriteLocalHail(om);
 			
@@ -97,6 +98,7 @@ namespace Lidgren.Network
 			om.m_messageType = NetMessageType.ConnectResponse;
 			om.Write(m_peerConfiguration.AppIdentifier);
 			om.Write(m_peer.m_uniqueIdentifier);
+			om.Write((float)NetTime.Now);
 
 			WriteLocalHail(om);
 
@@ -136,6 +138,7 @@ namespace Lidgren.Network
 		{
 			NetOutgoingMessage om = m_peer.CreateMessage(0);
 			om.m_messageType = NetMessageType.ConnectionEstablished;
+			om.Write((float)NetTime.Now);
 			m_peer.SendLibrary(om, m_remoteEndpoint);
 
 			InitializePing();
@@ -285,6 +288,10 @@ namespace Lidgren.Network
 							break;
 						case NetConnectionStatus.RespondedConnect:
 							// awesome
+				
+							NetIncomingMessage msg = m_peer.SetupReadHelperMessage(ptr, payloadLength);
+							InitializeRemoteTimeOffset(msg.ReadSingle());
+
 							m_peer.AcceptConnection(this);
 							InitializePing();
 							SetStatus(NetConnectionStatus.Connected, "Connected to " + NetUtility.ToHexString(m_remoteUniqueIdentifier));
@@ -320,6 +327,7 @@ namespace Lidgren.Network
 			{
 				string remoteAppIdentifier = msg.ReadString();
 				long remoteUniqueIdentifier = msg.ReadInt64();
+				InitializeRemoteTimeOffset(msg.ReadSingle());
 
 				int remainingBytes = payloadLength - (msg.PositionInBytes - ptr);
 				if (remainingBytes > 0)
