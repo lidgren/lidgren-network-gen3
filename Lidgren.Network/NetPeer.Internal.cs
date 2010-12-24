@@ -94,16 +94,23 @@ namespace Lidgren.Network
 				NetRandom.Instance.NextBytes(macBytes);
 
 #if IS_MAC_AVAILABLE
-			System.Net.NetworkInformation.PhysicalAddress pa = NetUtility.GetMacAddress();
-			if (pa != null)
-			{
-				macBytes = pa.GetAddressBytes();
-				LogVerbose("Mac address is " + NetUtility.ToHexString(macBytes));
-			}
-			else
-			{
-				LogWarning("Failed to get Mac address");
-			}
+				try
+				{
+					System.Net.NetworkInformation.PhysicalAddress pa = NetUtility.GetMacAddress();
+					if (pa != null)
+					{
+						macBytes = pa.GetAddressBytes();
+						LogVerbose("Mac address is " + NetUtility.ToHexString(macBytes));
+					}
+					else
+					{
+						LogWarning("Failed to get Mac address");
+					}
+				}
+				catch (NotSupportedException)
+				{
+					// not supported; lets just kee the random bytes set above
+				}
 #endif
 				byte[] epBytes = BitConverter.GetBytes(boundEp.GetHashCode());
 				byte[] combined = new byte[epBytes.Length + macBytes.Length];
