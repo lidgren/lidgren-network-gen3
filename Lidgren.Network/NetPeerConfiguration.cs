@@ -44,6 +44,8 @@ namespace Lidgren.Network
 		internal int m_port;
 		internal int m_receiveBufferSize;
 		internal int m_sendBufferSize;
+		internal float m_resendHandshakeInterval;
+		internal int m_maximumHandshakeAttempts;
 
 		// bad network simulation
 		internal float m_loss;
@@ -79,6 +81,8 @@ namespace Lidgren.Network
 			m_pingInterval = 4.0f;
 			m_connectionTimeout = 25.0f;
 			m_useMessageRecycling = true;
+			m_resendHandshakeInterval = 3.0f;
+			m_maximumHandshakeAttempts = 5;
 
 			// Maximum transmission unit
 			// Ethernet can take 1500 bytes of payload, so lets stay below that.
@@ -300,6 +304,24 @@ namespace Lidgren.Network
 		{
 			get { return m_acceptIncomingConnections; }
 			set { m_acceptIncomingConnections = value; }
+		}
+
+		/// <summary>
+		/// Gets or sets the number of seconds between handshake attempts
+		/// </summary>
+		public float ResendHandshakeInterval
+		{
+			get { return m_resendHandshakeInterval; }
+			set { m_resendHandshakeInterval = value; }
+		}
+
+		/// <summary>
+		/// Gets or sets the maximum number of handshake attempts before failing to connect
+		/// </summary>
+		public int MaximumHandshakeAttempts
+		{
+			get { return m_maximumHandshakeAttempts; }
+			set { m_maximumHandshakeAttempts = value; }
 		}
 
 		/// <summary>

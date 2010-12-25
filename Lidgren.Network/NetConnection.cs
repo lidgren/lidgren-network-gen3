@@ -90,9 +90,13 @@ namespace Lidgren.Network
 
 			if (status == m_status)
 				return;
+
 			m_status = status;
 			if (reason == null)
 				reason = string.Empty;
+
+			// new status equals potentially new handshake attempts
+			m_handshakeAttempts = 0;
 
 			if (m_status == NetConnectionStatus.Connected)
 			{
