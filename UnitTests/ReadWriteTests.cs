@@ -22,11 +22,18 @@ namespace UnitTests
 			msg.Write(true);
 
 			msg.WritePadBits();
-			
+
+			int bcnt = 0;
+
 			msg.Write(45.0f);
 			msg.Write(46.0);
-			msg.WriteVariableInt32(-47);
+			bcnt += msg.WriteVariableInt32(-47);
+			msg.WriteVariableInt32(470000);
 			msg.WriteVariableUInt32(48);
+			bcnt += msg.WriteVariableInt64(-49);
+
+			if (bcnt != 2)
+				throw new NetException("WriteVariable* wrote too many bytes!");
 
 			byte[] data = msg.PeekDataBuffer();
 
@@ -51,9 +58,11 @@ namespace UnitTests
 			bdr.Append(inc.ReadSingle());
 			bdr.Append(inc.ReadDouble());
 			bdr.Append(inc.ReadVariableInt32());
+			bdr.Append(inc.ReadVariableInt32());
 			bdr.Append(inc.ReadVariableUInt32());
+			bdr.Append(inc.ReadVariableInt64());
 
-			if (bdr.ToString().Equals("False-342duke of earl4344True4546-4748"))
+			if (bdr.ToString().Equals("False-342duke of earl4344True4546-4747000048-49"))
 				Console.WriteLine("Read/write tests OK");
 			else
 				throw new NetException("Read/write tests FAILED!");

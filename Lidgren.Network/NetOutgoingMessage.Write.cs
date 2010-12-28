@@ -430,6 +430,24 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
+		/// Write Base128 encoded variable sized signed integer
+		/// </summary>
+		/// <returns>number of bytes written</returns>
+		public int WriteVariableInt64(Int64 value)
+		{
+			int retval = 1;
+			UInt64 num1 = (UInt64)((value << 1) ^ (value >> 31));
+			while (num1 >= 0x80)
+			{
+				this.Write((byte)(num1 | 0x80));
+				num1 = num1 >> 7;
+				retval++;
+			}
+			this.Write((byte)num1);
+			return retval;
+		}
+
+		/// <summary>
 		/// Write Base128 encoded variable sized unsigned integer
 		/// </summary>
 		/// <returns>number of bytes written</returns>

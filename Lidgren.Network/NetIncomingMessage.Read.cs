@@ -364,6 +364,29 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
+		/// Reads a Int64 written using WriteVariableInt64()
+		/// </summary>
+		public Int64 ReadVariableInt64()
+		{
+			Int64 num1 = 0;
+			int num2 = 0;
+			while (true)
+			{
+				if (num2 == 0x23)
+					throw new FormatException("Bad 7-bit encoded integer");
+
+				byte num3 = this.ReadByte();
+				num1 |= (Int64)((Int64)(num3 & 0x7f) << (num2 & 0x1f));
+				num2 += 7;
+				if ((num3 & 0x80) == 0)
+				{
+					Int64 sign = (num1 << 63) >> 63;
+					return sign ^ (num1 >> 1);
+				}
+			}
+		}
+
+		/// <summary>
 		/// Reads a UInt32 written using WriteVariableInt64()
 		/// </summary>
 		[CLSCompliant(false)]
