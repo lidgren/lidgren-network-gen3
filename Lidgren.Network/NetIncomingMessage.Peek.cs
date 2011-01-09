@@ -202,7 +202,7 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
-		/// Reads an Int32 without advancing the read pointer
+		/// Reads an Int64 without advancing the read pointer
 		/// </summary>
 		public Int64 PeekInt64()
 		{
