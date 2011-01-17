@@ -75,6 +75,12 @@ namespace Lidgren.Network
 					case NetConnectionStatus.RespondedConnect:
 						SendConnectResponse(now, true);
 						break;
+					case NetConnectionStatus.None:
+						if (m_peerConfiguration.IsMessageTypeEnabled(NetIncomingMessageType.ConnectionApproval))
+							break; // we're probably waiting for connection approval here
+						m_peer.LogWarning("Time to resend handshake, but status is " + m_status);
+						break;
+
 					default:
 						m_peer.LogWarning("Time to resend handshake, but status is " + m_status);
 						break;
