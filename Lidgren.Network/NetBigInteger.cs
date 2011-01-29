@@ -1,891 +1,2129 @@
-﻿//
-// BigInteger.cs - Big Integer implementation
-//
-// Authors:
-//	Ben Maurer
-//	Chew Keong TAN
-//	Sebastien Pouliot <sebastien@ximian.com>
-//	Pieter Philippaerts <Pieter@mentalis.org>
-//
-// Copyright (c) 2003 Ben Maurer
-// All rights reserved
-//
-// Copyright (c) 2002 Chew Keong TAN
-// All rights reserved.
-//
-// Copyright (C) 2004 Novell, Inc (http://www.novell.com)
-//
-// Permission is hereby granted, free of charge, to any person obtaining
-// a copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to
-// permit persons to whom the Software is furnished to do so, subject to
-// the following conditions:
-// 
-// The above copyright notice and this permission notice shall be
-// included in all copies or substantial portions of the Software.
-// 
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-// WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-//
-
-using System;
-using System.Security.Cryptography;
-//using Mono.Math.Prime.Generator;
-//using Mono.Math.Prime;
+﻿using System;
+using System.Collections;
+using System.Diagnostics;
+using System.Globalization;
+using System.Text;
 
 namespace Lidgren.Network
 {
-
-#if INSIDE_CORLIB
-	internal
-#else
-	public
-#endif
- class BigInteger
+	/// <summary>
+	/// Big integer class based on BouncyCastle (http://www.bouncycastle.org) big integer code
+	/// </summary>
+	internal class NetBigInteger
 	{
+		private const long IMASK = 0xffffffffL;
+		private static readonly ulong UIMASK = (ulong)IMASK;
 
-		#region Data Storage
+		private static readonly int[] ZeroMagnitude = new int[0];
+		private static readonly byte[] ZeroEncoding = new byte[0];
 
-		/// <summary>
-		/// The Length of this BigInteger
-		/// </summary>
-		uint length = 1;
+		public static readonly NetBigInteger Zero = new NetBigInteger(0, ZeroMagnitude, false);
+		public static readonly NetBigInteger One = createUValueOf(1);
+		public static readonly NetBigInteger Two = createUValueOf(2);
+		public static readonly NetBigInteger Three = createUValueOf(3);
+		public static readonly NetBigInteger Ten = createUValueOf(10);
 
-		/// <summary>
-		/// The data for this BigInteger
-		/// </summary>
-		uint[] data;
+		private static readonly int chunk2 = 1;
+		private static readonly NetBigInteger radix2 = ValueOf(2);
+		private static readonly NetBigInteger radix2E = radix2.Pow(chunk2);
 
-		#endregion
+		private static readonly int chunk10 = 19;
+		private static readonly NetBigInteger radix10 = ValueOf(10);
+		private static readonly NetBigInteger radix10E = radix10.Pow(chunk10);
 
-		#region Constants
+		private static readonly int chunk16 = 16;
+		private static readonly NetBigInteger radix16 = ValueOf(16);
+		private static readonly NetBigInteger radix16E = radix16.Pow(chunk16);
 
-		/// <summary>
-		/// Default length of a BigInteger in bytes
-		/// </summary>
-		const uint DEFAULT_LEN = 20;
+		private const int BitsPerByte = 8;
+		private const int BitsPerInt = 32;
+		private const int BytesPerInt = 4;
 
-		/// <summary>
-		///		Table of primes below 2000.
-		/// </summary>
-		/// <remarks>
-		///		<para>
-		///		This table was generated using Mathematica 4.1 using the following function:
-		///		</para>
-		///		<para>
-		///			<code>
-		///			PrimeTable [x_] := Prime [Range [1, PrimePi [x]]]
-		///			PrimeTable [6000]
-		///			</code>
-		///		</para>
-		/// </remarks>
-		internal static readonly uint[] smallPrimes = {
-			2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71,
-			73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151,
-			157, 163, 167, 173, 179, 181, 191, 193, 197, 199, 211, 223, 227, 229, 233,
-			239, 241, 251, 257, 263, 269, 271, 277, 281, 283, 293, 307, 311, 313, 317,
-			331, 337, 347, 349, 353, 359, 367, 373, 379, 383, 389, 397, 401, 409, 419,
-			421, 431, 433, 439, 443, 449, 457, 461, 463, 467, 479, 487, 491, 499, 503,
-			509, 521, 523, 541, 547, 557, 563, 569, 571, 577, 587, 593, 599, 601, 607,
-			613, 617, 619, 631, 641, 643, 647, 653, 659, 661, 673, 677, 683, 691, 701,
-			709, 719, 727, 733, 739, 743, 751, 757, 761, 769, 773, 787, 797, 809, 811,
-			821, 823, 827, 829, 839, 853, 857, 859, 863, 877, 881, 883, 887, 907, 911,
-			919, 929, 937, 941, 947, 953, 967, 971, 977, 983, 991, 997,
+		private int m_sign; // -1 means -ve; +1 means +ve; 0 means 0;
+		private int[] m_magnitude; // array of ints with [0] being the most significant
+		private int m_numBits = -1; // cache BitCount() value
+		private int m_numBitLength = -1; // cache calcBitLength() value
+		private long m_quote = -1L; // -m^(-1) mod b, b = 2^32 (see Montgomery mult.)
 
-			1009, 1013, 1019, 1021, 1031, 1033, 1039, 1049, 1051, 1061, 1063, 1069, 1087,
-			1091, 1093, 1097, 1103, 1109, 1117, 1123, 1129, 1151, 1153, 1163, 1171, 1181,
-			1187, 1193, 1201, 1213, 1217, 1223, 1229, 1231, 1237, 1249, 1259, 1277, 1279,
-			1283, 1289, 1291, 1297, 1301, 1303, 1307, 1319, 1321, 1327, 1361, 1367, 1373,
-			1381, 1399, 1409, 1423, 1427, 1429, 1433, 1439, 1447, 1451, 1453, 1459, 1471,
-			1481, 1483, 1487, 1489, 1493, 1499, 1511, 1523, 1531, 1543, 1549, 1553, 1559,
-			1567, 1571, 1579, 1583, 1597, 1601, 1607, 1609, 1613, 1619, 1621, 1627, 1637,
-			1657, 1663, 1667, 1669, 1693, 1697, 1699, 1709, 1721, 1723, 1733, 1741, 1747,
-			1753, 1759, 1777, 1783, 1787, 1789, 1801, 1811, 1823, 1831, 1847, 1861, 1867,
-			1871, 1873, 1877, 1879, 1889, 1901, 1907, 1913, 1931, 1933, 1949, 1951, 1973,
-			1979, 1987, 1993, 1997, 1999, 
-		
-			2003, 2011, 2017, 2027, 2029, 2039, 2053, 2063, 2069, 2081, 2083, 2087, 2089,
-			2099, 2111, 2113, 2129, 2131, 2137, 2141, 2143, 2153, 2161, 2179, 2203, 2207,
-			2213, 2221, 2237, 2239, 2243, 2251, 2267, 2269, 2273, 2281, 2287, 2293, 2297,
-			2309, 2311, 2333, 2339, 2341, 2347, 2351, 2357, 2371, 2377, 2381, 2383, 2389,
-			2393, 2399, 2411, 2417, 2423, 2437, 2441, 2447, 2459, 2467, 2473, 2477, 2503,
-			2521, 2531, 2539, 2543, 2549, 2551, 2557, 2579, 2591, 2593, 2609, 2617, 2621,
-			2633, 2647, 2657, 2659, 2663, 2671, 2677, 2683, 2687, 2689, 2693, 2699, 2707,
-			2711, 2713, 2719, 2729, 2731, 2741, 2749, 2753, 2767, 2777, 2789, 2791, 2797,
-			2801, 2803, 2819, 2833, 2837, 2843, 2851, 2857, 2861, 2879, 2887, 2897, 2903,
-			2909, 2917, 2927, 2939, 2953, 2957, 2963, 2969, 2971, 2999,
-			
-			3001, 3011, 3019, 3023, 3037, 3041, 3049, 3061, 3067, 3079, 3083, 3089, 3109,
-			3119, 3121, 3137, 3163, 3167, 3169, 3181, 3187, 3191, 3203, 3209, 3217, 3221,
-			3229, 3251, 3253, 3257, 3259, 3271, 3299, 3301, 3307, 3313, 3319, 3323, 3329,
-			3331, 3343, 3347, 3359, 3361, 3371, 3373, 3389, 3391, 3407, 3413, 3433, 3449,
-			3457, 3461, 3463, 3467, 3469, 3491, 3499, 3511, 3517, 3527, 3529, 3533, 3539,
-			3541, 3547, 3557, 3559, 3571, 3581, 3583, 3593, 3607, 3613, 3617, 3623, 3631,
-			3637, 3643, 3659, 3671, 3673, 3677, 3691, 3697, 3701, 3709, 3719, 3727, 3733,
-			3739, 3761, 3767, 3769, 3779, 3793, 3797, 3803, 3821, 3823, 3833, 3847, 3851,
-			3853, 3863, 3877, 3881, 3889, 3907, 3911, 3917, 3919, 3923, 3929, 3931, 3943,
-			3947, 3967, 3989,
-			
-			4001, 4003, 4007, 4013, 4019, 4021, 4027, 4049, 4051, 4057, 4073, 4079, 4091,
-			4093, 4099, 4111, 4127, 4129, 4133, 4139, 4153, 4157, 4159, 4177, 4201, 4211,
-			4217, 4219, 4229, 4231, 4241, 4243, 4253, 4259, 4261, 4271, 4273, 4283, 4289,
-			4297, 4327, 4337, 4339, 4349, 4357, 4363, 4373, 4391, 4397, 4409, 4421, 4423,
-			4441, 4447, 4451, 4457, 4463, 4481, 4483, 4493, 4507, 4513, 4517, 4519, 4523,
-			4547, 4549, 4561, 4567, 4583, 4591, 4597, 4603, 4621, 4637, 4639, 4643, 4649,
-			4651, 4657, 4663, 4673, 4679, 4691, 4703, 4721, 4723, 4729, 4733, 4751, 4759,
-			4783, 4787, 4789, 4793, 4799, 4801, 4813, 4817, 4831, 4861, 4871, 4877, 4889,
-			4903, 4909, 4919, 4931, 4933, 4937, 4943, 4951, 4957, 4967, 4969, 4973, 4987,
-			4993, 4999,
-			
-			5003, 5009, 5011, 5021, 5023, 5039, 5051, 5059, 5077, 5081, 5087, 5099, 5101,
-			5107, 5113, 5119, 5147, 5153, 5167, 5171, 5179, 5189, 5197, 5209, 5227, 5231, 
-			5233, 5237, 5261, 5273, 5279, 5281, 5297, 5303, 5309, 5323, 5333, 5347, 5351,
-			5381, 5387, 5393, 5399, 5407, 5413, 5417, 5419, 5431, 5437, 5441, 5443, 5449,
-			5471, 5477, 5479, 5483, 5501, 5503, 5507, 5519, 5521, 5527, 5531, 5557, 5563,
-			5569, 5573, 5581, 5591, 5623, 5639, 5641, 5647, 5651, 5653, 5657, 5659, 5669,
-			5683, 5689, 5693, 5701, 5711, 5717, 5737, 5741, 5743, 5749, 5779, 5783, 5791,
-			5801, 5807, 5813, 5821, 5827, 5839, 5843, 5849, 5851, 5857, 5861, 5867, 5869,
-			5879, 5881, 5897, 5903, 5923, 5927, 5939, 5953, 5981, 5987
-		};
-
-		public enum Sign : int
+		private static int GetByteLength(
+			int nBits)
 		{
-			Negative = -1,
-			Zero = 0,
-			Positive = 1
-		};
-
-		#region Exception Messages
-		const string WouldReturnNegVal = "Operation would return a negative value";
-		#endregion
-
-		#endregion
-
-		#region Constructors
-
-		public BigInteger()
-		{
-			data = new uint[DEFAULT_LEN];
-			this.length = DEFAULT_LEN;
+			return (nBits + BitsPerByte - 1) / BitsPerByte;
 		}
 
-#if !INSIDE_CORLIB
-		[CLSCompliant(false)]
-#endif
-		public BigInteger(Sign sign, uint len)
+		private NetBigInteger()
 		{
-			this.data = new uint[len];
-			this.length = len;
 		}
 
-		public BigInteger(BigInteger bi)
+		private NetBigInteger(
+			int signum,
+			int[] mag,
+			bool checkMag)
 		{
-			this.data = (uint[])bi.data.Clone();
-			this.length = bi.length;
-		}
-
-#if !INSIDE_CORLIB
-		[CLSCompliant(false)]
-#endif
-		public BigInteger(BigInteger bi, uint len)
-		{
-
-			this.data = new uint[len];
-
-			for (uint i = 0; i < bi.length; i++)
-				this.data[i] = bi.data[i];
-
-			this.length = bi.length;
-		}
-
-		#endregion
-
-		#region Conversions
-
-		public BigInteger(byte[] inData)
-		{
-			length = (uint)inData.Length >> 2;
-			int leftOver = inData.Length & 0x3;
-
-			// length not multiples of 4
-			if (leftOver != 0) length++;
-
-			data = new uint[length];
-
-			for (int i = inData.Length - 1, j = 0; i >= 3; i -= 4, j++)
+			if (checkMag)
 			{
-				data[j] = (uint)(
-					(inData[i - 3] << (3 * 8)) |
-					(inData[i - 2] << (2 * 8)) |
-					(inData[i - 1] << (1 * 8)) |
-					(inData[i])
-					);
-			}
-
-			switch (leftOver)
-			{
-				case 1: data[length - 1] = (uint)inData[0]; break;
-				case 2: data[length - 1] = (uint)((inData[0] << 8) | inData[1]); break;
-				case 3: data[length - 1] = (uint)((inData[0] << 16) | (inData[1] << 8) | inData[2]); break;
-			}
-
-			this.Normalize();
-		}
-
-#if !INSIDE_CORLIB
-		[CLSCompliant(false)]
-#endif
-		public BigInteger(uint[] inData)
-		{
-			length = (uint)inData.Length;
-
-			data = new uint[length];
-
-			for (int i = (int)length - 1, j = 0; i >= 0; i--, j++)
-				data[j] = inData[i];
-
-			this.Normalize();
-		}
-
-#if !INSIDE_CORLIB
-		[CLSCompliant(false)]
-#endif
-		public BigInteger(uint ui)
-		{
-			data = new uint[] { ui };
-		}
-
-#if !INSIDE_CORLIB
-		[CLSCompliant(false)]
-#endif
-		public BigInteger(ulong ul)
-		{
-			data = new uint[2] { (uint)ul, (uint)(ul >> 32) };
-			length = 2;
-
-			this.Normalize();
-		}
-
-#if !INSIDE_CORLIB
-		[CLSCompliant(false)]
-#endif
-		public static implicit operator BigInteger(uint value)
-		{
-			return (new BigInteger(value));
-		}
-
-		public static implicit operator BigInteger(int value)
-		{
-			if (value < 0) throw new ArgumentOutOfRangeException("value");
-			return (new BigInteger((uint)value));
-		}
-
-#if !INSIDE_CORLIB
-		[CLSCompliant(false)]
-#endif
-		public static implicit operator BigInteger(ulong value)
-		{
-			return (new BigInteger(value));
-		}
-
-		/* This is the BigInteger.Parse method I use. This method works
-		because BigInteger.ToString returns the input I gave to Parse. */
-		public static BigInteger Parse(string number)
-		{
-			if (number == null)
-				throw new ArgumentNullException("number");
-
-			int i = 0, len = number.Length;
-			char c;
-			bool digits_seen = false;
-			BigInteger val = new BigInteger(0);
-			if (number[i] == '+')
-			{
-				i++;
-			}
-			else if (number[i] == '-')
-			{
-				throw new FormatException(WouldReturnNegVal);
-			}
-
-			for (; i < len; i++)
-			{
-				c = number[i];
-				if (c == '\0')
+				int i = 0;
+				while (i < mag.Length && mag[i] == 0)
 				{
-					i = len;
-					continue;
+					++i;
 				}
-				if (c >= '0' && c <= '9')
+
+				if (i == mag.Length)
 				{
-					val = val * 10 + (c - '0');
-					digits_seen = true;
+					//					sign = 0;
+					m_magnitude = ZeroMagnitude;
 				}
 				else
 				{
-					if (Char.IsWhiteSpace(c))
+					m_sign = signum;
+
+					if (i == 0)
 					{
-						for (i++; i < len; i++)
-						{
-							if (!Char.IsWhiteSpace(number[i]))
-								throw new FormatException();
-						}
-						break;
+						m_magnitude = mag;
 					}
 					else
-						throw new FormatException();
+					{
+						// strip leading 0 words
+						m_magnitude = new int[mag.Length - i];
+						Array.Copy(mag, i, m_magnitude, 0, m_magnitude.Length);
+					}
 				}
 			}
-			if (!digits_seen)
-				throw new FormatException();
-			return val;
-		}
-
-		#endregion
-
-		#region Operators
-
-		public static BigInteger operator +(BigInteger bi1, BigInteger bi2)
-		{
-			if (bi1 == 0)
-				return new BigInteger(bi2);
-			else if (bi2 == 0)
-				return new BigInteger(bi1);
 			else
-				return Kernel.AddSameSign(bi1, bi2);
-		}
-
-		public static BigInteger operator -(BigInteger bi1, BigInteger bi2)
-		{
-			if (bi2 == 0)
-				return new BigInteger(bi1);
-
-			if (bi1 == 0)
-				throw new ArithmeticException(WouldReturnNegVal);
-
-			switch (Kernel.Compare(bi1, bi2))
 			{
-
-				case Sign.Zero:
-					return 0;
-
-				case Sign.Positive:
-					return Kernel.Subtract(bi1, bi2);
-
-				case Sign.Negative:
-					throw new ArithmeticException(WouldReturnNegVal);
-				default:
-					throw new Exception();
+				m_sign = signum;
+				m_magnitude = mag;
 			}
 		}
 
-		public static int operator %(BigInteger bi, int i)
+		public NetBigInteger(
+			string value)
+			: this(value, 10)
 		{
-			if (i > 0)
-				return (int)Kernel.DwordMod(bi, (uint)i);
+		}
+
+		public NetBigInteger(
+			string str,
+			int radix)
+		{
+			if (str.Length == 0)
+				throw new FormatException("Zero length BigInteger");
+
+			NumberStyles style;
+			int chunk;
+			NetBigInteger r;
+			NetBigInteger rE;
+
+			switch (radix)
+			{
+				case 2:
+					// Is there anyway to restrict to binary digits?
+					style = NumberStyles.Integer;
+					chunk = chunk2;
+					r = radix2;
+					rE = radix2E;
+					break;
+				case 10:
+					// This style seems to handle spaces and minus sign already (our processing redundant?)
+					style = NumberStyles.Integer;
+					chunk = chunk10;
+					r = radix10;
+					rE = radix10E;
+					break;
+				case 16:
+					// TODO Should this be HexNumber?
+					style = NumberStyles.AllowHexSpecifier;
+					chunk = chunk16;
+					r = radix16;
+					rE = radix16E;
+					break;
+				default:
+					throw new FormatException("Only bases 2, 10, or 16 allowed");
+			}
+
+
+			int index = 0;
+			m_sign = 1;
+
+			if (str[0] == '-')
+			{
+				if (str.Length == 1)
+					throw new FormatException("Zero length BigInteger");
+
+				m_sign = -1;
+				index = 1;
+			}
+
+			// strip leading zeros from the string str
+			while (index < str.Length && Int32.Parse(str[index].ToString(), style) == 0)
+			{
+				index++;
+			}
+
+			if (index >= str.Length)
+			{
+				// zero value - we're done
+				m_sign = 0;
+				m_magnitude = ZeroMagnitude;
+				return;
+			}
+
+			//////
+			// could we work out the max number of ints required to store
+			// str.Length digits in the given base, then allocate that
+			// storage in one hit?, then Generate the magnitude in one hit too?
+			//////
+
+			NetBigInteger b = Zero;
+
+
+			int next = index + chunk;
+
+			if (next <= str.Length)
+			{
+				do
+				{
+					string s = str.Substring(index, chunk);
+					ulong i = ulong.Parse(s, style);
+					NetBigInteger bi = createUValueOf(i);
+
+					switch (radix)
+					{
+						case 2:
+							if (i > 1)
+								throw new FormatException("Bad character in radix 2 string: " + s);
+
+							b = b.ShiftLeft(1);
+							break;
+						case 16:
+							b = b.ShiftLeft(64);
+							break;
+						default:
+							b = b.Multiply(rE);
+							break;
+					}
+
+					b = b.Add(bi);
+
+					index = next;
+					next += chunk;
+				}
+				while (next <= str.Length);
+			}
+
+			if (index < str.Length)
+			{
+				string s = str.Substring(index);
+				ulong i = ulong.Parse(s, style);
+				NetBigInteger bi = createUValueOf(i);
+
+				if (b.m_sign > 0)
+				{
+					if (radix == 2)
+					{
+						// NB: Can't reach here since we are parsing one char at a time
+						Debug.Assert(false);
+					}
+					else if (radix == 16)
+					{
+						b = b.ShiftLeft(s.Length << 2);
+					}
+					else
+					{
+						b = b.Multiply(r.Pow(s.Length));
+					}
+
+					b = b.Add(bi);
+				}
+				else
+				{
+					b = bi;
+				}
+			}
+
+			// Note: This is the previous (slower) algorithm
+			//			while (index < value.Length)
+			//            {
+			//				char c = value[index];
+			//				string s = c.ToString();
+			//				int i = Int32.Parse(s, style);
+			//
+			//                b = b.Multiply(r).Add(ValueOf(i));
+			//                index++;
+			//            }
+
+			m_magnitude = b.m_magnitude;
+		}
+
+		public NetBigInteger(
+			byte[] bytes)
+			: this(bytes, 0, bytes.Length)
+		{
+		}
+
+		public NetBigInteger(
+			byte[] bytes,
+			int offset,
+			int length)
+		{
+			if (length == 0)
+				throw new FormatException("Zero length BigInteger");
+			if ((sbyte)bytes[offset] < 0)
+			{
+				m_sign = -1;
+
+				int end = offset + length;
+
+				int iBval;
+				// strip leading sign bytes
+				for (iBval = offset; iBval < end && ((sbyte)bytes[iBval] == -1); iBval++)
+				{
+				}
+
+				if (iBval >= end)
+				{
+					m_magnitude = One.m_magnitude;
+				}
+				else
+				{
+					int numBytes = end - iBval;
+					byte[] inverse = new byte[numBytes];
+
+					int index = 0;
+					while (index < numBytes)
+					{
+						inverse[index++] = (byte)~bytes[iBval++];
+					}
+
+					Debug.Assert(iBval == end);
+
+					while (inverse[--index] == byte.MaxValue)
+					{
+						inverse[index] = byte.MinValue;
+					}
+
+					inverse[index]++;
+
+					m_magnitude = MakeMagnitude(inverse, 0, inverse.Length);
+				}
+			}
 			else
-				return -(int)Kernel.DwordMod(bi, (uint)-i);
+			{
+				// strip leading zero bytes and return magnitude bytes
+				m_magnitude = MakeMagnitude(bytes, offset, length);
+				m_sign = m_magnitude.Length > 0 ? 1 : 0;
+			}
 		}
 
-#if !INSIDE_CORLIB
-		[CLSCompliant(false)]
-#endif
-		public static uint operator %(BigInteger bi, uint ui)
+		private static int[] MakeMagnitude(
+			byte[] bytes,
+			int offset,
+			int length)
 		{
-			return Kernel.DwordMod(bi, (uint)ui);
+			int end = offset + length;
+
+			// strip leading zeros
+			int firstSignificant;
+			for (firstSignificant = offset; firstSignificant < end
+				&& bytes[firstSignificant] == 0; firstSignificant++)
+			{
+			}
+
+			if (firstSignificant >= end)
+			{
+				return ZeroMagnitude;
+			}
+
+			int nInts = (end - firstSignificant + 3) / BytesPerInt;
+			int bCount = (end - firstSignificant) % BytesPerInt;
+			if (bCount == 0)
+			{
+				bCount = BytesPerInt;
+			}
+
+			if (nInts < 1)
+			{
+				return ZeroMagnitude;
+			}
+
+			int[] mag = new int[nInts];
+
+			int v = 0;
+			int magnitudeIndex = 0;
+			for (int i = firstSignificant; i < end; ++i)
+			{
+				v <<= 8;
+				v |= bytes[i] & 0xff;
+				bCount--;
+				if (bCount <= 0)
+				{
+					mag[magnitudeIndex] = v;
+					magnitudeIndex++;
+					bCount = BytesPerInt;
+					v = 0;
+				}
+			}
+
+			if (magnitudeIndex < mag.Length)
+			{
+				mag[magnitudeIndex] = v;
+			}
+
+			return mag;
 		}
 
-		public static BigInteger operator %(BigInteger bi1, BigInteger bi2)
+		public NetBigInteger(
+			int sign,
+			byte[] bytes)
+			: this(sign, bytes, 0, bytes.Length)
 		{
-			return Kernel.multiByteDivide(bi1, bi2)[1];
 		}
 
-		public static BigInteger operator /(BigInteger bi, int i)
+		public NetBigInteger(
+			int sign,
+			byte[] bytes,
+			int offset,
+			int length)
 		{
-			if (i > 0)
-				return Kernel.DwordDiv(bi, (uint)i);
+			if (sign < -1 || sign > 1)
+				throw new FormatException("Invalid sign value");
 
-			throw new ArithmeticException(WouldReturnNegVal);
+			if (sign == 0)
+			{
+				//sign = 0;
+				m_magnitude = ZeroMagnitude;
+			}
+			else
+			{
+				// copy bytes
+				m_magnitude = MakeMagnitude(bytes, offset, length);
+				m_sign = m_magnitude.Length < 1 ? 0 : sign;
+			}
 		}
 
-		public static BigInteger operator /(BigInteger bi1, BigInteger bi2)
+		public NetBigInteger Abs()
 		{
-			return Kernel.multiByteDivide(bi1, bi2)[0];
+			return m_sign >= 0 ? this : Negate();
 		}
 
-		public static BigInteger operator *(BigInteger bi1, BigInteger bi2)
+		// return a = a + b - b preserved.
+		private static int[] AddMagnitudes(
+			int[] a,
+			int[] b)
 		{
-			if (bi1 == 0 || bi2 == 0) return 0;
+			int tI = a.Length - 1;
+			int vI = b.Length - 1;
+			long m = 0;
 
-			//
-			// Validate pointers
-			//
-			if (bi1.data.Length < bi1.length) throw new IndexOutOfRangeException("bi1 out of range");
-			if (bi2.data.Length < bi2.length) throw new IndexOutOfRangeException("bi2 out of range");
+			while (vI >= 0)
+			{
+				m += ((long)(uint)a[tI] + (long)(uint)b[vI--]);
+				a[tI--] = (int)m;
+				m = (long)((ulong)m >> 32);
+			}
 
-			BigInteger ret = new BigInteger(Sign.Positive, bi1.length + bi2.length);
+			if (m != 0)
+			{
+				while (tI >= 0 && ++a[tI--] == 0)
+				{
+				}
+			}
 
-			Kernel.Multiply(bi1.data, 0, bi1.length, bi2.data, 0, bi2.length, ret.data, 0);
-
-			ret.Normalize();
-			return ret;
+			return a;
 		}
 
-		public static BigInteger operator *(BigInteger bi, int i)
+		public NetBigInteger Add(
+			NetBigInteger value)
 		{
-			if (i < 0) throw new ArithmeticException(WouldReturnNegVal);
-			if (i == 0) return 0;
-			if (i == 1) return new BigInteger(bi);
+			if (m_sign == 0)
+				return value;
 
-			return Kernel.MultiplyByDword(bi, (uint)i);
+			if (m_sign != value.m_sign)
+			{
+				if (value.m_sign == 0)
+					return this;
+
+				if (value.m_sign < 0)
+					return Subtract(value.Negate());
+
+				return value.Subtract(Negate());
+			}
+
+			return AddToMagnitude(value.m_magnitude);
 		}
 
-		public static BigInteger operator <<(BigInteger bi1, int shiftVal)
+		private NetBigInteger AddToMagnitude(
+			int[] magToAdd)
 		{
-			return Kernel.LeftShift(bi1, shiftVal);
+			int[] big, small;
+			if (m_magnitude.Length < magToAdd.Length)
+			{
+				big = magToAdd;
+				small = m_magnitude;
+			}
+			else
+			{
+				big = m_magnitude;
+				small = magToAdd;
+			}
+
+			// Conservatively avoid over-allocation when no overflow possible
+			uint limit = uint.MaxValue;
+			if (big.Length == small.Length)
+				limit -= (uint)small[0];
+
+			bool possibleOverflow = (uint)big[0] >= limit;
+
+			int[] bigCopy;
+			if (possibleOverflow)
+			{
+				bigCopy = new int[big.Length + 1];
+				big.CopyTo(bigCopy, 1);
+			}
+			else
+			{
+				bigCopy = (int[])big.Clone();
+			}
+
+			bigCopy = AddMagnitudes(bigCopy, small);
+
+			return new NetBigInteger(m_sign, bigCopy, possibleOverflow);
 		}
 
-		public static BigInteger operator >>(BigInteger bi1, int shiftVal)
+		public NetBigInteger And(
+			NetBigInteger value)
 		{
-			return Kernel.RightShift(bi1, shiftVal);
+			if (m_sign == 0 || value.m_sign == 0)
+			{
+				return Zero;
+			}
+
+			int[] aMag = m_sign > 0
+				? m_magnitude
+				: Add(One).m_magnitude;
+
+			int[] bMag = value.m_sign > 0
+				? value.m_magnitude
+				: value.Add(One).m_magnitude;
+
+			bool resultNeg = m_sign < 0 && value.m_sign < 0;
+			int resultLength = System.Math.Max(aMag.Length, bMag.Length);
+			int[] resultMag = new int[resultLength];
+
+			int aStart = resultMag.Length - aMag.Length;
+			int bStart = resultMag.Length - bMag.Length;
+
+			for (int i = 0; i < resultMag.Length; ++i)
+			{
+				int aWord = i >= aStart ? aMag[i - aStart] : 0;
+				int bWord = i >= bStart ? bMag[i - bStart] : 0;
+
+				if (m_sign < 0)
+				{
+					aWord = ~aWord;
+				}
+
+				if (value.m_sign < 0)
+				{
+					bWord = ~bWord;
+				}
+
+				resultMag[i] = aWord & bWord;
+
+				if (resultNeg)
+				{
+					resultMag[i] = ~resultMag[i];
+				}
+			}
+
+			NetBigInteger result = new NetBigInteger(1, resultMag, true);
+
+			if (resultNeg)
+			{
+				result = result.Not();
+			}
+
+			return result;
 		}
-
-		#endregion
-
-		#region Friendly names for operators
-
-		// with names suggested by FxCop 1.30
-
-		public static BigInteger Add(BigInteger bi1, BigInteger bi2)
+	
+		private int calcBitLength(
+			int indx,
+			int[] mag)
 		{
-			return (bi1 + bi2);
+			for (; ; )
+			{
+				if (indx >= mag.Length)
+					return 0;
+
+				if (mag[indx] != 0)
+					break;
+
+				++indx;
+			}
+
+			// bit length for everything after the first int
+			int bitLength = 32 * ((mag.Length - indx) - 1);
+
+			// and determine bitlength of first int
+			int firstMag = mag[indx];
+			bitLength += BitLen(firstMag);
+
+			// Check for negative powers of two
+			if (m_sign < 0 && ((firstMag & -firstMag) == firstMag))
+			{
+				do
+				{
+					if (++indx >= mag.Length)
+					{
+						--bitLength;
+						break;
+					}
+				}
+				while (mag[indx] == 0);
+			}
+
+			return bitLength;
 		}
 
-		public static BigInteger Subtract(BigInteger bi1, BigInteger bi2)
-		{
-			return (bi1 - bi2);
-		}
-
-		public BigInteger Modulus(BigInteger mod)
-		{
-			return BigInteger.Modulus(this, mod);
-		}
-
-		public BigInteger Multiply(BigInteger mult)
-		{
-			return BigInteger.Multiply(this, mult);
-		}
-
-		public static int Modulus(BigInteger bi, int i)
-		{
-			return (bi % i);
-		}
-
-#if !INSIDE_CORLIB
-		[CLSCompliant(false)]
-#endif
-		public static uint Modulus(BigInteger bi, uint ui)
-		{
-			return (bi % ui);
-		}
-
-		public static BigInteger Modulus(BigInteger bi1, BigInteger bi2)
-		{
-			return (bi1 % bi2);
-		}
-
-		public static BigInteger Divid(BigInteger bi, int i)
-		{
-			return (bi / i);
-		}
-
-		public static BigInteger Divid(BigInteger bi1, BigInteger bi2)
-		{
-			return (bi1 / bi2);
-		}
-
-		public static BigInteger Multiply(BigInteger bi1, BigInteger bi2)
-		{
-			return (bi1 * bi2);
-		}
-
-		public static BigInteger Multiply(BigInteger bi, int i)
-		{
-			return (bi * i);
-		}
-
-		#endregion
-
-		#region Random
-		private static RandomNumberGenerator rng;
-		private static RandomNumberGenerator Rng
+		public int BitLength
 		{
 			get
 			{
-				if (rng == null)
-					rng = RandomNumberGenerator.Create();
-				return rng;
-			}
-		}
-
-		/// <summary>
-		/// Generates a new, random BigInteger of the specified length.
-		/// </summary>
-		/// <param name="bits">The number of bits for the new number.</param>
-		/// <param name="rng">A random number generator to use to obtain the bits.</param>
-		/// <returns>A random number of the specified length.</returns>
-		public static BigInteger GenerateRandom(int bits, RandomNumberGenerator rng)
-		{
-			int dwords = bits >> 5;
-			int remBits = bits & 0x1F;
-
-			if (remBits != 0)
-				dwords++;
-
-			BigInteger ret = new BigInteger(Sign.Positive, (uint)dwords + 1);
-			byte[] random = new byte[dwords << 2];
-
-			rng.GetBytes(random);
-			Buffer.BlockCopy(random, 0, ret.data, 0, (int)dwords << 2);
-
-			if (remBits != 0)
-			{
-				uint mask = (uint)(0x01 << (remBits - 1));
-				ret.data[dwords - 1] |= mask;
-
-				mask = (uint)(0xFFFFFFFF >> (32 - remBits));
-				ret.data[dwords - 1] &= mask;
-			}
-			else
-				ret.data[dwords - 1] |= 0x80000000;
-
-			ret.Normalize();
-			return ret;
-		}
-
-		/// <summary>
-		/// Generates a new, random BigInteger of the specified length using the default RNG crypto service provider.
-		/// </summary>
-		/// <param name="bits">The number of bits for the new number.</param>
-		/// <returns>A random number of the specified length.</returns>
-		public static BigInteger GenerateRandom(int bits)
-		{
-			return GenerateRandom(bits, Rng);
-		}
-
-		/// <summary>
-		/// Randomizes the bits in "this" from the specified RNG.
-		/// </summary>
-		/// <param name="rng">A RNG.</param>
-		public void Randomize(RandomNumberGenerator rng)
-		{
-			if (this == 0)
-				return;
-
-			int bits = this.BitCount();
-			int dwords = bits >> 5;
-			int remBits = bits & 0x1F;
-
-			if (remBits != 0)
-				dwords++;
-
-			byte[] random = new byte[dwords << 2];
-
-			rng.GetBytes(random);
-			Buffer.BlockCopy(random, 0, data, 0, (int)dwords << 2);
-
-			if (remBits != 0)
-			{
-				uint mask = (uint)(0x01 << (remBits - 1));
-				data[dwords - 1] |= mask;
-
-				mask = (uint)(0xFFFFFFFF >> (32 - remBits));
-				data[dwords - 1] &= mask;
-			}
-
-			else
-				data[dwords - 1] |= 0x80000000;
-
-			Normalize();
-		}
-
-		/// <summary>
-		/// Randomizes the bits in "this" from the default RNG.
-		/// </summary>
-		public void Randomize()
-		{
-			Randomize(Rng);
-		}
-
-		#endregion
-
-		#region Bitwise
-
-		public int BitCount()
-		{
-			this.Normalize();
-
-			uint value = data[length - 1];
-			uint mask = 0x80000000;
-			uint bits = 32;
-
-			while (bits > 0 && (value & mask) == 0)
-			{
-				bits--;
-				mask >>= 1;
-			}
-			bits += ((length - 1) << 5);
-
-			return (int)bits;
-		}
-
-		/// <summary>
-		/// Tests if the specified bit is 1.
-		/// </summary>
-		/// <param name="bitNum">The bit to test. The least significant bit is 0.</param>
-		/// <returns>True if bitNum is set to 1, else false.</returns>
-#if !INSIDE_CORLIB
-		[CLSCompliant(false)]
-#endif
-		public bool TestBit(uint bitNum)
-		{
-			uint bytePos = bitNum >> 5;             // divide by 32
-			byte bitPos = (byte)(bitNum & 0x1F);    // get the lowest 5 bits
-
-			uint mask = (uint)1 << bitPos;
-			return ((this.data[bytePos] & mask) != 0);
-		}
-
-		public bool TestBit(int bitNum)
-		{
-			if (bitNum < 0) throw new IndexOutOfRangeException("bitNum out of range");
-
-			uint bytePos = (uint)bitNum >> 5;             // divide by 32
-			byte bitPos = (byte)(bitNum & 0x1F);    // get the lowest 5 bits
-
-			uint mask = (uint)1 << bitPos;
-			return ((this.data[bytePos] | mask) == this.data[bytePos]);
-		}
-
-#if !INSIDE_CORLIB
-		[CLSCompliant(false)]
-#endif
-		public void SetBit(uint bitNum)
-		{
-			SetBit(bitNum, true);
-		}
-
-#if !INSIDE_CORLIB
-		[CLSCompliant(false)]
-#endif
-		public void ClearBit(uint bitNum)
-		{
-			SetBit(bitNum, false);
-		}
-
-#if !INSIDE_CORLIB
-		[CLSCompliant(false)]
-#endif
-		public void SetBit(uint bitNum, bool value)
-		{
-			uint bytePos = bitNum >> 5;             // divide by 32
-
-			if (bytePos < this.length)
-			{
-				uint mask = (uint)1 << (int)(bitNum & 0x1F);
-				if (value)
-					this.data[bytePos] |= mask;
-				else
-					this.data[bytePos] &= ~mask;
-			}
-		}
-
-		public int LowestSetBit()
-		{
-			if (this == 0) return -1;
-			int i = 0;
-			while (!TestBit(i)) i++;
-			return i;
-		}
-
-		public byte[] GetBytes()
-		{
-			if (this == 0) return new byte[1];
-
-			int numBits = BitCount();
-			int numBytes = numBits >> 3;
-			if ((numBits & 0x7) != 0)
-				numBytes++;
-
-			byte[] result = new byte[numBytes];
-
-			int numBytesInWord = numBytes & 0x3;
-			if (numBytesInWord == 0) numBytesInWord = 4;
-
-			int pos = 0;
-			for (int i = (int)length - 1; i >= 0; i--)
-			{
-				uint val = data[i];
-				for (int j = numBytesInWord - 1; j >= 0; j--)
+				if (m_numBitLength == -1)
 				{
-					result[pos + j] = (byte)(val & 0xFF);
-					val >>= 8;
+					m_numBitLength = m_sign == 0
+						? 0
+						: calcBitLength(0, m_magnitude);
 				}
-				pos += numBytesInWord;
-				numBytesInWord = 4;
+
+				return m_numBitLength;
 			}
-			return result;
 		}
 
-		#endregion
-
-		#region Compare
-
-#if !INSIDE_CORLIB
-		[CLSCompliant(false)]
-#endif
-		public static bool operator ==(BigInteger bi1, uint ui)
+		//
+		// BitLen(value) is the number of bits in value.
+		//
+		private static int BitLen(
+			int w)
 		{
-			if (bi1.length != 1) bi1.Normalize();
-			return bi1.length == 1 && bi1.data[0] == ui;
+			// Binary search - decision tree (5 tests, rarely 6)
+			return (w < 1 << 15 ? (w < 1 << 7
+				? (w < 1 << 3 ? (w < 1 << 1
+				? (w < 1 << 0 ? (w < 0 ? 32 : 0) : 1)
+				: (w < 1 << 2 ? 2 : 3)) : (w < 1 << 5
+				? (w < 1 << 4 ? 4 : 5)
+				: (w < 1 << 6 ? 6 : 7)))
+				: (w < 1 << 11
+				? (w < 1 << 9 ? (w < 1 << 8 ? 8 : 9) : (w < 1 << 10 ? 10 : 11))
+				: (w < 1 << 13 ? (w < 1 << 12 ? 12 : 13) : (w < 1 << 14 ? 14 : 15)))) : (w < 1 << 23 ? (w < 1 << 19
+				? (w < 1 << 17 ? (w < 1 << 16 ? 16 : 17) : (w < 1 << 18 ? 18 : 19))
+				: (w < 1 << 21 ? (w < 1 << 20 ? 20 : 21) : (w < 1 << 22 ? 22 : 23))) : (w < 1 << 27
+				? (w < 1 << 25 ? (w < 1 << 24 ? 24 : 25) : (w < 1 << 26 ? 26 : 27))
+				: (w < 1 << 29 ? (w < 1 << 28 ? 28 : 29) : (w < 1 << 30 ? 30 : 31)))));
 		}
 
-#if !INSIDE_CORLIB
-		[CLSCompliant(false)]
-#endif
-		public static bool operator !=(BigInteger bi1, uint ui)
+		private bool QuickPow2Check()
 		{
-			if (bi1.length != 1) bi1.Normalize();
-			return !(bi1.length == 1 && bi1.data[0] == ui);
+			return m_sign > 0 && m_numBits == 1;
 		}
 
-		public static bool operator ==(BigInteger bi1, BigInteger bi2)
+		public int CompareTo(
+			object obj)
 		{
-			// we need to compare with null
-			if ((bi1 as object) == (bi2 as object))
-				return true;
-			if (null == bi1 || null == bi2)
-				return false;
-			return Kernel.Compare(bi1, bi2) == 0;
+			return CompareTo((NetBigInteger)obj);
 		}
 
-		public static bool operator !=(BigInteger bi1, BigInteger bi2)
+		
+		// unsigned comparison on two arrays - note the arrays may
+		// start with leading zeros.
+		private static int CompareTo(
+			int xIndx,
+			int[] x,
+			int yIndx,
+			int[] y)
 		{
-			// we need to compare with null
-			if ((bi1 as object) == (bi2 as object))
-				return false;
-			if (null == bi1 || null == bi2)
-				return true;
-			return Kernel.Compare(bi1, bi2) != 0;
-		}
-
-		public static bool operator >(BigInteger bi1, BigInteger bi2)
-		{
-			return Kernel.Compare(bi1, bi2) > 0;
-		}
-
-		public static bool operator <(BigInteger bi1, BigInteger bi2)
-		{
-			return Kernel.Compare(bi1, bi2) < 0;
-		}
-
-		public static bool operator >=(BigInteger bi1, BigInteger bi2)
-		{
-			return Kernel.Compare(bi1, bi2) >= 0;
-		}
-
-		public static bool operator <=(BigInteger bi1, BigInteger bi2)
-		{
-			return Kernel.Compare(bi1, bi2) <= 0;
-		}
-
-		public Sign Compare(BigInteger bi)
-		{
-			return Kernel.Compare(this, bi);
-		}
-
-		#endregion
-
-		#region Formatting
-
-#if !INSIDE_CORLIB
-		[CLSCompliant(false)]
-#endif
-		public string ToString(uint radix)
-		{
-			return ToString(radix, "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-		}
-
-#if !INSIDE_CORLIB
-		[CLSCompliant(false)]
-#endif
-		public string ToString(uint radix, string characterSet)
-		{
-			if (characterSet.Length < radix)
-				throw new ArgumentException("charSet length less than radix", "characterSet");
-			if (radix == 1)
-				throw new ArgumentException("There is no such thing as radix one notation", "radix");
-
-			if (this == 0) return "0";
-			if (this == 1) return "1";
-
-			string result = "";
-
-			BigInteger a = new BigInteger(this);
-
-			while (a != 0)
+			while (xIndx != x.Length && x[xIndx] == 0)
 			{
-				uint rem = Kernel.SingleByteDivideInPlace(a, radix);
-				result = characterSet[(int)rem] + result;
+				xIndx++;
 			}
 
-			return result;
+			while (yIndx != y.Length && y[yIndx] == 0)
+			{
+				yIndx++;
+			}
+
+			return CompareNoLeadingZeroes(xIndx, x, yIndx, y);
 		}
 
-		#endregion
-
-		#region Misc
-
-		/// <summary>
-		///     Normalizes this by setting the length to the actual number of
-		///     uints used in data and by setting the sign to Sign.Zero if the
-		///     value of this is 0.
-		/// </summary>
-		private void Normalize()
+		private static int CompareNoLeadingZeroes(
+			int xIndx,
+			int[] x,
+			int yIndx,
+			int[] y)
 		{
-			// Normalize length
-			while (length > 0 && data[length - 1] == 0) length--;
+			int diff = (x.Length - y.Length) - (xIndx - yIndx);
 
-			// Check for zero
-			if (length == 0)
-				length++;
+			if (diff != 0)
+			{
+				return diff < 0 ? -1 : 1;
+			}
+
+			// lengths of magnitudes the same, test the magnitude values
+
+			while (xIndx < x.Length)
+			{
+				uint v1 = (uint)x[xIndx++];
+				uint v2 = (uint)y[yIndx++];
+
+				if (v1 != v2)
+					return v1 < v2 ? -1 : 1;
+			}
+
+			return 0;
 		}
 
-		public void Clear()
+		public int CompareTo(
+			NetBigInteger value)
 		{
-			for (int i = 0; i < length; i++)
-				data[i] = 0x00;
+			return m_sign < value.m_sign ? -1
+				: m_sign > value.m_sign ? 1
+				: m_sign == 0 ? 0
+				: m_sign * CompareNoLeadingZeroes(0, m_magnitude, 0, value.m_magnitude);
 		}
 
-		#endregion
+		// return z = x / y - done in place (z value preserved, x contains the remainder)
+		private int[] Divide(
+			int[] x,
+			int[] y)
+		{
+			int xStart = 0;
+			while (xStart < x.Length && x[xStart] == 0)
+			{
+				++xStart;
+			}
 
-		#region Object Impl
+			int yStart = 0;
+			while (yStart < y.Length && y[yStart] == 0)
+			{
+				++yStart;
+			}
+
+			Debug.Assert(yStart < y.Length);
+
+			int xyCmp = CompareNoLeadingZeroes(xStart, x, yStart, y);
+			int[] count;
+
+			if (xyCmp > 0)
+			{
+				int yBitLength = calcBitLength(yStart, y);
+				int xBitLength = calcBitLength(xStart, x);
+				int shift = xBitLength - yBitLength;
+
+				int[] iCount;
+				int iCountStart = 0;
+
+				int[] c;
+				int cStart = 0;
+				int cBitLength = yBitLength;
+				if (shift > 0)
+				{
+					//					iCount = ShiftLeft(One.magnitude, shift);
+					iCount = new int[(shift >> 5) + 1];
+					iCount[0] = 1 << (shift % 32);
+
+					c = ShiftLeft(y, shift);
+					cBitLength += shift;
+				}
+				else
+				{
+					iCount = new int[] { 1 };
+
+					int len = y.Length - yStart;
+					c = new int[len];
+					Array.Copy(y, yStart, c, 0, len);
+				}
+
+				count = new int[iCount.Length];
+
+				for (; ; )
+				{
+					if (cBitLength < xBitLength
+						|| CompareNoLeadingZeroes(xStart, x, cStart, c) >= 0)
+					{
+						Subtract(xStart, x, cStart, c);
+						AddMagnitudes(count, iCount);
+
+						while (x[xStart] == 0)
+						{
+							if (++xStart == x.Length)
+								return count;
+						}
+
+						//xBitLength = calcBitLength(xStart, x);
+						xBitLength = 32 * (x.Length - xStart - 1) + BitLen(x[xStart]);
+
+						if (xBitLength <= yBitLength)
+						{
+							if (xBitLength < yBitLength)
+								return count;
+
+							xyCmp = CompareNoLeadingZeroes(xStart, x, yStart, y);
+
+							if (xyCmp <= 0)
+								break;
+						}
+					}
+
+					shift = cBitLength - xBitLength;
+
+					// NB: The case where c[cStart] is 1-bit is harmless
+					if (shift == 1)
+					{
+						uint firstC = (uint)c[cStart] >> 1;
+						uint firstX = (uint)x[xStart];
+						if (firstC > firstX)
+							++shift;
+					}
+
+					if (shift < 2)
+					{
+						c = ShiftRightOneInPlace(cStart, c);
+						--cBitLength;
+						iCount = ShiftRightOneInPlace(iCountStart, iCount);
+					}
+					else
+					{
+						c = ShiftRightInPlace(cStart, c, shift);
+						cBitLength -= shift;
+						iCount = ShiftRightInPlace(iCountStart, iCount, shift);
+					}
+
+					//cStart = c.Length - ((cBitLength + 31) / 32);
+					while (c[cStart] == 0)
+					{
+						++cStart;
+					}
+
+					while (iCount[iCountStart] == 0)
+					{
+						++iCountStart;
+					}
+				}
+			}
+			else
+			{
+				count = new int[1];
+			}
+
+			if (xyCmp == 0)
+			{
+				AddMagnitudes(count, One.m_magnitude);
+				Array.Clear(x, xStart, x.Length - xStart);
+			}
+
+			return count;
+		}
+
+		public NetBigInteger Divide(
+			NetBigInteger val)
+		{
+			if (val.m_sign == 0)
+				throw new ArithmeticException("Division by zero error");
+
+			if (m_sign == 0)
+				return Zero;
+
+			if (val.QuickPow2Check()) // val is power of two
+			{
+				NetBigInteger result = Abs().ShiftRight(val.Abs().BitLength - 1);
+				return val.m_sign == m_sign ? result : result.Negate();
+			}
+
+			int[] mag = (int[])m_magnitude.Clone();
+
+			return new NetBigInteger(m_sign * val.m_sign, Divide(mag, val.m_magnitude), true);
+		}
+
+		public NetBigInteger[] DivideAndRemainder(
+			NetBigInteger val)
+		{
+			if (val.m_sign == 0)
+				throw new ArithmeticException("Division by zero error");
+
+			NetBigInteger[] biggies = new NetBigInteger[2];
+
+			if (m_sign == 0)
+			{
+				biggies[0] = Zero;
+				biggies[1] = Zero;
+			}
+			else if (val.QuickPow2Check()) // val is power of two
+			{
+				int e = val.Abs().BitLength - 1;
+				NetBigInteger quotient = Abs().ShiftRight(e);
+				int[] remainder = LastNBits(e);
+
+				biggies[0] = val.m_sign == m_sign ? quotient : quotient.Negate();
+				biggies[1] = new NetBigInteger(m_sign, remainder, true);
+			}
+			else
+			{
+				int[] remainder = (int[])m_magnitude.Clone();
+				int[] quotient = Divide(remainder, val.m_magnitude);
+
+				biggies[0] = new NetBigInteger(m_sign * val.m_sign, quotient, true);
+				biggies[1] = new NetBigInteger(m_sign, remainder, true);
+			}
+
+			return biggies;
+		}
+
+		public override bool Equals(
+			object obj)
+		{
+			if (obj == this)
+				return true;
+
+			NetBigInteger biggie = obj as NetBigInteger;
+			if (biggie == null)
+				return false;
+
+			if (biggie.m_sign != m_sign || biggie.m_magnitude.Length != m_magnitude.Length)
+				return false;
+
+			for (int i = 0; i < m_magnitude.Length; i++)
+			{
+				if (biggie.m_magnitude[i] != m_magnitude[i])
+				{
+					return false;
+				}
+			}
+
+			return true;
+		}
+
+		public NetBigInteger Gcd(
+			NetBigInteger value)
+		{
+			if (value.m_sign == 0)
+				return Abs();
+
+			if (m_sign == 0)
+				return value.Abs();
+
+			NetBigInteger r;
+			NetBigInteger u = this;
+			NetBigInteger v = value;
+
+			while (v.m_sign != 0)
+			{
+				r = u.Mod(v);
+				u = v;
+				v = r;
+			}
+
+			return u;
+		}
 
 		public override int GetHashCode()
 		{
-			uint val = 0;
+			int hc = m_magnitude.Length;
+			if (m_magnitude.Length > 0)
+			{
+				hc ^= m_magnitude[0];
 
-			for (uint i = 0; i < this.length; i++)
-				val ^= this.data[i];
+				if (m_magnitude.Length > 1)
+				{
+					hc ^= m_magnitude[m_magnitude.Length - 1];
+				}
+			}
 
-			return (int)val;
+			return m_sign < 0 ? ~hc : hc;
+		}
+
+		private NetBigInteger Inc()
+		{
+			if (m_sign == 0)
+				return One;
+
+			if (m_sign < 0)
+				return new NetBigInteger(-1, doSubBigLil(m_magnitude, One.m_magnitude), true);
+
+			return AddToMagnitude(One.m_magnitude);
+		}
+
+		public int IntValue
+		{
+			get
+			{
+				return m_sign == 0 ? 0
+					: m_sign > 0 ? m_magnitude[m_magnitude.Length - 1]
+					: -m_magnitude[m_magnitude.Length - 1];
+			}
+		}
+	
+		public NetBigInteger Max(
+			NetBigInteger value)
+		{
+			return CompareTo(value) > 0 ? this : value;
+		}
+
+		public NetBigInteger Min(
+			NetBigInteger value)
+		{
+			return CompareTo(value) < 0 ? this : value;
+		}
+
+		public NetBigInteger Mod(
+			NetBigInteger m)
+		{
+			if (m.m_sign < 1)
+				throw new ArithmeticException("Modulus must be positive");
+
+			NetBigInteger biggie = Remainder(m);
+
+			return (biggie.m_sign >= 0 ? biggie : biggie.Add(m));
+		}
+
+		public NetBigInteger ModInverse(
+			NetBigInteger m)
+		{
+			if (m.m_sign < 1)
+				throw new ArithmeticException("Modulus must be positive");
+
+			NetBigInteger x = new NetBigInteger();
+			NetBigInteger gcd = ExtEuclid(this, m, x, null);
+
+			if (!gcd.Equals(One))
+				throw new ArithmeticException("Numbers not relatively prime.");
+
+			if (x.m_sign < 0)
+			{
+				x.m_sign = 1;
+				//x = m.Subtract(x);
+				x.m_magnitude = doSubBigLil(m.m_magnitude, x.m_magnitude);
+			}
+
+			return x;
+		}
+
+		private static NetBigInteger ExtEuclid(
+			NetBigInteger a,
+			NetBigInteger b,
+			NetBigInteger u1Out,
+			NetBigInteger u2Out)
+		{
+			NetBigInteger u1 = One;
+			NetBigInteger u3 = a;
+			NetBigInteger v1 = Zero;
+			NetBigInteger v3 = b;
+
+			while (v3.m_sign > 0)
+			{
+				NetBigInteger[] q = u3.DivideAndRemainder(v3);
+
+				NetBigInteger tmp = v1.Multiply(q[0]);
+				NetBigInteger tn = u1.Subtract(tmp);
+				u1 = v1;
+				v1 = tn;
+
+				u3 = v3;
+				v3 = q[1];
+			}
+
+			if (u1Out != null)
+			{
+				u1Out.m_sign = u1.m_sign;
+				u1Out.m_magnitude = u1.m_magnitude;
+			}
+
+			if (u2Out != null)
+			{
+				NetBigInteger tmp = u1.Multiply(a);
+				tmp = u3.Subtract(tmp);
+				NetBigInteger res = tmp.Divide(b);
+				u2Out.m_sign = res.m_sign;
+				u2Out.m_magnitude = res.m_magnitude;
+			}
+
+			return u3;
+		}
+
+		private static void ZeroOut(
+			int[] x)
+		{
+			Array.Clear(x, 0, x.Length);
+		}
+
+		public NetBigInteger ModPow(
+			NetBigInteger exponent,
+			NetBigInteger m)
+		{
+			if (m.m_sign < 1)
+				throw new ArithmeticException("Modulus must be positive");
+
+			if (m.Equals(One))
+				return Zero;
+
+			if (exponent.m_sign == 0)
+				return One;
+
+			if (m_sign == 0)
+				return Zero;
+
+			int[] zVal = null;
+			int[] yAccum = null;
+			int[] yVal;
+
+			// Montgomery exponentiation is only possible if the modulus is odd,
+			// but AFAIK, this is always the case for crypto algo's
+			bool useMonty = ((m.m_magnitude[m.m_magnitude.Length - 1] & 1) == 1);
+			long mQ = 0;
+			if (useMonty)
+			{
+				mQ = m.GetMQuote();
+
+				// tmp = this * R mod m
+				NetBigInteger tmp = ShiftLeft(32 * m.m_magnitude.Length).Mod(m);
+				zVal = tmp.m_magnitude;
+
+				useMonty = (zVal.Length <= m.m_magnitude.Length);
+
+				if (useMonty)
+				{
+					yAccum = new int[m.m_magnitude.Length + 1];
+					if (zVal.Length < m.m_magnitude.Length)
+					{
+						int[] longZ = new int[m.m_magnitude.Length];
+						zVal.CopyTo(longZ, longZ.Length - zVal.Length);
+						zVal = longZ;
+					}
+				}
+			}
+
+			if (!useMonty)
+			{
+				if (m_magnitude.Length <= m.m_magnitude.Length)
+				{
+					//zAccum = new int[m.magnitude.Length * 2];
+					zVal = new int[m.m_magnitude.Length];
+					m_magnitude.CopyTo(zVal, zVal.Length - m_magnitude.Length);
+				}
+				else
+				{
+					//
+					// in normal practice we'll never see ..
+					//
+					NetBigInteger tmp = Remainder(m);
+
+					//zAccum = new int[m.magnitude.Length * 2];
+					zVal = new int[m.m_magnitude.Length];
+					tmp.m_magnitude.CopyTo(zVal, zVal.Length - tmp.m_magnitude.Length);
+				}
+
+				yAccum = new int[m.m_magnitude.Length * 2];
+			}
+
+			yVal = new int[m.m_magnitude.Length];
+
+			//
+			// from LSW to MSW
+			//
+			for (int i = 0; i < exponent.m_magnitude.Length; i++)
+			{
+				int v = exponent.m_magnitude[i];
+				int bits = 0;
+
+				if (i == 0)
+				{
+					while (v > 0)
+					{
+						v <<= 1;
+						bits++;
+					}
+
+					//
+					// first time in initialise y
+					//
+					zVal.CopyTo(yVal, 0);
+
+					v <<= 1;
+					bits++;
+				}
+
+				while (v != 0)
+				{
+					if (useMonty)
+					{
+						// Montgomery square algo doesn't exist, and a normal
+						// square followed by a Montgomery reduction proved to
+						// be almost as heavy as a Montgomery mulitply.
+						MultiplyMonty(yAccum, yVal, yVal, m.m_magnitude, mQ);
+					}
+					else
+					{
+						Square(yAccum, yVal);
+						Remainder(yAccum, m.m_magnitude);
+						Array.Copy(yAccum, yAccum.Length - yVal.Length, yVal, 0, yVal.Length);
+						ZeroOut(yAccum);
+					}
+					bits++;
+
+					if (v < 0)
+					{
+						if (useMonty)
+						{
+							MultiplyMonty(yAccum, yVal, zVal, m.m_magnitude, mQ);
+						}
+						else
+						{
+							Multiply(yAccum, yVal, zVal);
+							Remainder(yAccum, m.m_magnitude);
+							Array.Copy(yAccum, yAccum.Length - yVal.Length, yVal, 0,
+								yVal.Length);
+							ZeroOut(yAccum);
+						}
+					}
+
+					v <<= 1;
+				}
+
+				while (bits < 32)
+				{
+					if (useMonty)
+					{
+						MultiplyMonty(yAccum, yVal, yVal, m.m_magnitude, mQ);
+					}
+					else
+					{
+						Square(yAccum, yVal);
+						Remainder(yAccum, m.m_magnitude);
+						Array.Copy(yAccum, yAccum.Length - yVal.Length, yVal, 0, yVal.Length);
+						ZeroOut(yAccum);
+					}
+					bits++;
+				}
+			}
+
+			if (useMonty)
+			{
+				// Return y * R^(-1) mod m by doing y * 1 * R^(-1) mod m
+				ZeroOut(zVal);
+				zVal[zVal.Length - 1] = 1;
+				MultiplyMonty(yAccum, yVal, zVal, m.m_magnitude, mQ);
+			}
+
+			NetBigInteger result = new NetBigInteger(1, yVal, true);
+
+			return exponent.m_sign > 0
+				? result
+				: result.ModInverse(m);
+		}
+
+		// return w with w = x * x - w is assumed to have enough space.
+		private static int[] Square(
+			int[] w,
+			int[] x)
+		{
+			// Note: this method allows w to be only (2 * x.Length - 1) words if result will fit
+			//			if (w.Length != 2 * x.Length)
+			//				throw new ArgumentException("no I don't think so...");
+
+			ulong u1, u2, c;
+
+			int wBase = w.Length - 1;
+
+			for (int i = x.Length - 1; i != 0; i--)
+			{
+				ulong v = (ulong)(uint)x[i];
+
+				u1 = v * v;
+				u2 = u1 >> 32;
+				u1 = (uint)u1;
+
+				u1 += (ulong)(uint)w[wBase];
+
+				w[wBase] = (int)(uint)u1;
+				c = u2 + (u1 >> 32);
+
+				for (int j = i - 1; j >= 0; j--)
+				{
+					--wBase;
+					u1 = v * (ulong)(uint)x[j];
+					u2 = u1 >> 31; // multiply by 2!
+					u1 = (uint)(u1 << 1); // multiply by 2!
+					u1 += c + (ulong)(uint)w[wBase];
+
+					w[wBase] = (int)(uint)u1;
+					c = u2 + (u1 >> 32);
+				}
+
+				c += (ulong)(uint)w[--wBase];
+				w[wBase] = (int)(uint)c;
+
+				if (--wBase >= 0)
+				{
+					w[wBase] = (int)(uint)(c >> 32);
+				}
+				else
+				{
+					Debug.Assert((uint)(c >> 32) == 0);
+				}
+				wBase += i;
+			}
+
+			u1 = (ulong)(uint)x[0];
+			u1 = u1 * u1;
+			u2 = u1 >> 32;
+			u1 = u1 & IMASK;
+
+			u1 += (ulong)(uint)w[wBase];
+
+			w[wBase] = (int)(uint)u1;
+			if (--wBase >= 0)
+			{
+				w[wBase] = (int)(uint)(u2 + (u1 >> 32) + (ulong)(uint)w[wBase]);
+			}
+			else
+			{
+				Debug.Assert((uint)(u2 + (u1 >> 32)) == 0);
+			}
+
+			return w;
+		}
+
+		// return x with x = y * z - x is assumed to have enough space.
+		private static int[] Multiply(
+			int[] x,
+			int[] y,
+			int[] z)
+		{
+			int i = z.Length;
+
+			if (i < 1)
+				return x;
+
+			int xBase = x.Length - y.Length;
+
+			for (; ; )
+			{
+				long a = z[--i] & IMASK;
+				long val = 0;
+
+				for (int j = y.Length - 1; j >= 0; j--)
+				{
+					val += a * (y[j] & IMASK) + (x[xBase + j] & IMASK);
+
+					x[xBase + j] = (int)val;
+
+					val = (long)((ulong)val >> 32);
+				}
+
+				--xBase;
+
+				if (i < 1)
+				{
+					if (xBase >= 0)
+					{
+						x[xBase] = (int)val;
+					}
+					else
+					{
+						Debug.Assert(val == 0);
+					}
+					break;
+				}
+
+				x[xBase] = (int)val;
+			}
+
+			return x;
+		}
+
+		private static long FastExtEuclid(
+			long a,
+			long b,
+			long[] uOut)
+		{
+			long u1 = 1;
+			long u3 = a;
+			long v1 = 0;
+			long v3 = b;
+
+			while (v3 > 0)
+			{
+				long q, tn;
+
+				q = u3 / v3;
+
+				tn = u1 - (v1 * q);
+				u1 = v1;
+				v1 = tn;
+
+				tn = u3 - (v3 * q);
+				u3 = v3;
+				v3 = tn;
+			}
+
+			uOut[0] = u1;
+			uOut[1] = (u3 - (u1 * a)) / b;
+
+			return u3;
+		}
+
+		private static long FastModInverse(
+			long v,
+			long m)
+		{
+			if (m < 1)
+				throw new ArithmeticException("Modulus must be positive");
+
+			long[] x = new long[2];
+			long gcd = FastExtEuclid(v, m, x);
+
+			if (gcd != 1)
+				throw new ArithmeticException("Numbers not relatively prime.");
+
+			if (x[0] < 0)
+			{
+				x[0] += m;
+			}
+
+			return x[0];
+		}
+
+		private long GetMQuote()
+		{
+			Debug.Assert(m_sign > 0);
+
+			if (m_quote != -1)
+			{
+				return m_quote; // already calculated
+			}
+
+			if (m_magnitude.Length == 0 || (m_magnitude[m_magnitude.Length - 1] & 1) == 0)
+			{
+				return -1; // not for even numbers
+			}
+
+			long v = (((~m_magnitude[m_magnitude.Length - 1]) | 1) & 0xffffffffL);
+			m_quote = FastModInverse(v, 0x100000000L);
+
+			return m_quote;
+		}
+
+		private static void MultiplyMonty(
+			int[] a,
+			int[] x,
+			int[] y,
+			int[] m,
+			long mQuote)
+		// mQuote = -m^(-1) mod b
+		{
+			if (m.Length == 1)
+			{
+				x[0] = (int)MultiplyMontyNIsOne((uint)x[0], (uint)y[0], (uint)m[0], (ulong)mQuote);
+				return;
+			}
+
+			int n = m.Length;
+			int nMinus1 = n - 1;
+			long y_0 = y[nMinus1] & IMASK;
+
+			// 1. a = 0 (Notation: a = (a_{n} a_{n-1} ... a_{0})_{b} )
+			Array.Clear(a, 0, n + 1);
+
+			// 2. for i from 0 to (n - 1) do the following:
+			for (int i = n; i > 0; i--)
+			{
+				long x_i = x[i - 1] & IMASK;
+
+				// 2.1 u = ((a[0] + (x[i] * y[0]) * mQuote) mod b
+				long u = ((((a[n] & IMASK) + ((x_i * y_0) & IMASK)) & IMASK) * mQuote) & IMASK;
+
+				// 2.2 a = (a + x_i * y + u * m) / b
+				long prod1 = x_i * y_0;
+				long prod2 = u * (m[nMinus1] & IMASK);
+				long tmp = (a[n] & IMASK) + (prod1 & IMASK) + (prod2 & IMASK);
+				long carry = (long)((ulong)prod1 >> 32) + (long)((ulong)prod2 >> 32) + (long)((ulong)tmp >> 32);
+				for (int j = nMinus1; j > 0; j--)
+				{
+					prod1 = x_i * (y[j - 1] & IMASK);
+					prod2 = u * (m[j - 1] & IMASK);
+					tmp = (a[j] & IMASK) + (prod1 & IMASK) + (prod2 & IMASK) + (carry & IMASK);
+					carry = (long)((ulong)carry >> 32) + (long)((ulong)prod1 >> 32) +
+						(long)((ulong)prod2 >> 32) + (long)((ulong)tmp >> 32);
+					a[j + 1] = (int)tmp; // division by b
+				}
+				carry += (a[0] & IMASK);
+				a[1] = (int)carry;
+				a[0] = (int)((ulong)carry >> 32); // OJO!!!!!
+			}
+
+			// 3. if x >= m the x = x - m
+			if (CompareTo(0, a, 0, m) >= 0)
+			{
+				Subtract(0, a, 0, m);
+			}
+
+			// put the result in x
+			Array.Copy(a, 1, x, 0, n);
+		}
+
+		private static uint MultiplyMontyNIsOne(
+			uint x,
+			uint y,
+			uint m,
+			ulong mQuote)
+		{
+			ulong um = m;
+			ulong prod1 = (ulong)x * (ulong)y;
+			ulong u = (prod1 * mQuote) & UIMASK;
+			ulong prod2 = u * um;
+			ulong tmp = (prod1 & UIMASK) + (prod2 & UIMASK);
+			ulong carry = (prod1 >> 32) + (prod2 >> 32) + (tmp >> 32);
+
+			if (carry > um)
+			{
+				carry -= um;
+			}
+
+			return (uint)(carry & UIMASK);
+		}
+
+		public NetBigInteger Modulus(
+			NetBigInteger val)
+		{
+			return Mod(val);
+		}
+
+		public NetBigInteger Multiply(
+			NetBigInteger val)
+		{
+			if (m_sign == 0 || val.m_sign == 0)
+				return Zero;
+
+			if (val.QuickPow2Check()) // val is power of two
+			{
+				NetBigInteger result = ShiftLeft(val.Abs().BitLength - 1);
+				return val.m_sign > 0 ? result : result.Negate();
+			}
+
+			if (QuickPow2Check()) // this is power of two
+			{
+				NetBigInteger result = val.ShiftLeft(Abs().BitLength - 1);
+				return m_sign > 0 ? result : result.Negate();
+			}
+
+			int maxBitLength = BitLength + val.BitLength;
+			int resLength = (maxBitLength + BitsPerInt - 1) / BitsPerInt;
+
+			int[] res = new int[resLength];
+
+			if (val == this)
+			{
+				Square(res, m_magnitude);
+			}
+			else
+			{
+				Multiply(res, m_magnitude, val.m_magnitude);
+			}
+
+			return new NetBigInteger(m_sign * val.m_sign, res, true);
+		}
+
+		public NetBigInteger Negate()
+		{
+			if (m_sign == 0)
+				return this;
+
+			return new NetBigInteger(-m_sign, m_magnitude, false);
+		}
+
+		public NetBigInteger Not()
+		{
+			return Inc().Negate();
+		}
+
+		public NetBigInteger Pow(int exp)
+		{
+			if (exp < 0)
+			{
+				throw new ArithmeticException("Negative exponent");
+			}
+
+			if (exp == 0)
+			{
+				return One;
+			}
+
+			if (m_sign == 0 || Equals(One))
+			{
+				return this;
+			}
+
+			NetBigInteger y = One;
+			NetBigInteger z = this;
+
+			for (; ; )
+			{
+				if ((exp & 0x1) == 1)
+				{
+					y = y.Multiply(z);
+				}
+				exp >>= 1;
+				if (exp == 0) break;
+				z = z.Multiply(z);
+			}
+
+			return y;
+		}
+		
+		private int Remainder(
+			int m)
+		{
+			Debug.Assert(m > 0);
+
+			long acc = 0;
+			for (int pos = 0; pos < m_magnitude.Length; ++pos)
+			{
+				long posVal = (uint)m_magnitude[pos];
+				acc = (acc << 32 | posVal) % m;
+			}
+
+			return (int)acc;
+		}
+
+		// return x = x % y - done in place (y value preserved)
+		private int[] Remainder(
+			int[] x,
+			int[] y)
+		{
+			int xStart = 0;
+			while (xStart < x.Length && x[xStart] == 0)
+			{
+				++xStart;
+			}
+
+			int yStart = 0;
+			while (yStart < y.Length && y[yStart] == 0)
+			{
+				++yStart;
+			}
+
+			Debug.Assert(yStart < y.Length);
+
+			int xyCmp = CompareNoLeadingZeroes(xStart, x, yStart, y);
+
+			if (xyCmp > 0)
+			{
+				int yBitLength = calcBitLength(yStart, y);
+				int xBitLength = calcBitLength(xStart, x);
+				int shift = xBitLength - yBitLength;
+
+				int[] c;
+				int cStart = 0;
+				int cBitLength = yBitLength;
+				if (shift > 0)
+				{
+					c = ShiftLeft(y, shift);
+					cBitLength += shift;
+					Debug.Assert(c[0] != 0);
+				}
+				else
+				{
+					int len = y.Length - yStart;
+					c = new int[len];
+					Array.Copy(y, yStart, c, 0, len);
+				}
+
+				for (; ; )
+				{
+					if (cBitLength < xBitLength
+						|| CompareNoLeadingZeroes(xStart, x, cStart, c) >= 0)
+					{
+						Subtract(xStart, x, cStart, c);
+
+						while (x[xStart] == 0)
+						{
+							if (++xStart == x.Length)
+								return x;
+						}
+
+						//xBitLength = calcBitLength(xStart, x);
+						xBitLength = 32 * (x.Length - xStart - 1) + BitLen(x[xStart]);
+
+						if (xBitLength <= yBitLength)
+						{
+							if (xBitLength < yBitLength)
+								return x;
+
+							xyCmp = CompareNoLeadingZeroes(xStart, x, yStart, y);
+
+							if (xyCmp <= 0)
+								break;
+						}
+					}
+
+					shift = cBitLength - xBitLength;
+
+					// NB: The case where c[cStart] is 1-bit is harmless
+					if (shift == 1)
+					{
+						uint firstC = (uint)c[cStart] >> 1;
+						uint firstX = (uint)x[xStart];
+						if (firstC > firstX)
+							++shift;
+					}
+
+					if (shift < 2)
+					{
+						c = ShiftRightOneInPlace(cStart, c);
+						--cBitLength;
+					}
+					else
+					{
+						c = ShiftRightInPlace(cStart, c, shift);
+						cBitLength -= shift;
+					}
+
+					//cStart = c.Length - ((cBitLength + 31) / 32);
+					while (c[cStart] == 0)
+					{
+						++cStart;
+					}
+				}
+			}
+
+			if (xyCmp == 0)
+			{
+				Array.Clear(x, xStart, x.Length - xStart);
+			}
+
+			return x;
+		}
+
+		public NetBigInteger Remainder(
+			NetBigInteger n)
+		{
+			if (n.m_sign == 0)
+				throw new ArithmeticException("Division by zero error");
+
+			if (m_sign == 0)
+				return Zero;
+
+			// For small values, use fast remainder method
+			if (n.m_magnitude.Length == 1)
+			{
+				int val = n.m_magnitude[0];
+
+				if (val > 0)
+				{
+					if (val == 1)
+						return Zero;
+
+					int rem = Remainder(val);
+
+					return rem == 0
+						? Zero
+						: new NetBigInteger(m_sign, new int[] { rem }, false);
+				}
+			}
+
+			if (CompareNoLeadingZeroes(0, m_magnitude, 0, n.m_magnitude) < 0)
+				return this;
+
+			int[] result;
+			if (n.QuickPow2Check())  // n is power of two
+			{
+				result = LastNBits(n.Abs().BitLength - 1);
+			}
+			else
+			{
+				result = (int[])m_magnitude.Clone();
+				result = Remainder(result, n.m_magnitude);
+			}
+
+			return new NetBigInteger(m_sign, result, true);
+		}
+
+		private int[] LastNBits(
+			int n)
+		{
+			if (n < 1)
+				return ZeroMagnitude;
+
+			int numWords = (n + BitsPerInt - 1) / BitsPerInt;
+			numWords = System.Math.Min(numWords, m_magnitude.Length);
+			int[] result = new int[numWords];
+
+			Array.Copy(m_magnitude, m_magnitude.Length - numWords, result, 0, numWords);
+
+			int hiBits = n % 32;
+			if (hiBits != 0)
+			{
+				result[0] &= ~(-1 << hiBits);
+			}
+
+			return result;
+		}
+
+
+		// do a left shift - this returns a new array.
+		private static int[] ShiftLeft(
+			int[] mag,
+			int n)
+		{
+			int nInts = (int)((uint)n >> 5);
+			int nBits = n & 0x1f;
+			int magLen = mag.Length;
+			int[] newMag;
+
+			if (nBits == 0)
+			{
+				newMag = new int[magLen + nInts];
+				mag.CopyTo(newMag, 0);
+			}
+			else
+			{
+				int i = 0;
+				int nBits2 = 32 - nBits;
+				int highBits = (int)((uint)mag[0] >> nBits2);
+
+				if (highBits != 0)
+				{
+					newMag = new int[magLen + nInts + 1];
+					newMag[i++] = highBits;
+				}
+				else
+				{
+					newMag = new int[magLen + nInts];
+				}
+
+				int m = mag[0];
+				for (int j = 0; j < magLen - 1; j++)
+				{
+					int next = mag[j + 1];
+
+					newMag[i++] = (m << nBits) | (int)((uint)next >> nBits2);
+					m = next;
+				}
+
+				newMag[i] = mag[magLen - 1] << nBits;
+			}
+
+			return newMag;
+		}
+
+		public NetBigInteger ShiftLeft(
+			int n)
+		{
+			if (m_sign == 0 || m_magnitude.Length == 0)
+				return Zero;
+
+			if (n == 0)
+				return this;
+
+			if (n < 0)
+				return ShiftRight(-n);
+
+			NetBigInteger result = new NetBigInteger(m_sign, ShiftLeft(m_magnitude, n), true);
+
+			if (m_numBits != -1)
+			{
+				result.m_numBits = m_sign > 0
+					? m_numBits
+					: m_numBits + n;
+			}
+
+			if (m_numBitLength != -1)
+			{
+				result.m_numBitLength = m_numBitLength + n;
+			}
+
+			return result;
+		}
+
+		// do a right shift - this does it in place.
+		private static int[] ShiftRightInPlace(
+			int start,
+			int[] mag,
+			int n)
+		{
+			int nInts = (int)((uint)n >> 5) + start;
+			int nBits = n & 0x1f;
+			int magEnd = mag.Length - 1;
+
+			if (nInts != start)
+			{
+				int delta = (nInts - start);
+
+				for (int i = magEnd; i >= nInts; i--)
+				{
+					mag[i] = mag[i - delta];
+				}
+				for (int i = nInts - 1; i >= start; i--)
+				{
+					mag[i] = 0;
+				}
+			}
+
+			if (nBits != 0)
+			{
+				int nBits2 = 32 - nBits;
+				int m = mag[magEnd];
+
+				for (int i = magEnd; i > nInts; --i)
+				{
+					int next = mag[i - 1];
+
+					mag[i] = (int)((uint)m >> nBits) | (next << nBits2);
+					m = next;
+				}
+
+				mag[nInts] = (int)((uint)mag[nInts] >> nBits);
+			}
+
+			return mag;
+		}
+
+		// do a right shift by one - this does it in place.
+		private static int[] ShiftRightOneInPlace(
+			int start,
+			int[] mag)
+		{
+			int i = mag.Length;
+			int m = mag[i - 1];
+
+			while (--i > start)
+			{
+				int next = mag[i - 1];
+				mag[i] = ((int)((uint)m >> 1)) | (next << 31);
+				m = next;
+			}
+
+			mag[start] = (int)((uint)mag[start] >> 1);
+
+			return mag;
+		}
+
+		public NetBigInteger ShiftRight(
+			int n)
+		{
+			if (n == 0)
+				return this;
+
+			if (n < 0)
+				return ShiftLeft(-n);
+
+			if (n >= BitLength)
+				return (m_sign < 0 ? One.Negate() : Zero);
+
+			//			int[] res = (int[]) magnitude.Clone();
+			//
+			//			res = ShiftRightInPlace(0, res, n);
+			//
+			//			return new BigInteger(sign, res, true);
+
+			int resultLength = (BitLength - n + 31) >> 5;
+			int[] res = new int[resultLength];
+
+			int numInts = n >> 5;
+			int numBits = n & 31;
+
+			if (numBits == 0)
+			{
+				Array.Copy(m_magnitude, 0, res, 0, res.Length);
+			}
+			else
+			{
+				int numBits2 = 32 - numBits;
+
+				int magPos = m_magnitude.Length - 1 - numInts;
+				for (int i = resultLength - 1; i >= 0; --i)
+				{
+					res[i] = (int)((uint)m_magnitude[magPos--] >> numBits);
+
+					if (magPos >= 0)
+					{
+						res[i] |= m_magnitude[magPos] << numBits2;
+					}
+				}
+			}
+
+			Debug.Assert(res[0] != 0);
+
+			return new NetBigInteger(m_sign, res, false);
+		}
+
+		public int SignValue
+		{
+			get { return m_sign; }
+		}
+
+		// returns x = x - y - we assume x is >= y
+		private static int[] Subtract(
+			int xStart,
+			int[] x,
+			int yStart,
+			int[] y)
+		{
+			Debug.Assert(yStart < y.Length);
+			Debug.Assert(x.Length - xStart >= y.Length - yStart);
+
+			int iT = x.Length;
+			int iV = y.Length;
+			long m;
+			int borrow = 0;
+
+			do
+			{
+				m = (x[--iT] & IMASK) - (y[--iV] & IMASK) + borrow;
+				x[iT] = (int)m;
+
+				//				borrow = (m < 0) ? -1 : 0;
+				borrow = (int)(m >> 63);
+			}
+			while (iV > yStart);
+
+			if (borrow != 0)
+			{
+				while (--x[--iT] == -1)
+				{
+				}
+			}
+
+			return x;
+		}
+
+		public NetBigInteger Subtract(
+			NetBigInteger n)
+		{
+			if (n.m_sign == 0)
+				return this;
+
+			if (m_sign == 0)
+				return n.Negate();
+
+			if (m_sign != n.m_sign)
+				return Add(n.Negate());
+
+			int compare = CompareNoLeadingZeroes(0, m_magnitude, 0, n.m_magnitude);
+			if (compare == 0)
+				return Zero;
+
+			NetBigInteger bigun, lilun;
+			if (compare < 0)
+			{
+				bigun = n;
+				lilun = this;
+			}
+			else
+			{
+				bigun = this;
+				lilun = n;
+			}
+
+			return new NetBigInteger(m_sign * compare, doSubBigLil(bigun.m_magnitude, lilun.m_magnitude), true);
+		}
+
+		private static int[] doSubBigLil(
+			int[] bigMag,
+			int[] lilMag)
+		{
+			int[] res = (int[])bigMag.Clone();
+
+			return Subtract(0, res, 0, lilMag);
+		}
+
+		public byte[] ToByteArray()
+		{
+			return ToByteArray(false);
+		}
+
+		public byte[] ToByteArrayUnsigned()
+		{
+			return ToByteArray(true);
+		}
+
+		private byte[] ToByteArray(
+			bool unsigned)
+		{
+			if (m_sign == 0)
+				return unsigned ? ZeroEncoding : new byte[1];
+
+			int nBits = (unsigned && m_sign > 0)
+				? BitLength
+				: BitLength + 1;
+
+			int nBytes = GetByteLength(nBits);
+			byte[] bytes = new byte[nBytes];
+
+			int magIndex = m_magnitude.Length;
+			int bytesIndex = bytes.Length;
+
+			if (m_sign > 0)
+			{
+				while (magIndex > 1)
+				{
+					uint mag = (uint)m_magnitude[--magIndex];
+					bytes[--bytesIndex] = (byte)mag;
+					bytes[--bytesIndex] = (byte)(mag >> 8);
+					bytes[--bytesIndex] = (byte)(mag >> 16);
+					bytes[--bytesIndex] = (byte)(mag >> 24);
+				}
+
+				uint lastMag = (uint)m_magnitude[0];
+				while (lastMag > byte.MaxValue)
+				{
+					bytes[--bytesIndex] = (byte)lastMag;
+					lastMag >>= 8;
+				}
+
+				bytes[--bytesIndex] = (byte)lastMag;
+			}
+			else // sign < 0
+			{
+				bool carry = true;
+
+				while (magIndex > 1)
+				{
+					uint mag = ~((uint)m_magnitude[--magIndex]);
+
+					if (carry)
+					{
+						carry = (++mag == uint.MinValue);
+					}
+
+					bytes[--bytesIndex] = (byte)mag;
+					bytes[--bytesIndex] = (byte)(mag >> 8);
+					bytes[--bytesIndex] = (byte)(mag >> 16);
+					bytes[--bytesIndex] = (byte)(mag >> 24);
+				}
+
+				uint lastMag = (uint)m_magnitude[0];
+
+				if (carry)
+				{
+					// Never wraps because magnitude[0] != 0
+					--lastMag;
+				}
+
+				while (lastMag > byte.MaxValue)
+				{
+					bytes[--bytesIndex] = (byte)~lastMag;
+					lastMag >>= 8;
+				}
+
+				bytes[--bytesIndex] = (byte)~lastMag;
+
+				if (bytesIndex > 0)
+				{
+					bytes[--bytesIndex] = byte.MaxValue;
+				}
+			}
+
+			return bytes;
 		}
 
 		public override string ToString()
@@ -893,1601 +2131,207 @@ namespace Lidgren.Network
 			return ToString(10);
 		}
 
-		public override bool Equals(object o)
+		public string ToString(
+			int radix)
 		{
-			if (o == null) return false;
-			if (o is int) return (int)o >= 0 && this == (uint)o;
-
-			return Kernel.Compare(this, (BigInteger)o) == 0;
-		}
-
-		#endregion
-
-		#region Number Theory
-
-		public BigInteger GCD(BigInteger bi)
-		{
-			return Kernel.gcd(this, bi);
-		}
-
-		public BigInteger ModInverse(BigInteger modulus)
-		{
-			return Kernel.modInverse(this, modulus);
-		}
-
-		public BigInteger ModPow(BigInteger exp, BigInteger n)
-		{
-			ModulusRing mr = new ModulusRing(n);
-			return mr.Pow(this, exp);
-		}
-
-		#endregion
-
-	
-#if INSIDE_CORLIB
-		internal
-#else
-		public
-#endif
- sealed class ModulusRing
-		{
-
-			BigInteger mod, constant;
-
-			public ModulusRing(BigInteger modulus)
+			switch (radix)
 			{
-				this.mod = modulus;
-
-				// calculate constant = b^ (2k) / m
-				uint i = mod.length << 1;
-
-				constant = new BigInteger(Sign.Positive, i + 1);
-				constant.data[i] = 0x00000001;
-
-				constant = constant / mod;
+				case 2:
+				case 10:
+				case 16:
+					break;
+				default:
+					throw new FormatException("Only bases 2, 10, 16 are allowed");
 			}
 
-			public void BarrettReduction(BigInteger x)
+			// NB: Can only happen to internally managed instances
+			if (m_magnitude == null)
+				return "null";
+
+			if (m_sign == 0)
+				return "0";
+
+			Debug.Assert(m_magnitude.Length > 0);
+
+			StringBuilder sb = new StringBuilder();
+
+			if (radix == 16)
 			{
-				BigInteger n = mod;
-				uint k = n.length,
-					kPlusOne = k + 1,
-					kMinusOne = k - 1;
+				sb.Append(m_magnitude[0].ToString("x"));
 
-				// x < mod, so nothing to do.
-				if (x.length < k) return;
-
-				BigInteger q3;
-
-				//
-				// Validate pointers
-				//
-				if (x.data.Length < x.length) throw new IndexOutOfRangeException("x out of range");
-
-				// q1 = x / b^ (k-1)
-				// q2 = q1 * constant
-				// q3 = q2 / b^ (k+1), Needs to be accessed with an offset of kPlusOne
-
-				// TODO: We should the method in HAC p 604 to do this (14.45)
-				q3 = new BigInteger(Sign.Positive, x.length - kMinusOne + constant.length);
-				Kernel.Multiply(x.data, kMinusOne, x.length - kMinusOne, constant.data, 0, constant.length, q3.data, 0);
-
-				// r1 = x mod b^ (k+1)
-				// i.e. keep the lowest (k+1) words
-
-				uint lengthToCopy = (x.length > kPlusOne) ? kPlusOne : x.length;
-
-				x.length = lengthToCopy;
-				x.Normalize();
-
-				// r2 = (q3 * n) mod b^ (k+1)
-				// partial multiplication of q3 and n
-
-				BigInteger r2 = new BigInteger(Sign.Positive, kPlusOne);
-				Kernel.MultiplyMod2p32pmod(q3.data, (int)kPlusOne, (int)q3.length - (int)kPlusOne, n.data, 0, (int)n.length, r2.data, 0, (int)kPlusOne);
-
-				r2.Normalize();
-
-				if (r2 <= x)
+				for (int i = 1; i < m_magnitude.Length; i++)
 				{
-					Kernel.MinusEq(x, r2);
+					sb.Append(m_magnitude[i].ToString("x8"));
 				}
-				else
-				{
-					BigInteger val = new BigInteger(Sign.Positive, kPlusOne + 1);
-					val.data[kPlusOne] = 0x00000001;
-
-					Kernel.MinusEq(val, r2);
-					Kernel.PlusEq(x, val);
-				}
-
-				while (x >= n)
-					Kernel.MinusEq(x, n);
 			}
-
-			public BigInteger Multiply(BigInteger a, BigInteger b)
+			else if (radix == 2)
 			{
-				if (a == 0 || b == 0) return 0;
+				sb.Append('1');
 
-				if (a.length >= mod.length << 1)
-					a %= mod;
-
-				if (b.length >= mod.length << 1)
-					b %= mod;
-
-				if (a.length >= mod.length)
-					BarrettReduction(a);
-
-				if (b.length >= mod.length)
-					BarrettReduction(b);
-
-				BigInteger ret = new BigInteger(a * b);
-				BarrettReduction(ret);
-
-				return ret;
-			}
-
-			public BigInteger Difference(BigInteger a, BigInteger b)
-			{
-				Sign cmp = Kernel.Compare(a, b);
-				BigInteger diff;
-
-				switch (cmp)
+				for (int i = BitLength - 2; i >= 0; --i)
 				{
-					case Sign.Zero:
-						return 0;
-					case Sign.Positive:
-						diff = a - b; break;
-					case Sign.Negative:
-						diff = b - a; break;
-					default:
-						throw new Exception();
+					sb.Append(TestBit(i) ? '1' : '0');
 				}
+			}
+			else
+			{
+				// This is algorithm 1a from chapter 4.4 in Seminumerical Algorithms, slow but it works
+				Stack S = new Stack();
+				NetBigInteger bs = ValueOf(radix);
 
-				if (diff >= mod)
+				NetBigInteger u = Abs();
+				NetBigInteger b;
+
+				while (u.m_sign != 0)
 				{
-					if (diff.length >= mod.length << 1)
-						diff %= mod;
+					b = u.Mod(bs);
+					if (b.m_sign == 0)
+					{
+						S.Push("0");
+					}
 					else
-						BarrettReduction(diff);
-				}
-				if (cmp == Sign.Negative)
-					diff = mod - diff;
-				return diff;
-			}
-
-			public BigInteger Pow(BigInteger b, BigInteger exp)
-			{
-				if ((mod.data[0] & 1) == 1) return OddPow(b, exp);
-				else return EvenPow(b, exp);
-			}
-
-			public BigInteger EvenPow(BigInteger b, BigInteger exp)
-			{
-				BigInteger resultNum = new BigInteger((BigInteger)1, mod.length << 1);
-				BigInteger tempNum = new BigInteger(b % mod, mod.length << 1);  // ensures (tempNum * tempNum) < b^ (2k)
-
-				uint totalBits = (uint)exp.BitCount();
-
-				uint[] wkspace = new uint[mod.length << 1];
-
-				// perform squaring and multiply exponentiation
-				for (uint pos = 0; pos < totalBits; pos++)
-				{
-					if (exp.TestBit(pos))
 					{
-
-						Array.Clear(wkspace, 0, wkspace.Length);
-						Kernel.Multiply(resultNum.data, 0, resultNum.length, tempNum.data, 0, tempNum.length, wkspace, 0);
-						resultNum.length += tempNum.length;
-						uint[] t = wkspace;
-						wkspace = resultNum.data;
-						resultNum.data = t;
-
-						BarrettReduction(resultNum);
+						// see how to interact with different bases
+						S.Push(b.m_magnitude[0].ToString("d"));
 					}
-
-					Kernel.SquarePositive(tempNum, ref wkspace);
-					BarrettReduction(tempNum);
-
-					if (tempNum == 1)
-					{
-						return resultNum;
-					}
+					u = u.Divide(bs);
 				}
 
-				return resultNum;
-			}
-
-			private BigInteger OddPow(BigInteger b, BigInteger exp)
-			{
-				BigInteger resultNum = new BigInteger(Montgomery.ToMont(1, mod), mod.length << 1);
-				BigInteger tempNum = new BigInteger(Montgomery.ToMont(b, mod), mod.length << 1);  // ensures (tempNum * tempNum) < b^ (2k)
-				uint mPrime = Montgomery.Inverse(mod.data[0]);
-				uint totalBits = (uint)exp.BitCount();
-
-				uint[] wkspace = new uint[mod.length << 1];
-
-				// perform squaring and multiply exponentiation
-				for (uint pos = 0; pos < totalBits; pos++)
+				// Then pop the stack
+				while (S.Count != 0)
 				{
-					if (exp.TestBit(pos))
-					{
-
-						Array.Clear(wkspace, 0, wkspace.Length);
-						Kernel.Multiply(resultNum.data, 0, resultNum.length, tempNum.data, 0, tempNum.length, wkspace, 0);
-						resultNum.length += tempNum.length;
-						uint[] t = wkspace;
-						wkspace = resultNum.data;
-						resultNum.data = t;
-
-						Montgomery.Reduce(resultNum, mod, mPrime);
-					}
-
-					Kernel.SquarePositive(tempNum, ref wkspace);
-					Montgomery.Reduce(tempNum, mod, mPrime);
+					sb.Append((string)S.Pop());
 				}
-
-				Montgomery.Reduce(resultNum, mod, mPrime);
-				return resultNum;
 			}
 
-			#region Pow Small Base
+			string s = sb.ToString();
 
-			// TODO: Make tests for this, not really needed b/c prime stuff
-			// checks it, but still would be nice
-#if !INSIDE_CORLIB
-			[CLSCompliant(false)]
-#endif
-			public BigInteger Pow(uint b, BigInteger exp)
+			Debug.Assert(s.Length > 0);
+
+			// Strip leading zeros. (We know this number is not all zeroes though)
+			if (s[0] == '0')
 			{
-				//				if (b != 2) {
-				if ((mod.data[0] & 1) == 1)
-					return OddPow(b, exp);
-				else
-					return EvenPow(b, exp);
-				/* buggy in some cases (like the well tested primes)
-								} else {
-									if ((mod.data [0] & 1) == 1)
-										return OddModTwoPow (exp);
-									else 
-										return EvenModTwoPow (exp);
-								}*/
+				int nonZeroPos = 0;
+				while (s[++nonZeroPos] == '0') { }
+
+				s = s.Substring(nonZeroPos);
 			}
 
-			private unsafe BigInteger OddPow(uint b, BigInteger exp)
+			if (m_sign == -1)
 			{
-				exp.Normalize();
-				uint[] wkspace = new uint[mod.length << 1 + 1];
-
-				BigInteger resultNum = Montgomery.ToMont((BigInteger)b, this.mod);
-				resultNum = new BigInteger(resultNum, mod.length << 1 + 1);
-
-				uint mPrime = Montgomery.Inverse(mod.data[0]);
-
-				uint pos = (uint)exp.BitCount() - 2;
-
-				//
-				// We know that the first itr will make the val b
-				//
-
-				do
-				{
-					//
-					// r = r ^ 2 % m
-					//
-					Kernel.SquarePositive(resultNum, ref wkspace);
-					resultNum = Montgomery.Reduce(resultNum, mod, mPrime);
-
-					if (exp.TestBit(pos))
-					{
-
-						//
-						// r = r * b % m
-						//
-
-						// TODO: Is Unsafe really speeding things up?
-						fixed (uint* u = resultNum.data)
-						{
-
-							uint i = 0;
-							ulong mc = 0;
-
-							do
-							{
-								mc += (ulong)u[i] * (ulong)b;
-								u[i] = (uint)mc;
-								mc >>= 32;
-							} while (++i < resultNum.length);
-
-							if (resultNum.length < mod.length)
-							{
-								if (mc != 0)
-								{
-									u[i] = (uint)mc;
-									resultNum.length++;
-									while (resultNum >= mod)
-										Kernel.MinusEq(resultNum, mod);
-								}
-							}
-							else if (mc != 0)
-							{
-
-								//
-								// First, we estimate the quotient by dividing
-								// the first part of each of the numbers. Then
-								// we correct this, if necessary, with a subtraction.
-								//
-
-								uint cc = (uint)mc;
-
-								// We would rather have this estimate overshoot,
-								// so we add one to the divisor
-								uint divEstimate;
-								if (mod.data[mod.length - 1] < UInt32.MaxValue)
-								{
-									divEstimate = (uint)((((ulong)cc << 32) | (ulong)u[i - 1]) /
-										(mod.data[mod.length - 1] + 1));
-								}
-								else
-								{
-									// guess but don't divide by 0
-									divEstimate = (uint)((((ulong)cc << 32) | (ulong)u[i - 1]) /
-										(mod.data[mod.length - 1]));
-								}
-
-								uint t;
-
-								i = 0;
-								mc = 0;
-								do
-								{
-									mc += (ulong)mod.data[i] * (ulong)divEstimate;
-									t = u[i];
-									u[i] -= (uint)mc;
-									mc >>= 32;
-									if (u[i] > t) mc++;
-									i++;
-								} while (i < resultNum.length);
-								cc -= (uint)mc;
-
-								if (cc != 0)
-								{
-
-									uint sc = 0, j = 0;
-									uint[] s = mod.data;
-									do
-									{
-										uint a = s[j];
-										if (((a += sc) < sc) | ((u[j] -= a) > ~a)) sc = 1;
-										else sc = 0;
-										j++;
-									} while (j < resultNum.length);
-									cc -= sc;
-								}
-								while (resultNum >= mod)
-									Kernel.MinusEq(resultNum, mod);
-							}
-							else
-							{
-								while (resultNum >= mod)
-									Kernel.MinusEq(resultNum, mod);
-							}
-						}
-					}
-				} while (pos-- > 0);
-
-				resultNum = Montgomery.Reduce(resultNum, mod, mPrime);
-				return resultNum;
-
+				s = "-" + s;
 			}
 
-			private unsafe BigInteger EvenPow(uint b, BigInteger exp)
-			{
-				exp.Normalize();
-				uint[] wkspace = new uint[mod.length << 1 + 1];
-				BigInteger resultNum = new BigInteger((BigInteger)b, mod.length << 1 + 1);
-
-				uint pos = (uint)exp.BitCount() - 2;
-
-				//
-				// We know that the first itr will make the val b
-				//
-
-				do
-				{
-					//
-					// r = r ^ 2 % m
-					//
-					Kernel.SquarePositive(resultNum, ref wkspace);
-					if (!(resultNum.length < mod.length))
-						BarrettReduction(resultNum);
-
-					if (exp.TestBit(pos))
-					{
-
-						//
-						// r = r * b % m
-						//
-
-						// TODO: Is Unsafe really speeding things up?
-						fixed (uint* u = resultNum.data)
-						{
-
-							uint i = 0;
-							ulong mc = 0;
-
-							do
-							{
-								mc += (ulong)u[i] * (ulong)b;
-								u[i] = (uint)mc;
-								mc >>= 32;
-							} while (++i < resultNum.length);
-
-							if (resultNum.length < mod.length)
-							{
-								if (mc != 0)
-								{
-									u[i] = (uint)mc;
-									resultNum.length++;
-									while (resultNum >= mod)
-										Kernel.MinusEq(resultNum, mod);
-								}
-							}
-							else if (mc != 0)
-							{
-
-								//
-								// First, we estimate the quotient by dividing
-								// the first part of each of the numbers. Then
-								// we correct this, if necessary, with a subtraction.
-								//
-
-								uint cc = (uint)mc;
-
-								// We would rather have this estimate overshoot,
-								// so we add one to the divisor
-								uint divEstimate = (uint)((((ulong)cc << 32) | (ulong)u[i - 1]) /
-									(mod.data[mod.length - 1] + 1));
-
-								uint t;
-
-								i = 0;
-								mc = 0;
-								do
-								{
-									mc += (ulong)mod.data[i] * (ulong)divEstimate;
-									t = u[i];
-									u[i] -= (uint)mc;
-									mc >>= 32;
-									if (u[i] > t) mc++;
-									i++;
-								} while (i < resultNum.length);
-								cc -= (uint)mc;
-
-								if (cc != 0)
-								{
-
-									uint sc = 0, j = 0;
-									uint[] s = mod.data;
-									do
-									{
-										uint a = s[j];
-										if (((a += sc) < sc) | ((u[j] -= a) > ~a)) sc = 1;
-										else sc = 0;
-										j++;
-									} while (j < resultNum.length);
-									cc -= sc;
-								}
-								while (resultNum >= mod)
-									Kernel.MinusEq(resultNum, mod);
-							}
-							else
-							{
-								while (resultNum >= mod)
-									Kernel.MinusEq(resultNum, mod);
-							}
-						}
-					}
-				} while (pos-- > 0);
-
-				return resultNum;
-			}
-
-			/* known to be buggy in some cases
-						private unsafe BigInteger EvenModTwoPow (BigInteger exp)
-						{
-							exp.Normalize ();
-							uint [] wkspace = new uint [mod.length << 1 + 1];
-
-							BigInteger resultNum = new BigInteger (2, mod.length << 1 +1);
-
-							uint value = exp.data [exp.length - 1];
-							uint mask = 0x80000000;
-
-							// Find the first bit of the exponent
-							while ((value & mask) == 0)
-								mask >>= 1;
-
-							//
-							// We know that the first itr will make the val 2,
-							// so eat one bit of the exponent
-							//
-							mask >>= 1;
-
-							uint wPos = exp.length - 1;
-
-							do {
-								value = exp.data [wPos];
-								do {
-									Kernel.SquarePositive (resultNum, ref wkspace);
-									if (resultNum.length >= mod.length)
-										BarrettReduction (resultNum);
-
-									if ((value & mask) != 0) {
-										//
-										// resultNum = (resultNum * 2) % mod
-										//
-
-										fixed (uint* u = resultNum.data) {
-											//
-											// Double
-											//
-											uint* uu = u;
-											uint* uuE = u + resultNum.length;
-											uint x, carry = 0;
-											while (uu < uuE) {
-												x = *uu;
-												*uu = (x << 1) | carry;
-												carry = x >> (32 - 1);
-												uu++;
-											}
-
-											// subtraction inlined because we know it is square
-											if (carry != 0 || resultNum >= mod) {
-												uu = u;
-												uint c = 0;
-												uint [] s = mod.data;
-												uint i = 0;
-												do {
-													uint a = s [i];
-													if (((a += c) < c) | ((* (uu++) -= a) > ~a))
-														c = 1;
-													else
-														c = 0;
-													i++;
-												} while (uu < uuE);
-											}
-										}
-									}
-								} while ((mask >>= 1) > 0);
-								mask = 0x80000000;
-							} while (wPos-- > 0);
-
-							return resultNum;
-						}
-
-						private unsafe BigInteger OddModTwoPow (BigInteger exp)
-						{
-
-							uint [] wkspace = new uint [mod.length << 1 + 1];
-
-							BigInteger resultNum = Montgomery.ToMont ((BigInteger)2, this.mod);
-							resultNum = new BigInteger (resultNum, mod.length << 1 +1);
-
-							uint mPrime = Montgomery.Inverse (mod.data [0]);
-
-							//
-							// TODO: eat small bits, the ones we can do with no modular reduction
-							//
-							uint pos = (uint)exp.BitCount () - 2;
-
-							do {
-								Kernel.SquarePositive (resultNum, ref wkspace);
-								resultNum = Montgomery.Reduce (resultNum, mod, mPrime);
-
-								if (exp.TestBit (pos)) {
-									//
-									// resultNum = (resultNum * 2) % mod
-									//
-
-									fixed (uint* u = resultNum.data) {
-										//
-										// Double
-										//
-										uint* uu = u;
-										uint* uuE = u + resultNum.length;
-										uint x, carry = 0;
-										while (uu < uuE) {
-											x = *uu;
-											*uu = (x << 1) | carry;
-											carry = x >> (32 - 1);
-											uu++;
-										}
-
-										// subtraction inlined because we know it is square
-										if (carry != 0 || resultNum >= mod) {
-											fixed (uint* s = mod.data) {
-												uu = u;
-												uint c = 0;
-												uint* ss = s;
-												do {
-													uint a = *ss++;
-													if (((a += c) < c) | ((* (uu++) -= a) > ~a))
-														c = 1;
-													else
-														c = 0;
-												} while (uu < uuE);
-											}
-										}
-									}
-								}
-							} while (pos-- > 0);
-
-							resultNum = Montgomery.Reduce (resultNum, mod, mPrime);
-							return resultNum;
-						}
-			*/
-			#endregion
+			return s;
 		}
 
-		internal sealed class Montgomery
+		private static NetBigInteger createUValueOf(
+			ulong value)
 		{
+			int msw = (int)(value >> 32);
+			int lsw = (int)value;
 
-			private Montgomery()
+			if (msw != 0)
+				return new NetBigInteger(1, new int[] { msw, lsw }, false);
+
+			if (lsw != 0)
 			{
-			}
-
-			public static uint Inverse(uint n)
-			{
-				uint y = n, z;
-
-				while ((z = n * y) != 1)
-					y *= 2 - z;
-
-				return (uint)-y;
-			}
-
-			public static BigInteger ToMont(BigInteger n, BigInteger m)
-			{
-				n.Normalize(); m.Normalize();
-
-				n <<= (int)m.length * 32;
-				n %= m;
+				NetBigInteger n = new NetBigInteger(1, new int[] { lsw }, false);
+				// Check for a power of two
+				if ((lsw & -lsw) == lsw)
+				{
+					n.m_numBits = 1;
+				}
 				return n;
 			}
 
-			public static unsafe BigInteger Reduce(BigInteger n, BigInteger m, uint mPrime)
-			{
-				BigInteger A = n;
-				fixed (uint* a = A.data, mm = m.data)
-				{
-					for (uint i = 0; i < m.length; i++)
-					{
-						// The mod here is taken care of by the CPU,
-						// since the multiply will overflow.
-						uint u_i = a[0] * mPrime /* % 2^32 */;
-
-						//
-						// A += u_i * m;
-						// A >>= 32
-						//
-
-						// mP = Position in mod
-						// aSP = the source of bits from a
-						// aDP = destination for bits
-						uint* mP = mm, aSP = a, aDP = a;
-
-						ulong c = (ulong)u_i * ((ulong)*(mP++)) + *(aSP++);
-						c >>= 32;
-						uint j = 1;
-
-						// Multiply and add
-						for (; j < m.length; j++)
-						{
-							c += (ulong)u_i * (ulong)*(mP++) + *(aSP++);
-							*(aDP++) = (uint)c;
-							c >>= 32;
-						}
-
-						// Account for carry
-						// TODO: use a better loop here, we dont need the ulong stuff
-						for (; j < A.length; j++)
-						{
-							c += *(aSP++);
-							*(aDP++) = (uint)c;
-							c >>= 32;
-							if (c == 0) { j++; break; }
-						}
-						// Copy the rest
-						for (; j < A.length; j++)
-						{
-							*(aDP++) = *(aSP++);
-						}
-
-						*(aDP++) = (uint)c;
-					}
-
-					while (A.length > 1 && a[A.length - 1] == 0) A.length--;
-
-				}
-				if (A >= m) Kernel.MinusEq(A, m);
-
-				return A;
-			}
-#if _NOT_USED_
-			public static BigInteger Reduce (BigInteger n, BigInteger m)
-			{
-				return Reduce (n, m, Inverse (m.data [0]));
-			}
-#endif
+			return Zero;
 		}
 
-		/// <summary>
-		/// Low level functions for the BigInteger
-		/// </summary>
-		private sealed class Kernel
+		private static NetBigInteger createValueOf(
+			long value)
 		{
-
-			#region Addition/Subtraction
-
-			/// <summary>
-			/// Adds two numbers with the same sign.
-			/// </summary>
-			/// <param name="bi1">A BigInteger</param>
-			/// <param name="bi2">A BigInteger</param>
-			/// <returns>bi1 + bi2</returns>
-			public static BigInteger AddSameSign(BigInteger bi1, BigInteger bi2)
+			if (value < 0)
 			{
-				uint[] x, y;
-				uint yMax, xMax, i = 0;
+				if (value == long.MinValue)
+					return createValueOf(~value).Not();
 
-				// x should be bigger
-				if (bi1.length < bi2.length)
-				{
-					x = bi2.data;
-					xMax = bi2.length;
-					y = bi1.data;
-					yMax = bi1.length;
-				}
-				else
-				{
-					x = bi1.data;
-					xMax = bi1.length;
-					y = bi2.data;
-					yMax = bi2.length;
-				}
-
-				BigInteger result = new BigInteger(Sign.Positive, xMax + 1);
-
-				uint[] r = result.data;
-
-				ulong sum = 0;
-
-				// Add common parts of both numbers
-				do
-				{
-					sum = ((ulong)x[i]) + ((ulong)y[i]) + sum;
-					r[i] = (uint)sum;
-					sum >>= 32;
-				} while (++i < yMax);
-
-				// Copy remainder of longer number while carry propagation is required
-				bool carry = (sum != 0);
-
-				if (carry)
-				{
-
-					if (i < xMax)
-					{
-						do
-							carry = ((r[i] = x[i] + 1) == 0);
-						while (++i < xMax && carry);
-					}
-
-					if (carry)
-					{
-						r[i] = 1;
-						result.length = ++i;
-						return result;
-					}
-				}
-
-				// Copy the rest
-				if (i < xMax)
-				{
-					do
-						r[i] = x[i];
-					while (++i < xMax);
-				}
-
-				result.Normalize();
-				return result;
+				return createValueOf(-value).Negate();
 			}
 
-			public static BigInteger Subtract(BigInteger big, BigInteger small)
+			return createUValueOf((ulong)value);
+		}
+
+		public static NetBigInteger ValueOf(
+			long value)
+		{
+			switch (value)
 			{
-				BigInteger result = new BigInteger(Sign.Positive, big.length);
-
-				uint[] r = result.data, b = big.data, s = small.data;
-				uint i = 0, c = 0;
-
-				do
-				{
-
-					uint x = s[i];
-					if (((x += c) < c) | ((r[i] = b[i] - x) > ~x))
-						c = 1;
-					else
-						c = 0;
-
-				} while (++i < small.length);
-
-				if (i == big.length) goto fixup;
-
-				if (c == 1)
-				{
-					do
-						r[i] = b[i] - 1;
-					while (b[i++] == 0 && i < big.length);
-
-					if (i == big.length) goto fixup;
-				}
-
-				do
-					r[i] = b[i];
-				while (++i < big.length);
-
-			fixup:
-
-				result.Normalize();
-				return result;
+				case 0:
+					return Zero;
+				case 1:
+					return One;
+				case 2:
+					return Two;
+				case 3:
+					return Three;
+				case 10:
+					return Ten;
 			}
 
-			public static void MinusEq(BigInteger big, BigInteger small)
+			return createValueOf(value);
+		}
+
+		public int GetLowestSetBit()
+		{
+			if (m_sign == 0)
+				return -1;
+
+			int w = m_magnitude.Length;
+
+			while (--w > 0)
 			{
-				uint[] b = big.data, s = small.data;
-				uint i = 0, c = 0;
-
-				do
-				{
-					uint x = s[i];
-					if (((x += c) < c) | ((b[i] -= x) > ~x))
-						c = 1;
-					else
-						c = 0;
-				} while (++i < small.length);
-
-				if (i == big.length) goto fixup;
-
-				if (c == 1)
-				{
-					do
-						b[i]--;
-					while (b[i++] == 0 && i < big.length);
-				}
-
-			fixup:
-
-				// Normalize length
-				while (big.length > 0 && big.data[big.length - 1] == 0) big.length--;
-
-				// Check for zero
-				if (big.length == 0)
-					big.length++;
-
+				if (m_magnitude[w] != 0)
+					break;
 			}
 
-			public static void PlusEq(BigInteger bi1, BigInteger bi2)
+			int word = (int)m_magnitude[w];
+			Debug.Assert(word != 0);
+
+			int b = (word & 0x0000FFFF) == 0
+				? (word & 0x00FF0000) == 0
+					? 7
+					: 15
+				: (word & 0x000000FF) == 0
+					? 23
+					: 31;
+
+			while (b > 0)
 			{
-				uint[] x, y;
-				uint yMax, xMax, i = 0;
-				bool flag = false;
+				if ((word << b) == int.MinValue)
+					break;
 
-				// x should be bigger
-				if (bi1.length < bi2.length)
-				{
-					flag = true;
-					x = bi2.data;
-					xMax = bi2.length;
-					y = bi1.data;
-					yMax = bi1.length;
-				}
-				else
-				{
-					x = bi1.data;
-					xMax = bi1.length;
-					y = bi2.data;
-					yMax = bi2.length;
-				}
-
-				uint[] r = bi1.data;
-
-				ulong sum = 0;
-
-				// Add common parts of both numbers
-				do
-				{
-					sum += ((ulong)x[i]) + ((ulong)y[i]);
-					r[i] = (uint)sum;
-					sum >>= 32;
-				} while (++i < yMax);
-
-				// Copy remainder of longer number while carry propagation is required
-				bool carry = (sum != 0);
-
-				if (carry)
-				{
-
-					if (i < xMax)
-					{
-						do
-							carry = ((r[i] = x[i] + 1) == 0);
-						while (++i < xMax && carry);
-					}
-
-					if (carry)
-					{
-						r[i] = 1;
-						bi1.length = ++i;
-						return;
-					}
-				}
-
-				// Copy the rest
-				if (flag && i < xMax - 1)
-				{
-					do
-						r[i] = x[i];
-					while (++i < xMax);
-				}
-
-				bi1.length = xMax + 1;
-				bi1.Normalize();
+				b--;
 			}
 
-			#endregion
-
-			#region Compare
-
-			/// <summary>
-			/// Compares two BigInteger
-			/// </summary>
-			/// <param name="bi1">A BigInteger</param>
-			/// <param name="bi2">A BigInteger</param>
-			/// <returns>The sign of bi1 - bi2</returns>
-			public static Sign Compare(BigInteger bi1, BigInteger bi2)
-			{
-				//
-				// Step 1. Compare the lengths
-				//
-				uint l1 = bi1.length, l2 = bi2.length;
-
-				while (l1 > 0 && bi1.data[l1 - 1] == 0) l1--;
-				while (l2 > 0 && bi2.data[l2 - 1] == 0) l2--;
-
-				if (l1 == 0 && l2 == 0) return Sign.Zero;
-
-				// bi1 len < bi2 len
-				if (l1 < l2) return Sign.Negative;
-				// bi1 len > bi2 len
-				else if (l1 > l2) return Sign.Positive;
-
-				//
-				// Step 2. Compare the bits
-				//
-
-				uint pos = l1 - 1;
-
-				while (pos != 0 && bi1.data[pos] == bi2.data[pos]) pos--;
-
-				if (bi1.data[pos] < bi2.data[pos])
-					return Sign.Negative;
-				else if (bi1.data[pos] > bi2.data[pos])
-					return Sign.Positive;
-				else
-					return Sign.Zero;
-			}
-
-			#endregion
-
-			#region Division
-
-			#region Dword
-
-			/// <summary>
-			/// Performs n / d and n % d in one operation.
-			/// </summary>
-			/// <param name="n">A BigInteger, upon exit this will hold n / d</param>
-			/// <param name="d">The divisor</param>
-			/// <returns>n % d</returns>
-			public static uint SingleByteDivideInPlace(BigInteger n, uint d)
-			{
-				ulong r = 0;
-				uint i = n.length;
-
-				while (i-- > 0)
-				{
-					r <<= 32;
-					r |= n.data[i];
-					n.data[i] = (uint)(r / d);
-					r %= d;
-				}
-				n.Normalize();
-
-				return (uint)r;
-			}
-
-			public static uint DwordMod(BigInteger n, uint d)
-			{
-				ulong r = 0;
-				uint i = n.length;
-
-				while (i-- > 0)
-				{
-					r <<= 32;
-					r |= n.data[i];
-					r %= d;
-				}
-
-				return (uint)r;
-			}
-
-			public static BigInteger DwordDiv(BigInteger n, uint d)
-			{
-				BigInteger ret = new BigInteger(Sign.Positive, n.length);
-
-				ulong r = 0;
-				uint i = n.length;
-
-				while (i-- > 0)
-				{
-					r <<= 32;
-					r |= n.data[i];
-					ret.data[i] = (uint)(r / d);
-					r %= d;
-				}
-				ret.Normalize();
-
-				return ret;
-			}
-
-			public static BigInteger[] DwordDivMod(BigInteger n, uint d)
-			{
-				BigInteger ret = new BigInteger(Sign.Positive, n.length);
-
-				ulong r = 0;
-				uint i = n.length;
-
-				while (i-- > 0)
-				{
-					r <<= 32;
-					r |= n.data[i];
-					ret.data[i] = (uint)(r / d);
-					r %= d;
-				}
-				ret.Normalize();
-
-				BigInteger rem = (uint)r;
-
-				return new BigInteger[] { ret, rem };
-			}
-
-			#endregion
-
-			#region BigNum
-
-			public static BigInteger[] multiByteDivide(BigInteger bi1, BigInteger bi2)
-			{
-				if (Kernel.Compare(bi1, bi2) == Sign.Negative)
-					return new BigInteger[2] { 0, new BigInteger(bi1) };
-
-				bi1.Normalize(); bi2.Normalize();
-
-				if (bi2.length == 1)
-					return DwordDivMod(bi1, bi2.data[0]);
-
-				uint remainderLen = bi1.length + 1;
-				int divisorLen = (int)bi2.length + 1;
-
-				uint mask = 0x80000000;
-				uint val = bi2.data[bi2.length - 1];
-				int shift = 0;
-				int resultPos = (int)bi1.length - (int)bi2.length;
-
-				while (mask != 0 && (val & mask) == 0)
-				{
-					shift++; mask >>= 1;
-				}
-
-				BigInteger quot = new BigInteger(Sign.Positive, bi1.length - bi2.length + 1);
-				BigInteger rem = (bi1 << shift);
-
-				uint[] remainder = rem.data;
-
-				bi2 = bi2 << shift;
-
-				int j = (int)(remainderLen - bi2.length);
-				int pos = (int)remainderLen - 1;
-
-				uint firstDivisorByte = bi2.data[bi2.length - 1];
-				ulong secondDivisorByte = bi2.data[bi2.length - 2];
-
-				while (j > 0)
-				{
-					ulong dividend = ((ulong)remainder[pos] << 32) + (ulong)remainder[pos - 1];
-
-					ulong q_hat = dividend / (ulong)firstDivisorByte;
-					ulong r_hat = dividend % (ulong)firstDivisorByte;
-
-					do
-					{
-
-						if (q_hat == 0x100000000 ||
-							(q_hat * secondDivisorByte) > ((r_hat << 32) + remainder[pos - 2]))
-						{
-							q_hat--;
-							r_hat += (ulong)firstDivisorByte;
-
-							if (r_hat < 0x100000000)
-								continue;
-						}
-						break;
-					} while (true);
-
-					//
-					// At this point, q_hat is either exact, or one too large
-					// (more likely to be exact) so, we attempt to multiply the
-					// divisor by q_hat, if we get a borrow, we just subtract
-					// one from q_hat and add the divisor back.
-					//
-
-					uint t;
-					uint dPos = 0;
-					int nPos = pos - divisorLen + 1;
-					ulong mc = 0;
-					uint uint_q_hat = (uint)q_hat;
-					do
-					{
-						mc += (ulong)bi2.data[dPos] * (ulong)uint_q_hat;
-						t = remainder[nPos];
-						remainder[nPos] -= (uint)mc;
-						mc >>= 32;
-						if (remainder[nPos] > t) mc++;
-						dPos++; nPos++;
-					} while (dPos < divisorLen);
-
-					nPos = pos - divisorLen + 1;
-					dPos = 0;
-
-					// Overestimate
-					if (mc != 0)
-					{
-						uint_q_hat--;
-						ulong sum = 0;
-
-						do
-						{
-							sum = ((ulong)remainder[nPos]) + ((ulong)bi2.data[dPos]) + sum;
-							remainder[nPos] = (uint)sum;
-							sum >>= 32;
-							dPos++; nPos++;
-						} while (dPos < divisorLen);
-
-					}
-
-					quot.data[resultPos--] = (uint)uint_q_hat;
-
-					pos--;
-					j--;
-				}
-
-				quot.Normalize();
-				rem.Normalize();
-				BigInteger[] ret = new BigInteger[2] { quot, rem };
-
-				if (shift != 0)
-					ret[1] >>= shift;
-
-				return ret;
-			}
-
-			#endregion
-
-			#endregion
-
-			#region Shift
-			public static BigInteger LeftShift(BigInteger bi, int n)
-			{
-				if (n == 0) return new BigInteger(bi, bi.length + 1);
-
-				int w = n >> 5;
-				n &= ((1 << 5) - 1);
-
-				BigInteger ret = new BigInteger(Sign.Positive, bi.length + 1 + (uint)w);
-
-				uint i = 0, l = bi.length;
-				if (n != 0)
-				{
-					uint x, carry = 0;
-					while (i < l)
-					{
-						x = bi.data[i];
-						ret.data[i + w] = (x << n) | carry;
-						carry = x >> (32 - n);
-						i++;
-					}
-					ret.data[i + w] = carry;
-				}
-				else
-				{
-					while (i < l)
-					{
-						ret.data[i + w] = bi.data[i];
-						i++;
-					}
-				}
-
-				ret.Normalize();
-				return ret;
-			}
-
-			public static BigInteger RightShift(BigInteger bi, int n)
-			{
-				if (n == 0) return new BigInteger(bi);
-
-				int w = n >> 5;
-				int s = n & ((1 << 5) - 1);
-
-				BigInteger ret = new BigInteger(Sign.Positive, bi.length - (uint)w + 1);
-				uint l = (uint)ret.data.Length - 1;
-
-				if (s != 0)
-				{
-
-					uint x, carry = 0;
-
-					while (l-- > 0)
-					{
-						x = bi.data[l + w];
-						ret.data[l] = (x >> n) | carry;
-						carry = x << (32 - n);
-					}
-				}
-				else
-				{
-					while (l-- > 0)
-						ret.data[l] = bi.data[l + w];
-
-				}
-				ret.Normalize();
-				return ret;
-			}
-
-			#endregion
-
-			#region Multiply
-
-			public static BigInteger MultiplyByDword(BigInteger n, uint f)
-			{
-				BigInteger ret = new BigInteger(Sign.Positive, n.length + 1);
-
-				uint i = 0;
-				ulong c = 0;
-
-				do
-				{
-					c += (ulong)n.data[i] * (ulong)f;
-					ret.data[i] = (uint)c;
-					c >>= 32;
-				} while (++i < n.length);
-				ret.data[i] = (uint)c;
-				ret.Normalize();
-				return ret;
-
-			}
-
-			/// <summary>
-			/// Multiplies the data in x [xOffset:xOffset+xLen] by
-			/// y [yOffset:yOffset+yLen] and puts it into
-			/// d [dOffset:dOffset+xLen+yLen].
-			/// </summary>
-			/// <remarks>
-			/// This code is unsafe! It is the caller's responsibility to make
-			/// sure that it is safe to access x [xOffset:xOffset+xLen],
-			/// y [yOffset:yOffset+yLen], and d [dOffset:dOffset+xLen+yLen].
-			/// </remarks>
-			public static unsafe void Multiply(uint[] x, uint xOffset, uint xLen, uint[] y, uint yOffset, uint yLen, uint[] d, uint dOffset)
-			{
-				fixed (uint* xx = x, yy = y, dd = d)
-				{
-					uint* xP = xx + xOffset,
-						xE = xP + xLen,
-						yB = yy + yOffset,
-						yE = yB + yLen,
-						dB = dd + dOffset;
-
-					for (; xP < xE; xP++, dB++)
-					{
-
-						if (*xP == 0) continue;
-
-						ulong mcarry = 0;
-
-						uint* dP = dB;
-						for (uint* yP = yB; yP < yE; yP++, dP++)
-						{
-							mcarry += ((ulong)*xP * (ulong)*yP) + (ulong)*dP;
-
-							*dP = (uint)mcarry;
-							mcarry >>= 32;
-						}
-
-						if (mcarry != 0)
-							*dP = (uint)mcarry;
-					}
-				}
-			}
-
-			/// <summary>
-			/// Multiplies the data in x [xOffset:xOffset+xLen] by
-			/// y [yOffset:yOffset+yLen] and puts the low mod words into
-			/// d [dOffset:dOffset+mod].
-			/// </summary>
-			/// <remarks>
-			/// This code is unsafe! It is the caller's responsibility to make
-			/// sure that it is safe to access x [xOffset:xOffset+xLen],
-			/// y [yOffset:yOffset+yLen], and d [dOffset:dOffset+mod].
-			/// </remarks>
-			public static unsafe void MultiplyMod2p32pmod(uint[] x, int xOffset, int xLen, uint[] y, int yOffest, int yLen, uint[] d, int dOffset, int mod)
-			{
-				fixed (uint* xx = x, yy = y, dd = d)
-				{
-					uint* xP = xx + xOffset,
-						xE = xP + xLen,
-						yB = yy + yOffest,
-						yE = yB + yLen,
-						dB = dd + dOffset,
-						dE = dB + mod;
-
-					for (; xP < xE; xP++, dB++)
-					{
-
-						if (*xP == 0) continue;
-
-						ulong mcarry = 0;
-						uint* dP = dB;
-						for (uint* yP = yB; yP < yE && dP < dE; yP++, dP++)
-						{
-							mcarry += ((ulong)*xP * (ulong)*yP) + (ulong)*dP;
-
-							*dP = (uint)mcarry;
-							mcarry >>= 32;
-						}
-
-						if (mcarry != 0 && dP < dE)
-							*dP = (uint)mcarry;
-					}
-				}
-			}
-
-			public static unsafe void SquarePositive(BigInteger bi, ref uint[] wkSpace)
-			{
-				uint[] t = wkSpace;
-				wkSpace = bi.data;
-				uint[] d = bi.data;
-				uint dl = bi.length;
-				bi.data = t;
-
-				fixed (uint* dd = d, tt = t)
-				{
-
-					uint* ttE = tt + t.Length;
-					// Clear the dest
-					for (uint* ttt = tt; ttt < ttE; ttt++)
-						*ttt = 0;
-
-					uint* dP = dd, tP = tt;
-
-					for (uint i = 0; i < dl; i++, dP++)
-					{
-						if (*dP == 0)
-							continue;
-
-						ulong mcarry = 0;
-						uint bi1val = *dP;
-
-						uint* dP2 = dP + 1, tP2 = tP + 2 * i + 1;
-
-						for (uint j = i + 1; j < dl; j++, tP2++, dP2++)
-						{
-							// k = i + j
-							mcarry += ((ulong)bi1val * (ulong)*dP2) + *tP2;
-
-							*tP2 = (uint)mcarry;
-							mcarry >>= 32;
-						}
-
-						if (mcarry != 0)
-							*tP2 = (uint)mcarry;
-					}
-
-					// Double t. Inlined for speed.
-
-					tP = tt;
-
-					uint x, carry = 0;
-					while (tP < ttE)
-					{
-						x = *tP;
-						*tP = (x << 1) | carry;
-						carry = x >> (32 - 1);
-						tP++;
-					}
-					if (carry != 0) *tP = carry;
-
-					// Add in the diagnals
-
-					dP = dd;
-					tP = tt;
-					for (uint* dE = dP + dl; (dP < dE); dP++, tP++)
-					{
-						ulong val = (ulong)*dP * (ulong)*dP + *tP;
-						*tP = (uint)val;
-						val >>= 32;
-						*(++tP) += (uint)val;
-						if (*tP < (uint)val)
-						{
-							uint* tP3 = tP;
-							// Account for the first carry
-							(*++tP3)++;
-
-							// Keep adding until no carry
-							while ((*tP3++) == 0)
-								(*tP3)++;
-						}
-
-					}
-
-					bi.length <<= 1;
-
-					// Normalize length
-					while (tt[bi.length - 1] == 0 && bi.length > 1) bi.length--;
-
-				}
-			}
-
-			/* 
-			 * Never called in BigInteger (and part of a private class)
-			 * 			public static bool Double (uint [] u, int l)
-						{
-							uint x, carry = 0;
-							uint i = 0;
-							while (i < l) {
-								x = u [i];
-								u [i] = (x << 1) | carry;
-								carry = x >> (32 - 1);
-								i++;
-							}
-							if (carry != 0) u [l] = carry;
-							return carry != 0;
-						}*/
-
-			#endregion
-
-			#region Number Theory
-
-			public static BigInteger gcd(BigInteger a, BigInteger b)
-			{
-				BigInteger x = a;
-				BigInteger y = b;
-
-				BigInteger g = y;
-
-				while (x.length > 1)
-				{
-					g = x;
-					x = y % x;
-					y = g;
-
-				}
-				if (x == 0) return g;
-
-				// TODO: should we have something here if we can convert to long?
-
-				//
-				// Now we can just do it with single precision. I am using the binary gcd method,
-				// as it should be faster.
-				//
-
-				uint yy = x.data[0];
-				uint xx = y % yy;
-
-				int t = 0;
-
-				while (((xx | yy) & 1) == 0)
-				{
-					xx >>= 1; yy >>= 1; t++;
-				}
-				while (xx != 0)
-				{
-					while ((xx & 1) == 0) xx >>= 1;
-					while ((yy & 1) == 0) yy >>= 1;
-					if (xx >= yy)
-						xx = (xx - yy) >> 1;
-					else
-						yy = (yy - xx) >> 1;
-				}
-
-				return yy << t;
-			}
-
-			public static uint modInverse(BigInteger bi, uint modulus)
-			{
-				uint a = modulus, b = bi % modulus;
-				uint p0 = 0, p1 = 1;
-
-				while (b != 0)
-				{
-					if (b == 1)
-						return p1;
-					p0 += (a / b) * p1;
-					a %= b;
-
-					if (a == 0)
-						break;
-					if (a == 1)
-						return modulus - p0;
-
-					p1 += (b / a) * p0;
-					b %= a;
-
-				}
-				return 0;
-			}
-
-			public static BigInteger modInverse(BigInteger bi, BigInteger modulus)
-			{
-				if (modulus.length == 1) return modInverse(bi, modulus.data[0]);
-
-				BigInteger[] p = { 0, 1 };
-				BigInteger[] q = new BigInteger[2];    // quotients
-				BigInteger[] r = { 0, 0 };             // remainders
-
-				int step = 0;
-
-				BigInteger a = modulus;
-				BigInteger b = bi;
-
-				ModulusRing mr = new ModulusRing(modulus);
-
-				while (b != 0)
-				{
-
-					if (step > 1)
-					{
-
-						BigInteger pval = mr.Difference(p[0], p[1] * q[0]);
-						p[0] = p[1]; p[1] = pval;
-					}
-
-					BigInteger[] divret = multiByteDivide(a, b);
-
-					q[0] = q[1]; q[1] = divret[0];
-					r[0] = r[1]; r[1] = divret[1];
-					a = b;
-					b = divret[1];
-
-					step++;
-				}
-
-				if (r[0] != 1)
-					throw (new ArithmeticException("No inverse!"));
-
-				return mr.Difference(p[0], p[1] * q[0]);
-
-			}
-			#endregion
+			return ((m_magnitude.Length - w) * 32 - (b + 1));
+		}
+
+		public bool TestBit(
+			int n)
+		{
+			if (n < 0)
+				throw new ArithmeticException("Bit position must not be negative");
+
+			if (m_sign < 0)
+				return !Not().TestBit(n);
+
+			int wordNum = n / 32;
+			if (wordNum >= m_magnitude.Length)
+				return false;
+
+			int word = m_magnitude[m_magnitude.Length - 1 - wordNum];
+			return ((word >> (n % 32)) & 1) > 0;
 		}
 	}
 }

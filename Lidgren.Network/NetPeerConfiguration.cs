@@ -57,7 +57,6 @@ namespace Lidgren.Network
 		internal int m_maximumTransmissionUnit;
 		internal bool m_autoExpandMTU;
 		internal float m_expandMTUFrequency;
-		internal float m_expandMTUFactor;
 		internal int m_expandMTUFailAttempts;
 
 		public NetPeerConfiguration(string appIdentifier)

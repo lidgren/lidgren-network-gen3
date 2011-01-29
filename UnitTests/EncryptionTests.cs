@@ -56,6 +56,40 @@ namespace UnitTests
 			if (im.ReadString() != "kokos")
 				throw new NetException("fail");
 
+			byte[] salt = NetSRP.CreateRandomKey(16);
+			byte[] x = NetSRP.ComputePrivateKey("user", "password", salt);
+
+			byte[] v = NetSRP.ComputeServerVerifier(x);
+			//Console.WriteLine("v = " + NetUtility.ToHexString(v));
+
+			byte[] a = NetSRP.CreateRandomKey(32); //  NetUtility.ToByteArray("393ed364924a71ba7258633cc4854d655ca4ec4e8ba833eceaad2511e80db2b5");
+			byte[] A = NetSRP.ComputeClientEphemeral(a);
+			//Console.WriteLine("A = " + NetUtility.ToHexString(A));
+
+			byte[] b = NetSRP.CreateRandomKey(32); // NetUtility.ToByteArray("cc4d87a90db91067d52e2778b802ca6f7d362490c4be294b21b4a57c71cf55a9");
+			byte[] B = NetSRP.ComputeServerEphemeral(b, v);
+			//Console.WriteLine("B = " + NetUtility.ToHexString(B));
+
+			byte[] u = NetSRP.ComputeU(A, B);
+			//Console.WriteLine("u = " + NetUtility.ToHexString(u));
+
+			byte[] Ss = NetSRP.ComputeServerSessionValue(A, v, u, b);
+			//Console.WriteLine("Ss = " + NetUtility.ToHexString(Ss));
+
+			byte[] Sc = NetSRP.ComputeClientSessionValue(B, x, u, a);
+			//Console.WriteLine("Sc = " + NetUtility.ToHexString(Sc));
+
+			if (Ss.Length != Sc.Length)
+				throw new NetException("SRP non matching lengths!");
+
+			for (int j = 0; j < Ss.Length; j++)
+			{
+				if (Ss[j] != Sc[j])
+					throw new NetException("SRP non matching session values!");
+			}
+
+			var test = NetSRP.CreateEncryption(Ss);
+
 			Console.WriteLine("Message encryption OK");
 		}
 	}
