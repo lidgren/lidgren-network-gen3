@@ -25,6 +25,14 @@ namespace Lidgren.Network
 {
 	public partial class NetIncomingMessage
 	{
+		/// <summary>
+		/// Returns the internal data buffer, don't modify
+		/// </summary>
+		public byte[] PeekDataBuffer()
+		{
+			return m_data;
+		}
+
 		//
 		// 1 bit
 		//
