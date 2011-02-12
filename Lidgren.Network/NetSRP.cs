@@ -43,11 +43,21 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
-		/// Get random bits
+		/// Create 16 bytes of random salt
 		/// </summary>
-		public static byte[] CreateRandomKey(int bits)
+		public static byte[] CreateRandomSalt()
 		{
-			byte[] retval = new byte[bits / 8];
+			byte[] retval = new byte[16];
+			NetRandom.Instance.NextBytes(retval);
+			return retval;
+		}
+
+		/// <summary>
+		/// Create 32 bytes of random ephemeral value
+		/// </summary>
+		public static byte[] CreateRandomEphemeral()
+		{
+			byte[] retval = new byte[32];
 			NetRandom.Instance.NextBytes(retval);
 			return retval;
 		}
