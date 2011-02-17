@@ -31,7 +31,9 @@ namespace Lidgren.Network
 				throw new ArgumentNullException("msg");
 			if (recipient == null)
 				throw new ArgumentNullException("recipient");
-	
+			if (sequenceChannel >= NetConstants.NetChannelsPerDeliveryMethod)
+				throw new ArgumentOutOfRangeException("sequenceChannel");
+
 			NetException.Assert(
 				((method != NetDeliveryMethod.Unreliable && method != NetDeliveryMethod.ReliableUnordered) ||
 				((method == NetDeliveryMethod.Unreliable || method == NetDeliveryMethod.ReliableUnordered) && sequenceChannel == 0)),

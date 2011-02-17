@@ -29,9 +29,9 @@ namespace Lidgren.Network
 		/// </summary>
 		/// <param name="msg">The message to send</param>
 		/// <param name="method">How to deliver the message</param>
-
-
-		public void SendToAll(NetOutgoingMessage msg, NetConnection except, NetDeliveryMethod method)
+		/// <param name="except">Don't send to this particular connection</param>
+		/// <param name="sequenceChannel">Which sequence channel to use for the message</param>
+		public void SendToAll(NetOutgoingMessage msg, NetConnection except, NetDeliveryMethod method, int sequenceChannel)
 		{
 			var all = this.Connections;
 			if (all.Count <= 0)
@@ -43,7 +43,7 @@ namespace Lidgren.Network
 					recipients.Add(conn);
 
 			if (recipients.Count > 0)
-				SendMessage(msg, recipients, method, 0);
+				SendMessage(msg, recipients, method, sequenceChannel);
 		}
 
 		/// <summary>
