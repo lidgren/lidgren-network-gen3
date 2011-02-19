@@ -110,7 +110,7 @@ namespace Lidgren.Network
 
 		public byte[] ReadBytes(int numberOfBytes)
 		{
-			NetException.Assert(m_bitLength - m_readPosition >= (numberOfBytes * 8), c_readOverflowError);
+			NetException.Assert(m_bitLength - m_readPosition + 7 >= (numberOfBytes * 8), c_readOverflowError);
 
 			byte[] retval = new byte[numberOfBytes];
 			NetBitWriter.ReadBytes(m_data, numberOfBytes, m_readPosition, retval, 0);
@@ -120,7 +120,7 @@ namespace Lidgren.Network
 
 		public void ReadBytes(byte[] into, int offset, int numberOfBytes)
 		{
-			NetException.Assert(m_bitLength - m_readPosition >= (numberOfBytes * 8), c_readOverflowError);
+			NetException.Assert(m_bitLength - m_readPosition + 7 >= (numberOfBytes * 8), c_readOverflowError);
 			NetException.Assert(offset + numberOfBytes <= into.Length);
 
 			NetBitWriter.ReadBytes(m_data, numberOfBytes, m_readPosition, into, offset);
