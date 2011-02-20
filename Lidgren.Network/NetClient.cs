@@ -50,6 +50,17 @@ namespace Lidgren.Network
 			}
 		}
 
+		public NetConnectionStatus ConnectionStatus
+		{
+			get
+			{
+				var conn = ServerConnection;
+				if (conn == null)
+					return NetConnectionStatus.Disconnected;
+				return conn.Status;
+			}
+		}
+
 		public NetClient(NetPeerConfiguration config)
 			: base(config)
 		{
