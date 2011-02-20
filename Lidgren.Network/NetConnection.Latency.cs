@@ -16,7 +16,9 @@ namespace Lidgren.Network
 		/// Gets the current average roundtrip time in seconds
 		/// </summary>
 		public float AverageRoundtripTime { get { return m_averageRoundtripTime; } }
-		
+
+		public float RemoteTimeOffset { get { return (float)m_remoteTimeOffset; } }
+
 		// this might happen more than once
 		internal void InitializeRemoteTimeOffset(float remoteSendTime)
 		{
