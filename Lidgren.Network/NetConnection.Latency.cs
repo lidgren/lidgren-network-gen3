@@ -50,6 +50,9 @@ namespace Lidgren.Network
 			m_sentPingTime -= (m_peerConfiguration.PingInterval * 0.25f); // delay ping for a little while
 			m_sentPingTime -= (NetRandom.Instance.NextSingle() * (m_peerConfiguration.PingInterval * 0.75f));
 			m_timeoutDeadline = now + (m_peerConfiguration.m_connectionTimeout * 2.0f); // initially allow a little more time
+
+			// make it better, quick :-)
+			SendPing();
 		}
 
 		internal void SendPing()
