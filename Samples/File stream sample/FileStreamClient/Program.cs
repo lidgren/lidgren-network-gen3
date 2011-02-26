@@ -49,6 +49,7 @@ namespace FileStreamClient
 							{
 								s_length = inc.ReadUInt64();
 								string filename = inc.ReadString();
+								s_form.Text = "Starting...";
 								s_writeStream = new FileStream(filename, FileMode.Create, FileAccess.Write, FileShare.None);
 								s_timeStarted = Environment.TickCount;
 								break;
@@ -91,6 +92,8 @@ namespace FileStreamClient
 
 		internal static void Connect(string host, int port)
 		{
+			s_length = 0;
+			s_received = 0;
 			s_client.Connect(host, port);
 		}
 	}

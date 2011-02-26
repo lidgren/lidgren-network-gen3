@@ -15,15 +15,17 @@ namespace Lidgren.Network
 	{
 		private int m_lastUsedFragmentGroup;
 
-		private Dictionary<int, ReceivedFragmentGroup> m_receivedFragmentGroups;
+		private Dictionary<NetConnection, Dictionary<int, ReceivedFragmentGroup>> m_receivedFragmentGroups;
 
 		// on user thread
 		private void SendFragmentedMessage(NetOutgoingMessage msg, IList<NetConnection> recipients, NetDeliveryMethod method, int sequenceChannel)
 		{
+			// Note: this group id is PER SENDING/NetPeer; ie. same id is sent to all recipients;
+			// this should be ok however; as long as recipients differentiate between same id but different sender
 			int group = Interlocked.Increment(ref m_lastUsedFragmentGroup);
 			if (group >= NetConstants.MaxFragmentationGroups)
 			{
-				// TODO: not thread safe; but in practice probably not an issue
+				// @TODO: not thread safe; but in practice probably not an issue
 				m_lastUsedFragmentGroup = 1;
 				group = 1;
 			}
@@ -69,8 +71,6 @@ namespace Lidgren.Network
 			return;
 		}
 
-		
-
 		private void HandleReleasedFragment(NetIncomingMessage im)
 		{
 			//
@@ -107,13 +107,20 @@ namespace Lidgren.Network
 				return;
 			}
 
+			Dictionary<int, ReceivedFragmentGroup> groups;
+			if (!m_receivedFragmentGroups.TryGetValue(im.SenderConnection, out groups))
+			{
+				groups = new Dictionary<int, ReceivedFragmentGroup>();
+				m_receivedFragmentGroups[im.SenderConnection] = groups;
+			}
+
 			ReceivedFragmentGroup info;
-			if (!m_receivedFragmentGroups.TryGetValue(group, out info))
+			if (!groups.TryGetValue(group, out info))
 			{
 				info = new ReceivedFragmentGroup();
 				info.Data = new byte[totalBytes];
 				info.ReceivedChunks = new NetBitVector(totalNumChunks);
-				m_receivedFragmentGroups[group] = info;
+				groups[group] = info;
 			}
 
 			info.ReceivedChunks[chunkNumber] = true;

@@ -96,7 +96,7 @@ namespace Lidgren.Network
 			m_handshakes = new Dictionary<IPEndPoint, NetConnection>();
 			m_senderRemote = (EndPoint)new IPEndPoint(IPAddress.Any, 0);
 			m_status = NetPeerStatus.NotRunning;
-			m_receivedFragmentGroups = new Dictionary<int, ReceivedFragmentGroup>();
+			m_receivedFragmentGroups = new Dictionary<NetConnection, Dictionary<int, ReceivedFragmentGroup>>();
 		}
 
 		/// <summary>
