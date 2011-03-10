@@ -44,7 +44,8 @@ namespace UnitTests
 						throw new Exception("Received error message!");
 				}
 			}
-
+			
+			Console.WriteLine("Done");
 			Console.ReadKey();
 		}
 

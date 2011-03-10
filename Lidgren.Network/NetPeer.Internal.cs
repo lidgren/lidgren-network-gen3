@@ -156,16 +156,23 @@ namespace Lidgren.Network
 			LogDebug("Shutting down...");
 
 			// disconnect and make one final heartbeat
+			var list = new List<NetConnection>(m_handshakes.Count + m_connections.Count);
 			lock (m_connections)
 			{
-				foreach (NetConnection conn in m_connections)
-					conn.Shutdown(m_shutdownReason);
-			}
+				foreach (var conn in m_connections)
+					if (conn != null)
+						list.Add(conn);
 
-			lock (m_handshakes)
-			{
-				foreach (NetConnection conn in m_handshakes.Values)
-					conn.Shutdown(m_shutdownReason);
+				lock (m_handshakes)
+				{
+					foreach (var hs in m_handshakes.Values)
+						if (hs != null)
+							list.Add(hs);
+
+					// shut down connections
+					foreach (NetConnection conn in list)
+						conn.Shutdown(m_shutdownReason);
+				}
 			}
 
 			// one final heartbeat, will send stuff and do disconnect
