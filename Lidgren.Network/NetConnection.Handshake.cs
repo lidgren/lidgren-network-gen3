@@ -108,7 +108,8 @@ namespace Lidgren.Network
 			SetStatus(NetConnectionStatus.Disconnected, reason);
 
 			// in case we're still in handshake
-			m_peer.m_handshakes.Remove(m_remoteEndpoint);
+			lock (m_peer.m_handshakes)
+				m_peer.m_handshakes.Remove(m_remoteEndpoint);
 
 			m_disconnectRequested = false;
 			m_connectRequested = false;
@@ -371,7 +372,7 @@ namespace Lidgren.Network
 					catch
 					{
 					}
-					SetStatus(NetConnectionStatus.Disconnected, reason);
+					ExecuteDisconnect(reason, false);
 					break;
 				default:
 					m_peer.LogDebug("Unhandled type during handshake: " + tp + " length: " + payloadLength);
