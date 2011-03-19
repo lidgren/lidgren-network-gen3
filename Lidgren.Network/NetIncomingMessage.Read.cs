@@ -329,9 +329,6 @@ namespace Lidgren.Network
 			int num2 = 0;
 			while (true)
 			{
-				if (num2 == 0x23)
-					throw new FormatException("Bad 7-bit encoded integer");
-
 				byte num3 = this.ReadByte();
 				num1 |= (num3 & 0x7f) << num2;
 				num2 += 7;
@@ -345,22 +342,8 @@ namespace Lidgren.Network
 		/// </summary>
 		public int ReadVariableInt32()
 		{
-			int num1 = 0;
-			int num2 = 0;
-			while (true)
-			{
-				if (num2 == 0x23)
-					throw new FormatException("Bad 7-bit encoded integer");
-
-				byte num3 = this.ReadByte();
-				num1 |= (num3 & 0x7f) << (num2 & 0x1f);
-				num2 += 7;
-				if ((num3 & 0x80) == 0)
-				{
-					int sign = (num1 << 31) >> 31;
-					return sign ^ (num1 >> 1);
-				}
-			}
+			uint n = ReadVariableUInt32();
+			return (int)(n >> 1) ^ -(int)(n & 1); // decode zigzag
 		}
 
 		/// <summary>
@@ -368,22 +351,8 @@ namespace Lidgren.Network
 		/// </summary>
 		public Int64 ReadVariableInt64()
 		{
-			Int64 num1 = 0;
-			int num2 = 0;
-			while (true)
-			{
-				if (num2 == 0x23)
-					throw new FormatException("Bad 7-bit encoded integer");
-
-				byte num3 = this.ReadByte();
-				num1 |= (Int64)((Int64)(num3 & 0x7f) << (num2 & 0x1f));
-				num2 += 7;
-				if ((num3 & 0x80) == 0)
-				{
-					Int64 sign = (num1 << 63) >> 63;
-					return sign ^ (num1 >> 1);
-				}
-			}
+			UInt64 n = ReadVariableUInt64();
+			return (Int64)(n >> 1) ^ -(long)(n & 1); // decode zigzag
 		}
 
 		/// <summary>
@@ -396,8 +365,8 @@ namespace Lidgren.Network
 			int num2 = 0;
 			while (true)
 			{
-				if (num2 == 0x23)
-					throw new FormatException("Bad 7-bit encoded integer");
+				//if (num2 == 0x23)
+				//	throw new FormatException("Bad 7-bit encoded integer");
 
 				byte num3 = this.ReadByte();
 				num1 |= ((UInt64)num3 & 0x7f) << num2;
@@ -507,6 +476,14 @@ namespace Lidgren.Network
 		/// Pads data with enough bits to reach a full byte. Decreases cpu usage for subsequent byte writes.
 		/// </summary>
 		public void SkipPadBits()
+		{
+			m_readPosition = ((m_readPosition + 7) >> 3) * 8;
+		}
+
+		/// <summary>
+		/// Pads data with enough bits to reach a full byte. Decreases cpu usage for subsequent byte writes.
+		/// </summary>
+		public void ReadPadBits()
 		{
 			m_readPosition = ((m_readPosition + 7) >> 3) * 8;
 		}

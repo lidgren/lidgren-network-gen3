@@ -9,6 +9,30 @@ namespace UnitTests
 {
 	public static class ReadWriteTests
 	{
+		public static string ToBinaryString(ulong value, int bits, bool includeSpaces)
+		{
+			int numSpaces = Math.Max(0, (bits / 8) - 1);
+			if (includeSpaces == false)
+				numSpaces = 0;
+
+			StringBuilder bdr = new StringBuilder(bits + numSpaces);
+			for (int i = 0; i < bits + numSpaces; i++)
+				bdr.Append(' ');
+
+			for (int i = 0; i < bits; i++)
+			{
+				ulong shifted = (ulong)(value >> i);
+				bool isSet = ((shifted & 1) != 0);
+
+				int pos = bits - 1 - i;
+				if (includeSpaces)
+					pos += Math.Max(0, (pos / 8));
+
+				bdr[pos] = (isSet ? '1' : '0');
+			}
+			return bdr.ToString();
+		}
+
 		public static void Run(NetPeer peer)
 		{
 			NetOutgoingMessage msg = peer.CreateMessage();
@@ -26,6 +50,7 @@ namespace UnitTests
 			int bcnt = 0;
 
 			msg.Write(45.0f);
+			msg.WriteVariableInt32(2115998022);
 			msg.Write(46.0);
 			bcnt += msg.WriteVariableInt32(-47);
 			msg.WriteVariableInt32(470000);
@@ -56,13 +81,14 @@ namespace UnitTests
 			inc.SkipPadBits();
 
 			bdr.Append(inc.ReadSingle());
+			bdr.Append(inc.ReadVariableInt32());
 			bdr.Append(inc.ReadDouble());
 			bdr.Append(inc.ReadVariableInt32());
 			bdr.Append(inc.ReadVariableInt32());
 			bdr.Append(inc.ReadVariableUInt32());
 			bdr.Append(inc.ReadVariableInt64());
 
-			if (bdr.ToString().Equals("False-342duke of earl4344True4546-4747000048-49"))
+			if (bdr.ToString().Equals("False-342duke of earl4344True45211599802246-4747000048-49"))
 				Console.WriteLine("Read/write tests OK");
 			else
 				throw new NetException("Read/write tests FAILED!");

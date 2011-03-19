@@ -393,7 +393,7 @@ namespace Lidgren.Network
 		//
 
 		/// <summary>
-		/// Write Base128 encoded variable sized unsigned integer
+		/// Write Base128 encoded variable sized unsigned integer of up to 32 bits
 		/// </summary>
 		/// <returns>number of bytes written</returns>
 		[CLSCompliant(false)]
@@ -412,43 +412,27 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
-		/// Write Base128 encoded variable sized signed integer
+		/// Write Base128 encoded variable sized signed integer of up to 32 bits
 		/// </summary>
 		/// <returns>number of bytes written</returns>
 		public int WriteVariableInt32(int value)
 		{
-			int retval = 1;
-			uint num1 = (uint)((value << 1) ^ (value >> 31));
-			while (num1 >= 0x80)
-			{
-				this.Write((byte)(num1 | 0x80));
-				num1 = num1 >> 7;
-				retval++;
-			}
-			this.Write((byte)num1);
-			return retval;
+			uint zigzag = (uint)(value << 1) ^ (uint)(value >> 31);
+			return WriteVariableUInt32(zigzag);
 		}
 
 		/// <summary>
-		/// Write Base128 encoded variable sized signed integer
+		/// Write Base128 encoded variable sized signed integer of up to 64 bits
 		/// </summary>
 		/// <returns>number of bytes written</returns>
 		public int WriteVariableInt64(Int64 value)
 		{
-			int retval = 1;
-			UInt64 num1 = (UInt64)((value << 1) ^ (value >> 31));
-			while (num1 >= 0x80)
-			{
-				this.Write((byte)(num1 | 0x80));
-				num1 = num1 >> 7;
-				retval++;
-			}
-			this.Write((byte)num1);
-			return retval;
+			ulong zigzag = (ulong)(value << 1) ^ (ulong)(value >> 63);
+			return WriteVariableUInt64(zigzag);
 		}
 
 		/// <summary>
-		/// Write Base128 encoded variable sized unsigned integer
+		/// Write Base128 encoded variable sized unsigned integer of up to 64 bits
 		/// </summary>
 		/// <returns>number of bytes written</returns>
 		[CLSCompliant(false)]
