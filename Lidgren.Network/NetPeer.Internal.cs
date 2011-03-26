@@ -321,6 +321,7 @@ namespace Lidgren.Network
 			//
 			// parse packet into messages
 			//
+			int numMessages = 0;
 			int ptr = 0;
 			while ((bytesReceived - ptr) >= NetConstants.HeaderByteSize)
 			{
@@ -329,6 +330,8 @@ namespace Lidgren.Network
 				//  1 bit  - Fragment?
 				// 15 bits - Sequence number
 				// 16 bits - Payload length in bits
+
+				numMessages++;
 
 				NetMessageType tp = (NetMessageType)m_receiveBuffer[ptr++];
 
@@ -401,6 +404,10 @@ namespace Lidgren.Network
 				}
 				ptr += payloadByteLength;
 			}
+
+			m_statistics.PacketReceived(bytesReceived, numMessages);
+			if (sender != null)
+				sender.m_statistics.PacketReceived(bytesReceived, numMessages);
 		}
 
 		private void ReceivedUnconnectedLibraryMessage(double now, IPEndPoint senderEndpoint, NetMessageType tp, int ptr, int payloadByteLength)

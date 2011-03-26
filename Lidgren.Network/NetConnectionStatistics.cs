@@ -16,6 +16,10 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRA
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
+
+// Uncomment the line below to get statistics in RELEASE builds
+//#define USE_RELEASE_STATISTICS
+
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -89,6 +93,15 @@ namespace Lidgren.Network
 
 		// public double LastSendRespondedTo { get { return m_connection.m_lastSendRespondedTo; } }
 
+#if USE_RELEASE_STATISTICS
+		internal void PacketSent(int numBytes, int numMessages)
+		{
+			NetException.Assert(numBytes > 0 && numMessages > 0);
+			m_sentPackets++;
+			m_sentBytes += numBytes;
+			m_sentMessages += numMessages;
+		}
+#else
 		[Conditional("DEBUG")]
 		internal void PacketSent(int numBytes, int numMessages)
 		{
@@ -97,7 +110,17 @@ namespace Lidgren.Network
 			m_sentBytes += numBytes;
 			m_sentMessages += numMessages;
 		}
+#endif
 
+#if USE_RELEASE_STATISTICS
+		internal void PacketReceived(int numBytes, int numMessages)
+		{
+			NetException.Assert(numBytes > 0 && numMessages > 0);
+			m_receivedPackets++;
+			m_receivedBytes += numBytes;
+			m_receivedMessages += numMessages;
+		}
+#else
 		[Conditional("DEBUG")]
 		internal void PacketReceived(int numBytes, int numMessages)
 		{
@@ -106,7 +129,17 @@ namespace Lidgren.Network
 			m_receivedBytes += numBytes;
 			m_receivedMessages += numMessages;
 		}
+#endif
 
+#if USE_RELEASE_STATISTICS
+		internal void MessageResent(MessageResendReason reason)
+		{
+			if (reason == MessageResendReason.Delay)
+				m_resentMessagesDueToDelay++;
+			else
+				m_resentMessagesDueToHole++;
+		}
+#else
 		[Conditional("DEBUG")]
 		internal void MessageResent(MessageResendReason reason)
 		{
@@ -115,6 +148,7 @@ namespace Lidgren.Network
 			else
 				m_resentMessagesDueToHole++;
 		}
+#endif
 
 		/// <summary>
 		/// Returns a string that represents this object

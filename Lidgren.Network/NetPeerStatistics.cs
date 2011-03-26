@@ -17,6 +17,10 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 */
+
+// Uncomment the line below to get statistics in RELEASE builds
+//#define USE_RELEASE_STATISTICS
+
 using System;
 using System.Text;
 using System.Diagnostics;
@@ -101,6 +105,14 @@ namespace Lidgren.Network
 		/// </summary>
 		public int BytesInRecyclePool { get { return m_peer.m_storagePoolBytes; } }
 
+#if USE_RELEASE_STATISTICS
+		internal void PacketSent(int numBytes, int numMessages)
+		{
+			m_sentPackets++;
+			m_sentBytes += numBytes;
+			m_sentMessages += numMessages;
+		}
+#else
 		[Conditional("DEBUG")]
 		internal void PacketSent(int numBytes, int numMessages)
 		{
@@ -108,7 +120,16 @@ namespace Lidgren.Network
 			m_sentBytes += numBytes;
 			m_sentMessages += numMessages;
 		}
+#endif
 
+#if USE_RELEASE_STATISTICS
+		internal void PacketReceived(int numBytes, int numMessages)
+		{
+			m_receivedPackets++;
+			m_receivedBytes += numBytes;
+			m_receivedMessages += numMessages;
+		}
+#else
 		[Conditional("DEBUG")]
 		internal void PacketReceived(int numBytes, int numMessages)
 		{
@@ -116,6 +137,7 @@ namespace Lidgren.Network
 			m_receivedBytes += numBytes;
 			m_receivedMessages += numMessages;
 		}
+#endif
 
 		/// <summary>
 		/// Returns a string that represents this object
