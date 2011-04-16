@@ -3,6 +3,7 @@ using System.Text;
 
 using Lidgren.Network;
 using System.Security;
+using System.Collections.Generic;
 
 namespace UnitTests
 {
@@ -13,48 +14,42 @@ namespace UnitTests
 			//
 			// Test XTEA
 			//
-			NetXtea xtea = new NetXtea("TopSecret");
+			List<INetEncryption> algos = new List<INetEncryption>();
 
-			byte[] original = new byte[16];
-			NetRandom.Instance.NextBytes(original);
+			algos.Add(new NetXorEncryption("TopSecret"));
+			algos.Add(new NetXtea("TopSecret"));
 
-			byte[] encrypted = new byte[original.Length];
-			xtea.EncryptBlock(original, 0, encrypted, 0);
-			xtea.EncryptBlock(original, 8, encrypted, 8);
+			foreach (var algo in algos)
+			{
+				NetOutgoingMessage om = peer.CreateMessage();
+				om.Write("Hallon");
+				om.Write(42);
+				om.Write(5, 5);
+				om.Write(true);
+				om.Write("kokos");
+				int trueLen = om.LengthBits;
+				om.Encrypt(algo);
 
-			byte[] decrypted = new byte[original.Length];
-			xtea.DecryptBlock(encrypted, 0, decrypted, 0);
-			xtea.DecryptBlock(encrypted, 8, decrypted, 8);
+				// convert to incoming message
+				NetIncomingMessage im = Program.CreateIncomingMessage(om.PeekDataBuffer(), om.LengthBits);
+				im.Decrypt(algo);
 
-			// compare!
-			for (int i = 0; i < original.Length; i++)
-				if (original[i] != decrypted[i])
-					throw new NetException("XTEA fail!");
+				if (im.LengthBits != trueLen)
+					throw new NetException("Length fail");
 
-			Console.WriteLine("XTEA OK");
+				if (im.ReadString() != "Hallon")
+					throw new NetException("fail");
+				if (im.ReadInt32() != 42)
+					throw new NetException("fail");
+				if (im.ReadInt32(5) != 5)
+					throw new NetException("fail");
+				if (im.ReadBoolean() != true)
+					throw new NetException("fail");
+				if (im.ReadString() != "kokos")
+					throw new NetException("fail");
 
-			NetOutgoingMessage om = peer.CreateMessage();
-			om.Write("Hallon");
-			om.Write(42);
-			om.Write(5, 5);
-			om.Write(true);
-			om.Write("kokos");
-			om.Encrypt(xtea);
-
-			// convert to incoming message
-			NetIncomingMessage im = Program.CreateIncomingMessage(om.PeekDataBuffer(), om.LengthBits);
-			im.Decrypt(xtea);
-
-			if (im.ReadString() != "Hallon")
-				throw new NetException("fail");
-			if (im.ReadInt32() != 42)
-				throw new NetException("fail");
-			if (im.ReadInt32(5) != 5)
-				throw new NetException("fail");
-			if (im.ReadBoolean() != true)
-				throw new NetException("fail");
-			if (im.ReadString() != "kokos")
-				throw new NetException("fail");
+				Console.WriteLine(algo.GetType().Name + " encryption verified");
+			}
 
 			for (int i = 0; i < 100; i++)
 			{

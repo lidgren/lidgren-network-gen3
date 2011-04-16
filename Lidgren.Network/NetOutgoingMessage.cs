@@ -115,22 +115,11 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
-		/// Encrypt this message using the XTEA algorithm; no more writing can be done before sending it
+		/// Encrypt this message using the provided algorithm; no more writing can be done before sending it or the message will be corrupt!
 		/// </summary>
-		public void Encrypt(NetXtea tea)
+		public bool Encrypt(INetEncryption encryption)
 		{
-			// need blocks of 8 bytes
-			WritePadBits();
-			int blocksNeeded = (m_bitLength + 63) / 64;
-			int missingBits = (blocksNeeded * 64) - m_bitLength;
-			int missingBytes = NetUtility.BytesToHoldBits(missingBits);
-			for (int i = 0; i < missingBytes; i++)
-				Write((byte)0);
-
-			byte[] result = new byte[m_data.Length];
-			for (int i = 0; i < blocksNeeded; i++)
-				tea.EncryptBlock(m_data, (i * 8), result, (i * 8));
-			m_data = result;
+			return encryption.Encrypt(this);
 		}
 
 		/// <summary>
