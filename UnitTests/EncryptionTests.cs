@@ -12,12 +12,16 @@ namespace UnitTests
 		public static void Run(NetPeer peer)
 		{
 			//
-			// Test XTEA
+			// Test encryption
 			//
 			List<INetEncryption> algos = new List<INetEncryption>();
 
 			algos.Add(new NetXorEncryption("TopSecret"));
 			algos.Add(new NetXtea("TopSecret"));
+            algos.Add(new NetAESEncryption("TopSecret"));
+            algos.Add(new NetRC2Encryption("TopSecret"));
+            algos.Add(new NetDESEncryption("TopSecret"));
+		    algos.Add(new NetTripleDESEncryption("TopSecret"));
 
 			foreach (var algo in algos)
 			{
