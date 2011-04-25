@@ -455,6 +455,22 @@ namespace Lidgren.Network
 				case NetMessageType.NatPunchMessage:
 					HandleNatPunch(ptr, senderEndpoint);
 					return;
+				case NetMessageType.ConnectResponse:
+
+					lock (m_handshakes)
+					{
+						foreach (var hs in m_handshakes)
+						{
+							if (hs.Key.Address.Equals(senderEndpoint.Address))
+							{
+								LogWarning("Detected possible host port switch! TODO: Create new connection and continue handshake");
+								return;
+							}
+						}
+					}
+
+					LogWarning("Received unhandled library message " + tp + " from " + senderEndpoint);
+					return;
 				case NetMessageType.Connect:
 					// proceed
 					break;
