@@ -71,6 +71,13 @@ namespace Lidgren.Network
 			return mtu;
 		}
 
+		/// <summary>
+		/// Send a message to a list of connections
+		/// </summary>
+		/// <param name="msg">The message to send</param>
+		/// <param name="recipients">The list of recipients to send to</param>
+		/// <param name="method">How to deliver the message</param>
+		/// <param name="sequenceChannel">Sequence channel within the delivery method</param>
 		public void SendMessage(NetOutgoingMessage msg, IList<NetConnection> recipients, NetDeliveryMethod method, int sequenceChannel)
 		{
 			if (msg == null)

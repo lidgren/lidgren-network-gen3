@@ -118,6 +118,9 @@ namespace Lidgren.Network
 			return best;
 		}
 
+		/// <summary>
+		/// Returns the physical (MAC) address for the first usable network interface
+		/// </summary>
 		public static PhysicalAddress GetMacAddress()
 		{
 			NetworkInterface ni = GetNetworkInterface();
@@ -126,11 +129,17 @@ namespace Lidgren.Network
 			return ni.GetPhysicalAddress();
 		}
 
+		/// <summary>
+		/// Create a hex string from an Int64 value
+		/// </summary>
 		public static string ToHexString(long data)
 		{
 			return ToHexString(BitConverter.GetBytes(data));
 		}
 
+		/// <summary>
+		/// Create a hex string from an array of bytes
+		/// </summary>
 		public static string ToHexString(byte[] data)
 		{
 			char[] c = new char[data.Length * 2];
@@ -283,6 +292,9 @@ namespace Lidgren.Network
 			return retval;
 		}
 
+		/// <summary>
+		/// Gets the window size used internally in the library for a certain delivery method
+		/// </summary>
 		public static int GetWindowSize(NetDeliveryMethod method)
 		{
 			switch (method)

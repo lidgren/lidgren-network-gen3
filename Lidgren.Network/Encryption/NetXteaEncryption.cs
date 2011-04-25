@@ -36,6 +36,9 @@ namespace Lidgren.Network
 		private readonly uint[] m_sum0;
 		private readonly uint[] m_sum1;
 
+		/// <summary>
+		/// Gets the block size for this cipher
+		/// </summary>
 		public override int BlockSize { get { return c_blockSize; } }
 
 		/// <summary>
@@ -83,6 +86,9 @@ namespace Lidgren.Network
 		{
 		}
 
+		/// <summary>
+		/// Encrypts a block of bytes
+		/// </summary>
 		protected override void EncryptBlock(byte[] source, int sourceOffset, byte[] destination)
 		{
 			uint v0 = BytesToUInt(source, sourceOffset);
@@ -100,6 +106,9 @@ namespace Lidgren.Network
 			return;
 		}
 
+		/// <summary>
+		/// Decrypts a block of bytes
+		/// </summary>
 		protected override void DecryptBlock(byte[] source, int sourceOffset, byte[] destination)
 		{
 			// Pack bytes into integers

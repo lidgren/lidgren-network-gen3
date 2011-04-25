@@ -8,6 +8,9 @@ namespace Lidgren.Network
 	/// </summary>
 	public class NetServer : NetPeer
 	{
+		/// <summary>
+		/// NetServer constructor
+		/// </summary>
 		public NetServer(NetPeerConfiguration config)
 			: base(config)
 		{

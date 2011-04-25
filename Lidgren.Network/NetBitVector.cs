@@ -36,6 +36,9 @@ namespace Lidgren.Network
 		/// </summary>
 		public int Capacity { get { return m_capacity; } }
 
+		/// <summary>
+		/// NetBitVector constructor
+		/// </summary>
 		public NetBitVector(int bitsCapacity)
 		{
 			m_capacity = bitsCapacity;
@@ -80,6 +83,9 @@ namespace Lidgren.Network
 			m_data[lenMinusOne] = cur;
 		}
 
+		/// <summary>
+		/// Gets the first (lowest) index set to true
+		/// </summary>
 		public int GetFirstSetIndex()
 		{
 			int idx = 0;

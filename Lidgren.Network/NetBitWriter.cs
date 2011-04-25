@@ -169,6 +169,9 @@ namespace Lidgren.Network
 			return;
 		}
 
+		/// <summary>
+		/// Reads the specified number of bits into an UInt32
+		/// </summary>
 		[CLSCompliant(false)]
 #if UNSAFE
 		public static unsafe uint ReadUInt32(byte[] fromBuffer, int numberOfBits, int readBitOffset)
@@ -183,6 +186,7 @@ namespace Lidgren.Network
 				}
 			}
 #else
+		
 		public static uint ReadUInt32(byte[] fromBuffer, int numberOfBits, int readBitOffset)
 		{
 			NetException.Assert(((numberOfBits > 0) && (numberOfBits <= 32)), "ReadUInt32() can only read between 1 and 32 bits");
@@ -234,6 +238,9 @@ namespace Lidgren.Network
 		//[CLSCompliant(false)]
 		//public static ulong ReadUInt64(byte[] fromBuffer, int numberOfBits, int readBitOffset)
 
+		/// <summary>
+		/// Writes the specified number of bits into a byte array
+		/// </summary>
 		[CLSCompliant(false)]
 		public static int WriteUInt32(uint source, int numberOfBits, byte[] destination, int destinationBitOffset)
 		{
@@ -277,6 +284,9 @@ namespace Lidgren.Network
 			return returnValue;
 		}
 
+		/// <summary>
+		/// Writes the specified number of bits into a byte array
+		/// </summary>
 		[CLSCompliant(false)]
 		public static int WriteUInt64(ulong source, int numberOfBits, byte[] destination, int destinationBitOffset)
 		{

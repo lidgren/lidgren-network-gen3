@@ -123,6 +123,9 @@ namespace Lidgren.Network
 			return B.ToByteArrayUnsigned();
 		}
 
+		/// <summary>
+		/// Compute intermediate value U
+		/// </summary>
 		public static byte[] ComputeU(byte[] clientPublicEphemeral, byte[] serverPublicEphemeral)
 		{
 			// u = SHA-1(A || B)
@@ -140,6 +143,9 @@ namespace Lidgren.Network
 			return new NetBigInteger(NetUtility.ToHexString(ccHashed), 16).ToByteArrayUnsigned();
 		}
 
+		/// <summary>
+		/// Computes the server session value
+		/// </summary>
 		public static byte[] ComputeServerSessionValue(byte[] clientPublicEphemeral, byte[] verifier, byte[] udata, byte[] serverPrivateEphemeral)
 		{
 			// S = (Av^u) ^ b (mod N)
@@ -153,6 +159,9 @@ namespace Lidgren.Network
 			return retval.ToByteArrayUnsigned();
 		}
 
+		/// <summary>
+		/// Computes the client session value
+		/// </summary>
 		public static byte[] ComputeClientSessionValue(byte[] serverPublicEphemeral, byte[] xdata,  byte[] udata, byte[] clientPrivateEphemeral)
 		{
 			// (B - kg^x) ^ (a + ux)   (mod N)

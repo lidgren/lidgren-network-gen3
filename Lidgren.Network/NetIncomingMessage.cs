@@ -104,6 +104,11 @@ namespace Lidgren.Network
 			m_isFragment = false;
 		}
 
+		/// <summary>
+		/// Decrypt a message
+		/// </summary>
+		/// <param name="encryption">The encryption algorithm used to encrypt the message</param>
+		/// <returns>true on success</returns>
 		public bool Decrypt(INetEncryption encryption)
 		{
 			return encryption.Decrypt(this);

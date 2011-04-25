@@ -49,6 +49,9 @@ namespace UnitTests
 			Console.ReadKey();
 		}
 
+		/// <summary>
+		/// Helper method
+		/// </summary>
 		public static NetIncomingMessage CreateIncomingMessage(byte[] fromData, int bitLength)
 		{
 			NetIncomingMessage inc = (NetIncomingMessage)Activator.CreateInstance(typeof(NetIncomingMessage), true);

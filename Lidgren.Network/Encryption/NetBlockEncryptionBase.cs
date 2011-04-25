@@ -16,6 +16,9 @@ namespace Lidgren.Network
 		/// </summary>
 		public abstract int BlockSize { get; }
 
+		/// <summary>
+		/// NetBlockEncryptionBase constructor
+		/// </summary>
 		public NetBlockEncryptionBase()
 		{
 			m_tmp = new byte[BlockSize];
@@ -72,7 +75,14 @@ namespace Lidgren.Network
 			return true;
 		}
 
+		/// <summary>
+		/// Encrypt a block of bytes
+		/// </summary>
 		protected abstract void EncryptBlock(byte[] source, int sourceOffset, byte[] destination);
+
+		/// <summary>
+		/// Decrypt a block of bytes
+		/// </summary>
 		protected abstract void DecryptBlock(byte[] source, int sourceOffset, byte[] destination);
 	}
 }

@@ -72,6 +72,9 @@ namespace Lidgren.Network
 			Reinitialise(seed);
 		}
 
+		/// <summary>
+		/// Create a semi-random seed based on an object
+		/// </summary>
 		public int GetSeed(object forObject)
 		{
 			// mix some semi-random properties

@@ -85,6 +85,9 @@ namespace Lidgren.Network
 		/// </summary>
 		public NetPeerConfiguration Configuration { get { return m_configuration; } }
 
+		/// <summary>
+		/// NetPeer constructor
+		/// </summary>
 		public NetPeer(NetPeerConfiguration config)
 		{
 			m_configuration = config;
@@ -132,6 +135,9 @@ namespace Lidgren.Network
 			Thread.Sleep(10);
 		}
 
+		/// <summary>
+		/// Get the connection, if any, for a certain remote endpoint
+		/// </summary>
 		public NetConnection GetConnection(IPEndPoint ep)
 		{
 			NetConnection retval;
@@ -253,6 +259,9 @@ namespace Lidgren.Network
 		}
 
 #if DEBUG
+		/// <summary>
+		/// Send raw bytes; only used for debugging
+		/// </summary>
 		public void RawSend(byte[] arr, int offset, int length, IPEndPoint destination)
 		{
 			// wrong thread - this miiiight crash with network thread... but what's a boy to do.

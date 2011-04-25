@@ -11,16 +11,25 @@ namespace Lidgren.Network
 	{
 		private byte[] m_key;
 
+		/// <summary>
+		/// NetXorEncryption constructor
+		/// </summary>
 		public NetXorEncryption(byte[] key)
 		{
 			m_key = key;
 		}
 
+		/// <summary>
+		/// NetXorEncryption constructor
+		/// </summary>
 		public NetXorEncryption(string key)
 		{
 			m_key = Encoding.ASCII.GetBytes(key);
 		}
 
+		/// <summary>
+		/// Encrypt an outgoing message
+		/// </summary>
 		public bool Encrypt(NetOutgoingMessage msg)
 		{
 			int numBytes = msg.LengthBytes;
@@ -32,6 +41,9 @@ namespace Lidgren.Network
 			return true;
 		}
 
+		/// <summary>
+		/// Decrypt an incoming message
+		/// </summary>
 		public bool Decrypt(NetIncomingMessage msg)
 		{
 			int numBytes = msg.LengthBytes;

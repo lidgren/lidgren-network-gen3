@@ -17,6 +17,9 @@ namespace Lidgren.Network
 		/// </summary>
 		public float AverageRoundtripTime { get { return m_averageRoundtripTime; } }
 
+		/// <summary>
+		/// Time offset between this peer and the remote peer
+		/// </summary>
 		public float RemoteTimeOffset { get { return (float)m_remoteTimeOffset; } }
 
 		// this might happen more than once

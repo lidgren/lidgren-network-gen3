@@ -59,6 +59,9 @@ namespace Lidgren.Network
 		internal float m_expandMTUFrequency;
 		internal int m_expandMTUFailAttempts;
 
+		/// <summary>
+		/// NetPeerConfiguration constructor
+		/// </summary>
 		public NetPeerConfiguration(string appIdentifier)
 		{
 			if (string.IsNullOrEmpty(appIdentifier))

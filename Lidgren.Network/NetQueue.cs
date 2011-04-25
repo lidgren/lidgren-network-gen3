@@ -57,6 +57,9 @@ namespace Lidgren.Network
 		/// </summary>
 		public int Capacity { get { return m_items.Length; } }
 
+		/// <summary>
+		/// NetQueue constructor
+		/// </summary>
 		public NetQueue(int initialCapacity)
 		{
 			m_lock = new object();

@@ -28,21 +28,33 @@ namespace Lidgren.Network
 	[Serializable]
 	public sealed class NetException : Exception
 	{
+		/// <summary>
+		/// NetException constructor
+		/// </summary>
 		public NetException()
 			: base()
 		{
 		}
 
+		/// <summary>
+		/// NetException constructor
+		/// </summary>
 		public NetException(string message)
 			: base(message)
 		{
 		}
 
+		/// <summary>
+		/// NetException constructor
+		/// </summary>
 		public NetException(string message, Exception inner)
 			: base(message, inner)
 		{
 		}
 
+		/// <summary>
+		/// NetException constructor
+		/// </summary>
 		private NetException(SerializationInfo info, StreamingContext context)
 			: base(info, context)
 		{
