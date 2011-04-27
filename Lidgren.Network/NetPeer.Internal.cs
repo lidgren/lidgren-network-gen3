@@ -463,8 +463,23 @@ namespace Lidgren.Network
 						{
 							if (hs.Key.Address.Equals(senderEndpoint.Address))
 							{
-								LogWarning("Detected possible host port switch! TODO: Create new connection and continue handshake");
-								return;
+								if (hs.Value.m_connectionInitiator)
+								{
+									//
+									// We are currently trying to connection to XX.XX.XX.XX:Y
+									// ... but we just received a ConnectResponse from XX.XX.XX.XX:Z
+									// Lets just assume the router decided to use this port instead
+									//
+									var hsconn = hs.Value;
+									m_connectionLookup.Remove(hsconn.RemoteEndpoint);
+
+									LogDebug("Detected host port change; rerouting connection to " + senderEndpoint);
+									hsconn.MutateEndpoint(senderEndpoint);
+									m_connectionLookup.Add(senderEndpoint, hsconn);
+
+									hsconn.ReceivedHandshake(now, tp, ptr, payloadByteLength);
+									return;
+								}
 							}
 						}
 					}

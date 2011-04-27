@@ -89,6 +89,15 @@ namespace Lidgren.Network
 			m_currentMTU = m_peerConfiguration.MaximumTransmissionUnit;
 		}
 
+		/// <summary>
+		/// Change the internal endpoint to this new one. Used when, during handshake, a switch in port is detected (due to NAT)
+		/// </summary>
+		internal void MutateEndpoint(IPEndPoint endpoint)
+		{
+			m_remoteEndpoint = endpoint;
+
+		}
+
 		internal void SetStatus(NetConnectionStatus status, string reason)
 		{
 			// user or library thread
