@@ -44,6 +44,11 @@ namespace Lidgren.Network
 		public int Port { get { return m_listenPort; } }
 
 		/// <summary>
+		/// Returns an UPnP object if enabled in the NetPeerConfiguration
+		/// </summary>
+		public NetUPnP UPnP { get { return m_upnp; } }
+
+		/// <summary>
 		/// Gets or sets the application defined object containing data about the peer
 		/// </summary>
 		public object Tag
@@ -99,7 +104,7 @@ namespace Lidgren.Network
 			m_handshakes = new Dictionary<IPEndPoint, NetConnection>();
 			m_senderRemote = (EndPoint)new IPEndPoint(IPAddress.Any, 0);
 			m_status = NetPeerStatus.NotRunning;
-			m_receivedFragmentGroups = new Dictionary<NetConnection, Dictionary<int, ReceivedFragmentGroup>>();
+			m_receivedFragmentGroups = new Dictionary<NetConnection, Dictionary<int, ReceivedFragmentGroup>>();	
 		}
 
 		/// <summary>
@@ -131,8 +136,12 @@ namespace Lidgren.Network
 			m_networkThread.IsBackground = true;
 			m_networkThread.Start();
 
-			// allow some time for network thread to start up in case they call Connect() immediately
-			Thread.Sleep(10);
+			// send upnp discovery
+			if (m_upnp != null)
+				m_upnp.Discover(this);
+
+			// allow some time for network thread to start up in case they call Connect() or UPnP calls immediately
+			Thread.Sleep(50);
 		}
 
 		/// <summary>
@@ -258,18 +267,20 @@ namespace Lidgren.Network
 			}
 		}
 
-#if DEBUG
 		/// <summary>
 		/// Send raw bytes; only used for debugging
 		/// </summary>
+#if DEBUG
 		public void RawSend(byte[] arr, int offset, int length, IPEndPoint destination)
-		{
+#else
+		internal void RawSend(byte[] arr, int offset, int length, IPEndPoint destination)
+#endif
+	{
 			// wrong thread - this miiiight crash with network thread... but what's a boy to do.
 			Array.Copy(arr, offset, m_sendBuffer, 0, length);
 			bool unused;
 			SendPacket(length, destination, 1, out unused);
 		}
-#endif
 
 		/// <summary>
 		/// Disconnects all active connections and closes the socket

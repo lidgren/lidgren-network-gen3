@@ -39,6 +39,7 @@ namespace Lidgren.Network
 		internal float m_pingInterval;
 		internal bool m_useMessageRecycling;
 		internal float m_connectionTimeout;
+		internal bool m_enableUPnP;
 
 		internal NetIncomingMessageType m_disabledTypes;
 		internal int m_port;
@@ -240,6 +241,20 @@ namespace Lidgren.Network
 				if (value < m_pingInterval)
 					throw new NetException("Connection timeout cannot be lower than ping interval!");
 				m_connectionTimeout = value;
+			}
+		}
+
+		/// <summary>
+		/// Enables UPnP support; enabling port forwarding and getting external ip
+		/// </summary>
+		public bool EnableUPnP
+		{
+			get { return m_enableUPnP; }
+			set
+			{
+				if (m_isLocked)
+					throw new NetException(c_isLockedMessage);
+				m_enableUPnP = value;
 			}
 		}
 

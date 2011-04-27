@@ -115,6 +115,7 @@ namespace Lidgren.Network
 			connectionReset = false;
 			try
 			{
+				// TODO: refactor this check outta here
 				if (target.Address == IPAddress.Broadcast)
 					m_socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Broadcast, true);
 
@@ -230,6 +231,7 @@ namespace Lidgren.Network
 			connectionReset = false;
 			try
 			{
+				// TODO: refactor this check outta here
 				if (target.Address == IPAddress.Broadcast)
 					m_socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Broadcast, true);
 

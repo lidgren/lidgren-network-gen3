@@ -22,6 +22,7 @@ namespace Lidgren.Network
 		private object m_initializeLock = new object();
 		private uint m_frameCounter;
 		private double m_lastHeartbeat;
+		private NetUPnP m_upnp;
 
 		internal readonly NetPeerConfiguration m_configuration;
 		private readonly NetQueue<NetIncomingMessage> m_releasedIncomingMessages;
@@ -62,6 +63,9 @@ namespace Lidgren.Network
 
 				if (m_status == NetPeerStatus.Running)
 					return;
+
+				if (m_configuration.m_enableUPnP)
+					m_upnp = new NetUPnP(this);
 
 				InitializePools();
 
@@ -288,126 +292,147 @@ namespace Lidgren.Network
 			//if (m_socket == null || m_socket.Available < 1)
 			//	return;
 
-			int bytesReceived = 0;
-			try
+			do
 			{
-				bytesReceived = m_socket.ReceiveFrom(m_receiveBuffer, 0, m_receiveBuffer.Length, SocketFlags.None, ref m_senderRemote);
-			}
-			catch (SocketException sx)
-			{
-				if (sx.SocketErrorCode == SocketError.ConnectionReset)
-				{
-					// connection reset by peer, aka connection forcibly closed aka "ICMP port unreachable" 
-					// we should shut down the connection; but m_senderRemote seemingly cannot be trusted, so which connection should we shut down?!
-					// So, what to do?
-					return;
-				}
-
-				LogWarning(sx.ToString());
-				return;
-			}
-
-			if (bytesReceived < NetConstants.HeaderByteSize)
-				return;
-
-			//LogVerbose("Received " + bytesReceived + " bytes");
-
-			IPEndPoint ipsender = (IPEndPoint)m_senderRemote;
-
-			NetConnection sender = null;
-			m_connectionLookup.TryGetValue(ipsender, out sender);
-
-			double receiveTime = NetTime.Now;
-			//
-			// parse packet into messages
-			//
-			int numMessages = 0;
-			int ptr = 0;
-			while ((bytesReceived - ptr) >= NetConstants.HeaderByteSize)
-			{
-				// decode header
-				//  8 bits - NetMessageType
-				//  1 bit  - Fragment?
-				// 15 bits - Sequence number
-				// 16 bits - Payload length in bits
-
-				numMessages++;
-
-				NetMessageType tp = (NetMessageType)m_receiveBuffer[ptr++];
-
-				byte low = m_receiveBuffer[ptr++];
-				byte high = m_receiveBuffer[ptr++];
-
-				bool isFragment = ((low & 1) == 1);
-				ushort sequenceNumber = (ushort)((low >> 1) | (((int)high) << 7));
-				
-				ushort payloadBitLength = (ushort)(m_receiveBuffer[ptr++] | (m_receiveBuffer[ptr++] << 8));
-				int payloadByteLength = NetUtility.BytesToHoldBits(payloadBitLength);
-
-				if (bytesReceived - ptr < payloadByteLength)
-				{
-					LogWarning("Malformed packet; stated payload length " + payloadByteLength + ", remaining bytes " + (bytesReceived - ptr));
-					return;
-				}
-
+				int bytesReceived = 0;
 				try
 				{
-					NetException.Assert(tp < NetMessageType.Unused1 || tp > NetMessageType.Unused29);
-
-					if (tp >= NetMessageType.LibraryError)
+					bytesReceived = m_socket.ReceiveFrom(m_receiveBuffer, 0, m_receiveBuffer.Length, SocketFlags.None, ref m_senderRemote);
+				}
+				catch (SocketException sx)
+				{
+					if (sx.SocketErrorCode == SocketError.ConnectionReset)
 					{
-						if (sender != null)
-							sender.ReceivedLibraryMessage(tp, ptr, payloadByteLength);
-						else
-							ReceivedUnconnectedLibraryMessage(receiveTime, ipsender, tp, ptr, payloadByteLength);
+						// connection reset by peer, aka connection forcibly closed aka "ICMP port unreachable" 
+						// we should shut down the connection; but m_senderRemote seemingly cannot be trusted, so which connection should we shut down?!
+						// So, what to do?
+						return;
 					}
-					else
-					{
-						if (sender == null && !m_configuration.IsMessageTypeEnabled(NetIncomingMessageType.UnconnectedData))
-							return; // dropping unconnected message since it's not enabled
 
-						NetIncomingMessage msg = CreateIncomingMessage(NetIncomingMessageType.Data, payloadByteLength);
-						msg.m_isFragment = isFragment;
-						msg.m_receiveTime = receiveTime;
-						msg.m_sequenceNumber = sequenceNumber;
-						msg.m_receivedMessageType = tp;
-						msg.m_senderConnection = sender;
-						msg.m_senderEndpoint = ipsender;
-						msg.m_bitLength = payloadBitLength;
-						Buffer.BlockCopy(m_receiveBuffer, ptr, msg.m_data, 0, payloadByteLength);
-						if (sender != null)
+					LogWarning(sx.ToString());
+					return;
+				}
+
+				if (bytesReceived < NetConstants.HeaderByteSize)
+					return;
+
+				//LogVerbose("Received " + bytesReceived + " bytes");
+
+				IPEndPoint ipsender = (IPEndPoint)m_senderRemote;
+
+				if (ipsender.Port == 1900)
+				{
+					// UPnP response
+					try
+					{
+						string resp = System.Text.Encoding.ASCII.GetString(m_receiveBuffer, 0, bytesReceived);
+						if (resp.Contains("upnp:rootdevice"))
 						{
-							if (tp == NetMessageType.Unconnected)
+							resp = resp.Substring(resp.ToLower().IndexOf("location:") + 9);
+							resp = resp.Substring(0, resp.IndexOf("\r")).Trim();
+							m_upnp.ExtractServiceUrl(resp);
+							return;
+						}
+					}
+					catch { }
+				}
+
+				NetConnection sender = null;
+				m_connectionLookup.TryGetValue(ipsender, out sender);
+
+				double receiveTime = NetTime.Now;
+				//
+				// parse packet into messages
+				//
+				int numMessages = 0;
+				int ptr = 0;
+				while ((bytesReceived - ptr) >= NetConstants.HeaderByteSize)
+				{
+					// decode header
+					//  8 bits - NetMessageType
+					//  1 bit  - Fragment?
+					// 15 bits - Sequence number
+					// 16 bits - Payload length in bits
+
+					numMessages++;
+
+					NetMessageType tp = (NetMessageType)m_receiveBuffer[ptr++];
+
+					byte low = m_receiveBuffer[ptr++];
+					byte high = m_receiveBuffer[ptr++];
+
+					bool isFragment = ((low & 1) == 1);
+					ushort sequenceNumber = (ushort)((low >> 1) | (((int)high) << 7));
+
+					ushort payloadBitLength = (ushort)(m_receiveBuffer[ptr++] | (m_receiveBuffer[ptr++] << 8));
+					int payloadByteLength = NetUtility.BytesToHoldBits(payloadBitLength);
+
+					if (bytesReceived - ptr < payloadByteLength)
+					{
+						LogWarning("Malformed packet; stated payload length " + payloadByteLength + ", remaining bytes " + (bytesReceived - ptr));
+						return;
+					}
+
+					try
+					{
+						NetException.Assert(tp < NetMessageType.Unused1 || tp > NetMessageType.Unused29);
+
+						if (tp >= NetMessageType.LibraryError)
+						{
+							if (sender != null)
+								sender.ReceivedLibraryMessage(tp, ptr, payloadByteLength);
+							else
+								ReceivedUnconnectedLibraryMessage(receiveTime, ipsender, tp, ptr, payloadByteLength);
+						}
+						else
+						{
+							if (sender == null && !m_configuration.IsMessageTypeEnabled(NetIncomingMessageType.UnconnectedData))
+								return; // dropping unconnected message since it's not enabled
+
+							NetIncomingMessage msg = CreateIncomingMessage(NetIncomingMessageType.Data, payloadByteLength);
+							msg.m_isFragment = isFragment;
+							msg.m_receiveTime = receiveTime;
+							msg.m_sequenceNumber = sequenceNumber;
+							msg.m_receivedMessageType = tp;
+							msg.m_senderConnection = sender;
+							msg.m_senderEndpoint = ipsender;
+							msg.m_bitLength = payloadBitLength;
+							Buffer.BlockCopy(m_receiveBuffer, ptr, msg.m_data, 0, payloadByteLength);
+							if (sender != null)
 							{
-								// We're connected; but we can still send unconnected messages to this peer
-								msg.m_incomingMessageType = NetIncomingMessageType.UnconnectedData;
-								ReleaseMessage(msg);
+								if (tp == NetMessageType.Unconnected)
+								{
+									// We're connected; but we can still send unconnected messages to this peer
+									msg.m_incomingMessageType = NetIncomingMessageType.UnconnectedData;
+									ReleaseMessage(msg);
+								}
+								else
+								{
+									// connected application (non-library) message
+									sender.ReceivedMessage(msg);
+								}
 							}
 							else
 							{
-								// connected application (non-library) message
-								sender.ReceivedMessage(msg);
+								// at this point we know the message type is enabled
+								// unconnected application (non-library) message
+								msg.m_incomingMessageType = NetIncomingMessageType.UnconnectedData;
+								ReleaseMessage(msg);
 							}
 						}
-						else
-						{
-							// at this point we know the message type is enabled
-							// unconnected application (non-library) message
-							msg.m_incomingMessageType = NetIncomingMessageType.UnconnectedData;
-							ReleaseMessage(msg);
-						}
 					}
+					catch (Exception ex)
+					{
+						LogError("Packet parsing error: " + ex.Message + " from " + ipsender);
+					}
+					ptr += payloadByteLength;
 				}
-				catch (Exception ex)
-				{
-					LogError("Packet parsing error: " + ex.Message + " from " + ipsender);
-				}
-				ptr += payloadByteLength;
-			}
 
-			m_statistics.PacketReceived(bytesReceived, numMessages);
-			if (sender != null)
-				sender.m_statistics.PacketReceived(bytesReceived, numMessages);
+				m_statistics.PacketReceived(bytesReceived, numMessages);
+				if (sender != null)
+					sender.m_statistics.PacketReceived(bytesReceived, numMessages);
+
+			} while (m_socket.Available > 0);
 		}
 
 		private void ReceivedUnconnectedLibraryMessage(double now, IPEndPoint senderEndpoint, NetMessageType tp, int ptr, int payloadByteLength)

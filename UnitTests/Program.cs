@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Reflection;
 using Lidgren.Network;
+using System.Net;
+using System.Net.Sockets;
 
 namespace UnitTests
 {
@@ -9,10 +11,9 @@ namespace UnitTests
 		static void Main(string[] args)
 		{
 			NetPeerConfiguration config = new NetPeerConfiguration("unittests");
+			config.EnableUPnP = true;
 			NetPeer peer = new NetPeer(config);
 			peer.Start(); // needed for initialization
-
-			System.Threading.Thread.Sleep(50);
 
 			Console.WriteLine("Unique identifier is " + NetUtility.ToHexString(peer.UniqueIdentifier));
 
