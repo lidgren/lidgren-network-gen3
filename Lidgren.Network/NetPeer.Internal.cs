@@ -496,11 +496,14 @@ namespace Lidgren.Network
 									// Lets just assume the router decided to use this port instead
 									//
 									var hsconn = hs.Value;
-									m_connectionLookup.Remove(hsconn.RemoteEndpoint);
+									m_connectionLookup.Remove(hs.Key);
+									m_handshakes.Remove(hs.Key);
 
 									LogDebug("Detected host port change; rerouting connection to " + senderEndpoint);
 									hsconn.MutateEndpoint(senderEndpoint);
+
 									m_connectionLookup.Add(senderEndpoint, hsconn);
+									m_handshakes.Add(senderEndpoint, hsconn);
 
 									hsconn.ReceivedHandshake(now, tp, ptr, payloadByteLength);
 									return;
