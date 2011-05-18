@@ -41,6 +41,9 @@ namespace Lidgren.Network
 		/// </summary>
 		public Socket Socket { get { return m_socket; } }
 
+		/// <summary>
+		/// Call this to register a callback for when a new message arrives
+		/// </summary>
 		public void RegisterReceivedCallback(SendOrPostCallback callback)
 		{
 			if (m_receiveCallbacks == null)
