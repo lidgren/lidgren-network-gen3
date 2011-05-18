@@ -14,6 +14,9 @@ namespace Lidgren.Network
 		private string m_serviceUrl;
 		private NetPeer m_peer;
 
+		/// <summary>
+		/// NetUPnP constructor
+		/// </summary>
 		public NetUPnP(NetPeer peer)
 		{
 			m_peer = peer;

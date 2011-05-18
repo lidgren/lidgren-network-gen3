@@ -55,6 +55,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Encryption\INetEncryption.cs" />
+    <Compile Include="Encryption\NetBCrypt.cs" />
     <Compile Include="Encryption\NetBlockEncryptionBase.cs" />
     <Compile Include="Encryption\NetXorEncryption.cs" />
     <Compile Include="Encryption\NetXteaEncryption.cs" />

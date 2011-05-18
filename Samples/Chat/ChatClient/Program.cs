@@ -24,7 +24,7 @@ namespace ChatClient
 			NetPeerConfiguration config = new NetPeerConfiguration("chat");
 			s_client = new NetClient(config);
 
-			Application.Idle += new EventHandler(Application_Idle);
+			s_client.RegisterReceivedCallback(new SendOrPostCallback(GotMessage)); 
 
 			Application.Run(s_form);
 
@@ -36,44 +36,40 @@ namespace ChatClient
 			NativeMethods.AppendText(s_form.richTextBox1, text);
 		}
 
-		private static void Application_Idle(object sender, EventArgs e)
+		public static void GotMessage(object peer)
 		{
-			while (NativeMethods.AppStillIdle)
+			NetIncomingMessage im;
+			while ((im = s_client.ReadMessage()) != null)
 			{
-				NetIncomingMessage im;
-				while ((im = s_client.ReadMessage()) != null)
+				// handle incoming message
+				switch (im.MessageType)
 				{
-					// handle incoming message
-					switch (im.MessageType)
-					{
-						case NetIncomingMessageType.DebugMessage:
-						case NetIncomingMessageType.ErrorMessage:
-						case NetIncomingMessageType.WarningMessage:
-						case NetIncomingMessageType.VerboseDebugMessage:
-							string text = im.ReadString();
-							Output(text);
-							break;
-						case NetIncomingMessageType.StatusChanged:
-							NetConnectionStatus status = (NetConnectionStatus)im.ReadByte();
+					case NetIncomingMessageType.DebugMessage:
+					case NetIncomingMessageType.ErrorMessage:
+					case NetIncomingMessageType.WarningMessage:
+					case NetIncomingMessageType.VerboseDebugMessage:
+						string text = im.ReadString();
+						Output(text);
+						break;
+					case NetIncomingMessageType.StatusChanged:
+						NetConnectionStatus status = (NetConnectionStatus)im.ReadByte();
 
-							if (status == NetConnectionStatus.Connected)
-								s_form.EnableInput();
-							else
-								s_form.DisableInput();
-							string reason = im.ReadString();
-							Output(status.ToString() + ": " + reason);
-							
-							break;
-						case NetIncomingMessageType.Data:
-							string chat = im.ReadString();
-							Output(chat);
-							break;
-						default:
-							Output("Unhandled type: " + im.MessageType + " " + im.LengthBytes + " bytes");
-							break;
-					}
+						if (status == NetConnectionStatus.Connected)
+							s_form.EnableInput();
+						else
+							s_form.DisableInput();
+						string reason = im.ReadString();
+						Output(status.ToString() + ": " + reason);
+
+						break;
+					case NetIncomingMessageType.Data:
+						string chat = im.ReadString();
+						Output(chat);
+						break;
+					default:
+						Output("Unhandled type: " + im.MessageType + " " + im.LengthBytes + " bytes");
+						break;
 				}
-				Thread.Sleep(1);
 			}
 		}
 
@@ -93,6 +89,7 @@ namespace ChatClient
 			// s_client.Shutdown("Requested by user");
 		}
 
+		// called by the UI
 		public static void Send(string text)
 		{
 			NetOutgoingMessage om = s_client.CreateMessage(text);

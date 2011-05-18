@@ -34,11 +34,19 @@ namespace Lidgren.Network
 		internal long m_uniqueIdentifier;
 
 		private AutoResetEvent m_messageReceivedEvent = new AutoResetEvent(false);
+		private List<NetTuple<SynchronizationContext, SendOrPostCallback>> m_receiveCallbacks;
 
 		/// <summary>
 		/// Gets the socket, if Start() has been called
 		/// </summary>
 		public Socket Socket { get { return m_socket; } }
+
+		public void RegisterReceivedCallback(SendOrPostCallback callback)
+		{
+			if (m_receiveCallbacks == null)
+				m_receiveCallbacks = new List<NetTuple<SynchronizationContext, SendOrPostCallback>>();
+			m_receiveCallbacks.Add(new NetTuple<SynchronizationContext, SendOrPostCallback>(SynchronizationContext.Current, callback));
+		}
 
 		internal void ReleaseMessage(NetIncomingMessage msg)
 		{
@@ -51,8 +59,15 @@ namespace Lidgren.Network
 			}
 			
 			m_releasedIncomingMessages.Enqueue(msg);
+
 			if (m_messageReceivedEvent != null)
 				m_messageReceivedEvent.Set();
+
+			if (m_receiveCallbacks != null)
+			{
+				foreach (var tuple in m_receiveCallbacks)
+					tuple.Item1.Post(tuple.Item2, this);
+			}
 		}
 
 		private void InitializeNetwork()

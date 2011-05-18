@@ -63,7 +63,7 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
-		/// Computer private key
+		/// Computer private key (x)
 		/// </summary>
 		public static byte[] ComputePrivateKey(string username, string password, byte[] salt)
 		{
@@ -85,14 +85,21 @@ namespace Lidgren.Network
 		/// </summary>
 		public static byte[] ComputeServerVerifier(byte[] privateKey)
 		{
-			var sha = GetHashAlgorithm();
-
 			NetBigInteger x = new NetBigInteger(NetUtility.ToHexString(privateKey), 16);
 
 			// Verifier (v) = g^x (mod N)
 			var serverVerifier = g.ModPow(x, N);
 
 			return serverVerifier.ToByteArrayUnsigned();
+		}
+
+		/// <summary>
+		/// SHA hash data
+		/// </summary>
+		public static byte[] Hash(byte[] data)
+		{
+			var sha = GetHashAlgorithm();
+			return sha.ComputeHash(data);
 		}
 
 		/// <summary>
@@ -124,7 +131,7 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
-		/// Compute intermediate value U
+		/// Compute intermediate value (u)
 		/// </summary>
 		public static byte[] ComputeU(byte[] clientPublicEphemeral, byte[] serverPublicEphemeral)
 		{
