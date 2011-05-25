@@ -338,7 +338,12 @@ namespace Lidgren.Network
 		public int MaximumHandshakeAttempts
 		{
 			get { return m_maximumHandshakeAttempts; }
-			set { m_maximumHandshakeAttempts = value; }
+			set
+			{
+				if (value < 1)
+					throw new NetException("MaximumHandshakeAttempts must be at least 1");
+				m_maximumHandshakeAttempts = value;
+			}
 		}
 
 		/// <summary>

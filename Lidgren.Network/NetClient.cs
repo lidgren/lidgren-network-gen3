@@ -102,6 +102,17 @@ namespace Lidgren.Network
 			NetConnection serverConnection = ServerConnection;
 			if (serverConnection == null)
 			{
+				lock (m_handshakes)
+				{
+					if (m_handshakes.Count > 0)
+					{
+						LogVerbose("Aborting connection attempt");
+						foreach(var hs in m_handshakes)
+							hs.Value.Disconnect(byeMessage);
+						return;
+					}
+				}
+
 				LogWarning("Disconnect requested when not connected!");
 				return;
 			}

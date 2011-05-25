@@ -109,9 +109,6 @@ namespace Lidgren.Network
 			if (reason == null)
 				reason = string.Empty;
 
-			// new status equals potentially new handshake attempts
-			m_handshakeAttempts = 0;
-
 			if (m_status == NetConnectionStatus.Connected)
 			{
 				m_timeoutDeadline = (float)NetTime.Now + m_peerConfiguration.m_connectionTimeout;

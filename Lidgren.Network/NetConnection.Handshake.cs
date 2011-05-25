@@ -59,7 +59,7 @@ namespace Lidgren.Network
 
 			if (now - m_lastHandshakeSendTime > m_peerConfiguration.m_resendHandshakeInterval)
 			{
-				if (m_handshakeAttempts > m_peerConfiguration.m_maximumHandshakeAttempts)
+				if (m_handshakeAttempts >= m_peerConfiguration.m_maximumHandshakeAttempts)
 				{
 					// failed to connect
 					ExecuteDisconnect("Failed to establish connection - no response from remote host", true);
@@ -431,6 +431,7 @@ namespace Lidgren.Network
 			if (m_status != NetConnectionStatus.Disconnected && m_status != NetConnectionStatus.None)
 				SetStatus(NetConnectionStatus.Disconnecting, byeMessage);
 
+			m_handshakeAttempts = 0;
 			m_disconnectRequested = true;
 		}
 	}
