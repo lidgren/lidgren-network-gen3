@@ -27,6 +27,18 @@ namespace UnitTests
 
 			EncryptionTests.Run(peer);
 
+			var om = peer.CreateMessage();
+			peer.SendUnconnectedMessage(om, new IPEndPoint(IPAddress.Loopback, 14242));
+			try
+			{
+				peer.SendUnconnectedMessage(om, new IPEndPoint(IPAddress.Loopback, 14242));
+			}
+			catch (NetException nex)
+			{
+				if (nex.Message != "This message has already been sent! Use NetPeer.SendMessage() to send to multiple recipients efficiently")
+					throw nex;
+			}
+
 			peer.Shutdown("bye");
 
 			// read all message

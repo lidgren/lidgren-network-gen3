@@ -45,6 +45,8 @@ namespace Lidgren.Network
 			if (msg.m_isSent)
 				throw new NetException("This message has already been sent! Use NetPeer.SendMessage() to send to multiple recipients efficiently");
 
+			msg.m_isSent = true;
+
 			int len = msg.LengthBytes;
 			if (len <= recipient.m_currentMTU)
 			{
@@ -90,6 +92,8 @@ namespace Lidgren.Network
 				throw new NetException("This message has already been sent! Use NetPeer.SendMessage() to send to multiple recipients efficiently");
 
 			int mtu = GetMTU(recipients);
+
+			msg.m_isSent = true;
 
 			int len = msg.LengthBytes;
 			if (len <= m_configuration.MaximumTransmissionUnit)
@@ -158,6 +162,7 @@ namespace Lidgren.Network
 				throw new NetException("Unconnected messages too long! Must be shorter than NetConfiguration.MaximumTransmissionUnit (currently " + m_configuration.MaximumTransmissionUnit + ")");
 
 			msg.m_messageType = NetMessageType.Unconnected;
+			msg.m_isSent = true;
 
 			Interlocked.Increment(ref msg.m_recyclingCount);
 			m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(recipient, msg));
@@ -178,6 +183,7 @@ namespace Lidgren.Network
 				throw new NetException("Unconnected messages too long! Must be shorter than NetConfiguration.MaximumTransmissionUnit (currently " + m_configuration.MaximumTransmissionUnit + ")");
 
 			msg.m_messageType = NetMessageType.Unconnected;
+			msg.m_isSent = true;
 
 			Interlocked.Add(ref msg.m_recyclingCount, recipients.Count);
 			foreach(IPEndPoint ep in recipients)
