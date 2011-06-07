@@ -3,6 +3,7 @@ using System.IO;
 using System.Xml;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 
 namespace Lidgren.Network
 {
@@ -11,8 +12,11 @@ namespace Lidgren.Network
 	/// </summary>
 	public class NetUPnP
 	{
+		private const int c_discoveryTimeOutMillis = 1000;
+
 		private string m_serviceUrl;
 		private NetPeer m_peer;
+		private ManualResetEvent m_discoveryComplete = new ManualResetEvent(false);
 
 		/// <summary>
 		/// NetUPnP constructor
@@ -38,7 +42,7 @@ namespace Lidgren.Network
 			peer.Socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Broadcast, false);
 
 			// allow some extra time for router to respond
-			System.Threading.Thread.Sleep(50);
+			// System.Threading.Thread.Sleep(50);
 		}
 
 		internal void ExtractServiceUrl(string resp)
@@ -59,7 +63,7 @@ namespace Lidgren.Network
 				return;
 			m_serviceUrl = CombineUrls(resp, node.Value);
 			m_peer.LogDebug("UPnP service ready");
-			System.Threading.Thread.Sleep(50);
+			m_discoveryComplete.Set();
 #if !DEBUG
             }
             catch { return; }
@@ -84,7 +88,7 @@ namespace Lidgren.Network
 		/// </summary>
 		public bool ForwardPort(int port, string description)
 		{
-			if (m_serviceUrl == null)
+			if (m_serviceUrl == null && !m_discoveryComplete.WaitOne(c_discoveryTimeOutMillis))
 				return false;
 
 			IPAddress mask;
@@ -120,7 +124,7 @@ namespace Lidgren.Network
 		/// </summary>
 		public bool DeleteForwardingRule(int port)
 		{
-			if (m_serviceUrl == null)
+			if (m_serviceUrl == null && !m_discoveryComplete.WaitOne(c_discoveryTimeOutMillis))
 				return false;
 			try
 			{
@@ -145,9 +149,8 @@ namespace Lidgren.Network
 		/// </summary>
 		public IPAddress GetExternalIP()
 		{
-			if (m_serviceUrl == null)
+			if (m_serviceUrl == null && !m_discoveryComplete.WaitOne(c_discoveryTimeOutMillis))
 				return null;
-
 			try
 			{
 				XmlDocument xdoc = SOAPRequest(m_serviceUrl, "<u:GetExternalIPAddress xmlns:u=\"urn:schemas-upnp-org:service:WANIPConnection:1\">" +

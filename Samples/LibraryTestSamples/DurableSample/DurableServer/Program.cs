@@ -25,8 +25,12 @@ namespace DurableServer
 			config.Port = 14242;
 			config.EnableMessageType(NetIncomingMessageType.ConnectionApproval);
 			config.EnableMessageType(NetIncomingMessageType.DiscoveryRequest);
+			config.EnableUPnP = true;
 			Server = new NetServer(config);
 			Server.Start();
+
+			// attempt upnp port forwarding
+			Server.UPnP.ForwardPort(14242, "Durable sample test");
 
 			m_expectedReliableOrdered = new uint[3];
 			m_reliableOrderedCorrect = new int[3];
