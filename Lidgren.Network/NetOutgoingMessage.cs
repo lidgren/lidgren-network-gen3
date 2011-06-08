@@ -106,7 +106,7 @@ namespace Lidgren.Network
 
 		internal int GetEncodedSize()
 		{
-			int retval = 5; // regular headers
+			int retval = NetConstants.UnfragmentedMessageHeaderSize; // regular headers
 			if (m_fragmentGroup != 0)
 				retval += NetFragmentationHelper.GetFragmentationHeaderSize(m_fragmentGroup, m_fragmentGroupTotalBits / 8, m_fragmentChunkByteSize, m_fragmentChunkNumber);
 			retval += this.LengthBytes;

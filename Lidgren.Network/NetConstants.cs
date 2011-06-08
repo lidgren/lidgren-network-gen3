@@ -40,6 +40,8 @@ namespace Lidgren.Network
 
 		internal const int MaxFragmentationGroups = ushort.MaxValue - 1;
 
+		internal const int UnfragmentedMessageHeaderSize = 5;
+
 		/// <summary>
 		/// Number of channels which needs a sequence number to work
 		/// </summary>

@@ -46,7 +46,7 @@ namespace Lidgren.Network
 				throw new NetException("This message has already been sent! Use NetPeer.SendMessage() to send to multiple recipients efficiently");
 			msg.m_isSent = true;
 
-			int len = 5 + msg.LengthBytes; // headers + length, faster than calling msg.GetEncodedSize
+			int len = NetConstants.UnfragmentedMessageHeaderSize + msg.LengthBytes; // headers + length, faster than calling msg.GetEncodedSize
 			if (len <= recipient.m_currentMTU)
 			{
 				Interlocked.Increment(ref msg.m_recyclingCount);
