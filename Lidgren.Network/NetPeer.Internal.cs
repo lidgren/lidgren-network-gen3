@@ -211,6 +211,7 @@ namespace Lidgren.Network
 					}
 					if (m_messageReceivedEvent != null)
 					{
+						m_messageReceivedEvent.Set();
 						m_messageReceivedEvent.Close();
 						m_messageReceivedEvent = null;
 					}
