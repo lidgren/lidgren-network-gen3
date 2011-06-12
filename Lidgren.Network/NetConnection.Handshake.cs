@@ -361,6 +361,7 @@ namespace Lidgren.Network
 							return;
 					}
 					break;
+
 				case NetMessageType.Disconnect:
 					// ouch
 					string reason = "Ouch";
@@ -374,6 +375,15 @@ namespace Lidgren.Network
 					}
 					ExecuteDisconnect(reason, false);
 					break;
+
+				case NetMessageType.Discovery:
+					m_peer.HandleIncomingDiscoveryRequest(now, m_remoteEndpoint, ptr, payloadLength);
+					return;
+
+				case NetMessageType.DiscoveryResponse:
+					m_peer.HandleIncomingDiscoveryResponse(now, m_remoteEndpoint, ptr, payloadLength);
+					return;
+
 				default:
 					m_peer.LogDebug("Unhandled type during handshake: " + tp + " length: " + payloadLength);
 					break;
