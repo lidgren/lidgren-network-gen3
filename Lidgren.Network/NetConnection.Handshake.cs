@@ -384,6 +384,10 @@ namespace Lidgren.Network
 					m_peer.HandleIncomingDiscoveryResponse(now, m_remoteEndpoint, ptr, payloadLength);
 					return;
 
+				case NetMessageType.Ping:
+					// silently ignore
+					return;
+
 				default:
 					m_peer.LogDebug("Unhandled type during handshake: " + tp + " length: " + payloadLength);
 					break;
