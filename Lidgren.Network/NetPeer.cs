@@ -255,6 +255,7 @@ namespace Lidgren.Network
 				}
 
 				NetConnection conn = new NetConnection(this, remoteEndpoint);
+				conn.m_status = NetConnectionStatus.InitiatedConnect;
 				conn.m_localHailMessage = hailMessage;
 
 				// handle on network thread
