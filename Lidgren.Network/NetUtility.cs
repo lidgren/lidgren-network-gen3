@@ -90,6 +90,8 @@ namespace Lidgren.Network
 			}
 		}
 
+#if IS_FULL_NET_AVAILABLE
+
 		private static NetworkInterface GetNetworkInterface()
 		{
 			IPGlobalProperties computerProperties = IPGlobalProperties.GetIPGlobalProperties();
@@ -119,7 +121,6 @@ namespace Lidgren.Network
 			return best;
 		}
 
-#if IS_FULL_NET_AVAILABLE
 		/// <summary>
 		/// Returns the physical (MAC) address for the first usable network interface
 		/// </summary>
