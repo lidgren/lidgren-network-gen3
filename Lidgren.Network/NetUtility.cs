@@ -15,8 +15,9 @@ PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
 LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 USE OR OTHER DEALINGS IN THE SOFTWARE.
-
 */
+#define IS_FULL_NET_AVAILABLE
+
 using System;
 using System.Net;
 using System.Net.NetworkInformation;
@@ -118,6 +119,7 @@ namespace Lidgren.Network
 			return best;
 		}
 
+#if IS_FULL_NET_AVAILABLE
 		/// <summary>
 		/// Returns the physical (MAC) address for the first usable network interface
 		/// </summary>
@@ -128,6 +130,7 @@ namespace Lidgren.Network
 				return null;
 			return ni.GetPhysicalAddress();
 		}
+#endif
 
 		/// <summary>
 		/// Create a hex string from an Int64 value
@@ -159,6 +162,7 @@ namespace Lidgren.Network
 		/// </summary>
 		public static IPAddress GetMyAddress(out IPAddress mask)
 		{
+#if IS_FULL_NET_AVAILABLE
 			NetworkInterface ni = GetNetworkInterface();
 			if (ni == null)
 			{
@@ -175,7 +179,7 @@ namespace Lidgren.Network
 					return unicastAddress.Address;
 				}
 			}
-
+#endif
 			mask = null;
 			return null;
 		}

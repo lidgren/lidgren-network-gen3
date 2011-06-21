@@ -93,6 +93,8 @@ namespace Lidgren.Network
 
 			IPAddress mask;
 			var client = NetUtility.GetMyAddress(out mask);
+			if (client == null)
+				return false;
 
 			try
 			{

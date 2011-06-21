@@ -131,7 +131,7 @@ namespace Lidgren.Network
 				}
 				catch (NotSupportedException)
 				{
-					// not supported; lets just kee the random bytes set above
+					// not supported; lets just keep the random bytes set above
 				}
 #endif
 				byte[] epBytes = BitConverter.GetBytes(boundEp.GetHashCode());
