@@ -108,7 +108,7 @@ namespace Lidgren.Network
 		/// </summary>
 		public byte ReadByte(int numberOfBits)
 		{
-			NetException.Assert(numberOfBits > 0 && numberOfBits < 8);
+			NetException.Assert(numberOfBits > 0 && numberOfBits <= 8, "ReadByte(bits) can only read between 1 and 8 bits");
 			byte retval = NetBitWriter.ReadByte(m_data, numberOfBits, m_readPosition);
 			m_readPosition += numberOfBits;
 			return retval;
@@ -205,7 +205,7 @@ namespace Lidgren.Network
 		/// </summary>
 		public Int32 ReadInt32(int numberOfBits)
 		{
-			NetException.Assert((numberOfBits > 0 && numberOfBits <= 32), "ReadInt() can only read between 1 and 32 bits");
+			NetException.Assert(numberOfBits > 0 && numberOfBits <= 32, "ReadInt32(bits) can only read between 1 and 32 bits");
 			NetException.Assert(m_bitLength - m_readPosition >= numberOfBits, c_readOverflowError);
 
 			uint retval = NetBitWriter.ReadUInt32(m_data, numberOfBits, m_readPosition);
@@ -245,7 +245,7 @@ namespace Lidgren.Network
 		[CLSCompliant(false)]
 		public UInt32 ReadUInt32(int numberOfBits)
 		{
-			NetException.Assert((numberOfBits > 0 && numberOfBits <= 32), "ReadUInt() can only read between 1 and 32 bits");
+			NetException.Assert(numberOfBits > 0 && numberOfBits <= 32, "ReadUInt32(bits) can only read between 1 and 32 bits");
 			//NetException.Assert(m_bitLength - m_readBitPtr >= numberOfBits, "tried to read past buffer size");
 
 			UInt32 retval = NetBitWriter.ReadUInt32(m_data, numberOfBits, m_readPosition);
@@ -291,7 +291,7 @@ namespace Lidgren.Network
 		[CLSCompliant(false)]
 		public UInt64 ReadUInt64(int numberOfBits)
 		{
-			NetException.Assert((numberOfBits > 0 && numberOfBits <= 64), "ReadUInt() can only read between 1 and 64 bits");
+			NetException.Assert(numberOfBits > 0 && numberOfBits <= 64, "ReadUInt64(bits) can only read between 1 and 64 bits");
 			NetException.Assert(m_bitLength - m_readPosition >= numberOfBits, c_readOverflowError);
 
 			ulong retval;
@@ -313,7 +313,7 @@ namespace Lidgren.Network
 		/// </summary>
 		public Int64 ReadInt64(int numberOfBits)
 		{
-			NetException.Assert(((numberOfBits > 0) && (numberOfBits < 65)), "ReadInt64(bits) can only read between 1 and 64 bits");
+			NetException.Assert(((numberOfBits > 0) && (numberOfBits <= 64)), "ReadInt64(bits) can only read between 1 and 64 bits");
 			return (long)ReadUInt64(numberOfBits);
 		}
 
