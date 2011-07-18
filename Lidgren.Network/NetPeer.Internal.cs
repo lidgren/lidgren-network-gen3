@@ -46,6 +46,8 @@ namespace Lidgren.Network
 		/// </summary>
 		public void RegisterReceivedCallback(SendOrPostCallback callback)
 		{
+			if (SynchronizationContext.Current == null)
+				throw new NetException("Need a SynchronizationContext to register callback on correct thread!");
 			if (m_receiveCallbacks == null)
 				m_receiveCallbacks = new List<NetTuple<SynchronizationContext, SendOrPostCallback>>();
 			m_receiveCallbacks.Add(new NetTuple<SynchronizationContext, SendOrPostCallback>(SynchronizationContext.Current, callback));

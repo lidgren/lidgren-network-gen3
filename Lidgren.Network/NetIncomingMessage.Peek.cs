@@ -274,13 +274,12 @@ namespace Lidgren.Network
 
 			if ((m_readPosition & 7) == 0) // read directly
 			{
-				// endianness is handled inside BitConverter.ToSingle
 				float retval = BitConverter.ToSingle(m_data, m_readPosition >> 3);
 				return retval;
 			}
 
 			byte[] bytes = PeekBytes(4);
-			return BitConverter.ToSingle(bytes, 0); // endianness is handled inside BitConverter.ToSingle
+			return BitConverter.ToSingle(bytes, 0);
 		}
 
 		/// <summary>
@@ -298,7 +297,7 @@ namespace Lidgren.Network
 			}
 
 			byte[] bytes = PeekBytes(8);
-			return BitConverter.ToDouble(bytes, 0); // endianness is handled inside BitConverter.ToSingle
+			return BitConverter.ToDouble(bytes, 0);
 		}
 
 		/// <summary>
