@@ -175,7 +175,7 @@
       <Project>{FA245447-5F23-4AA1-BD5F-8D2DDF33CFBD}</Project>
       <Name>Lidgren.Network</Name>
     </ProjectReference>
-    <ProjectReference Include="Content\XnaGameClientContent.contentproj">
+    <ProjectReference Include="Content\Content.contentproj">
       <Project>{416F5A82-22D8-4A94-BC19-4C6A24F34A73}</Project>
       <Name>XnaGameClientContent %28Content%29</Name>
       <XnaReferenceType>Content</XnaReferenceType>

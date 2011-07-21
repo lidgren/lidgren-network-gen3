@@ -7,7 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XnaGameServer", "XnaGameSer
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lidgren.Network", "..\..\Lidgren.Network\Lidgren.Network.csproj", "{AE483C29-042E-4226-BA52-D247CE7676DA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XnaGameClientContent", "XnaGameClient\Content\XnaGameClientContent.contentproj", "{416F5A82-22D8-4A94-BC19-4C6A24F34A73}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XnaGameClientContent", "XnaGameClient\Content\Content.contentproj", "{416F5A82-22D8-4A94-BC19-4C6A24F34A73}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
