@@ -159,6 +159,9 @@ namespace Lidgren.Network
 		/// </summary>
 		public NetIncomingMessage WaitMessage(int maxMillis)
 		{
+			var msg = ReadMessage();
+			if (msg != null)
+				return msg; // no need to wait; we already have a message to deliver
 			if (m_messageReceivedEvent != null)
 				m_messageReceivedEvent.WaitOne(maxMillis);
 			return ReadMessage();
