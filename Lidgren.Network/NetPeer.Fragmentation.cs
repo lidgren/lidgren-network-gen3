@@ -143,6 +143,7 @@ namespace Lidgren.Network
 				im.m_isFragment = false;
 
 				LogVerbose("Fragment group #" + group + " fully received in " + totalNumChunks + " chunks (" + totalBits + " bits)");
+				groups.Remove(group);
 
 				ReleaseMessage(im);
 			}
