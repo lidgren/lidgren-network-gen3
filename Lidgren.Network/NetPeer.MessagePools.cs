@@ -148,6 +148,28 @@ namespace Lidgren.Network
 			m_incomingMessagesPool.Enqueue(msg);
 		}
 
+		/// <summary>
+		/// Recycles a list of NetIncomingMessage instances for reuse; taking pressure off the garbage collector
+		/// </summary>
+		public void Recycle(IEnumerable<NetIncomingMessage> toRecycle)
+		{
+			if (m_incomingMessagesPool == null)
+				return;
+
+			foreach (var msg in toRecycle)
+			{
+#if DEBUG
+				if (m_incomingMessagesPool.Contains(msg))
+					throw new NetException("Recyling already recycled message! Thread race?");
+#endif
+				byte[] storage = msg.m_data;
+				msg.m_data = null;
+				Recycle(storage);
+				msg.Reset();
+				m_incomingMessagesPool.Enqueue(msg);
+			}
+		}
+
 		internal void Recycle(NetOutgoingMessage msg)
 		{
 			if (m_outgoingMessagesPool == null)

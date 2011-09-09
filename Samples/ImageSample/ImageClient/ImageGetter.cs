@@ -18,6 +18,7 @@ namespace ImageClient
 		public int NumReceivedSegments;
 
 		private double m_startedFetching;
+		private List<NetIncomingMessage> m_readList;
 
 		public ImageGetter(string host, NetPeerConfiguration copyConfig)
 		{
@@ -25,6 +26,7 @@ namespace ImageClient
 
 			NetPeerConfiguration config = copyConfig.Clone();
 			config.EnableMessageType(NetIncomingMessageType.DiscoveryResponse);
+			m_readList = new List<NetIncomingMessage>();
 
 			Client = new NetClient(config);
 			Client.Start();
@@ -50,8 +52,11 @@ namespace ImageClient
 
 		public void Heartbeat()
 		{
-			NetIncomingMessage inc;
-			while ((inc = Client.ReadMessage()) != null)
+			int numRead = Client.ReadMessages(m_readList);
+			if (numRead < 1)
+				return;
+
+			foreach(var inc in m_readList)
 			{
 				switch(inc.MessageType)
 				{
@@ -166,10 +171,11 @@ namespace ImageClient
 
 						break;
 				}
-
-				// recycle message to avoid garbage
-				Client.Recycle(inc);
 			}
+
+			// recycle messages to avoid garbage
+			Client.Recycle(m_readList);
+			m_readList.Clear();
 		}
 	}
 }

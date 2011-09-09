@@ -19,6 +19,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 using System;
 using System.Diagnostics;
+using System.Collections.Generic;
 
 namespace Lidgren.Network
 {
@@ -156,6 +157,30 @@ namespace Lidgren.Network
 				m_size--;
 
 				return true;
+			}
+		}
+
+		/// <summary>
+		/// Gets an item from the head of the queue, or returns default(T) if empty
+		/// </summary>
+		public int TryDrain(IList<T> addTo)
+		{
+			if (m_size == 0)
+				return 0;
+
+			lock (m_lock)
+			{
+				int added = m_size;
+				while (m_size > 0)
+				{
+					var item = m_items[m_head];
+					addTo.Add(item);
+
+					m_items[m_head] = default(T);
+					m_head = (m_head + 1) % m_items.Length;
+					m_size--;
+				}
+				return added;
 			}
 		}
 

@@ -183,7 +183,29 @@ namespace Lidgren.Network
 			}
 			return retval;
 		}
-		
+
+		/// <summary>
+		/// Read a pending message from any connection, if any
+		/// </summary>
+		public int ReadMessages(IList<NetIncomingMessage> addTo)
+		{
+			int added = m_releasedIncomingMessages.TryDrain(addTo);
+			if (added > 0)
+			{
+				for (int i = 0; i < added; i++)
+				{
+					var index = addTo.Count - added + i;
+					var nim = addTo[index];
+					if (nim.MessageType == NetIncomingMessageType.StatusChanged)
+					{
+						NetConnectionStatus status = (NetConnectionStatus)nim.PeekByte();
+						nim.SenderConnection.m_visibleStatus = status;
+					}
+				}
+			}
+			return added;
+		}
+
 		// send message immediately
 		internal void SendLibrary(NetOutgoingMessage msg, IPEndPoint recipient)
 		{
