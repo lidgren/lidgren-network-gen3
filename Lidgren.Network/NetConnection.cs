@@ -304,7 +304,10 @@ namespace Lidgren.Network
 			if (msg.GetEncodedSize() > m_currentMTU)
 				throw new NetException("Message too large! Fragmentation failure?");
 
-			return chan.Enqueue(msg);
+			var retval = chan.Enqueue(msg);
+			if (retval == NetSendResult.Sent && m_peerConfiguration.m_autoFlushSendQueue == false)
+				retval = NetSendResult.Queued; // queued since we're not autoflushing
+			return retval;
 		}
 
 		// may be on user thread
