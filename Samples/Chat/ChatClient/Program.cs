@@ -22,6 +22,7 @@ namespace ChatClient
 			s_form = new Form1();
 
 			NetPeerConfiguration config = new NetPeerConfiguration("chat");
+			config.AutoFlushSendQueue = false;
 			s_client = new NetClient(config);
 
 			s_client.RegisterReceivedCallback(new SendOrPostCallback(GotMessage)); 
@@ -95,6 +96,7 @@ namespace ChatClient
 			NetOutgoingMessage om = s_client.CreateMessage(text);
 			s_client.SendMessage(om, NetDeliveryMethod.ReliableOrdered);
 			Output("Sending '" + text + "'");
+			s_client.FlushSendQueue();
 		}
 
 		// called by the UI

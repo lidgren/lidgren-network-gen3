@@ -32,6 +32,7 @@ namespace Lidgren.Network
 
 		internal readonly NetPeerStatistics m_statistics;
 		internal long m_uniqueIdentifier;
+		internal bool m_executeFlushSendQueue;
 
 		private AutoResetEvent m_messageReceivedEvent = new AutoResetEvent(false);
 		private List<NetTuple<SynchronizationContext, SendOrPostCallback>> m_receiveCallbacks;
@@ -62,7 +63,7 @@ namespace Lidgren.Network
 				HandleReleasedFragment(msg);
 				return;
 			}
-			
+
 			m_releasedIncomingMessages.Enqueue(msg);
 
 			if (m_messageReceivedEvent != null)
@@ -280,8 +281,12 @@ namespace Lidgren.Network
 				}
 
 #if DEBUG
-			SendDelayedPackets();
+				SendDelayedPackets();
 #endif
+
+				// update m_executeFlushSendQueue
+				if (m_configuration.m_autoFlushSendQueue)
+					m_executeFlushSendQueue = true;
 
 				// do connection heartbeats
 				lock (m_connections)
@@ -300,6 +305,7 @@ namespace Lidgren.Network
 						}
 					}
 				}
+				m_executeFlushSendQueue = false;
 
 				// send unsent unconnected messages
 				NetTuple<IPEndPoint, NetOutgoingMessage> unsent;
@@ -470,6 +476,14 @@ namespace Lidgren.Network
 					sender.m_statistics.PacketReceived(bytesReceived, numMessages);
 
 			} while (m_socket.Available > 0);
+		}
+
+		/// <summary>
+		/// If NetPeerConfiguration.AutoFlushSendQueue() is false; you need to call this to send all messages queued using SendMessage()
+		/// </summary>
+		public void FlushSendQueue()
+		{
+			m_executeFlushSendQueue = true;
 		}
 
 		internal void HandleIncomingDiscoveryRequest(double now, IPEndPoint senderEndpoint, int ptr, int payloadByteLength)

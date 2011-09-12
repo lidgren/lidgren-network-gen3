@@ -225,13 +225,16 @@ namespace Lidgren.Network
 			//
 			// send queued messages
 			//
-			for (int i = m_sendChannels.Length - 1; i >= 0; i--)    // Reverse order so reliable messages are sent first
+			if (m_peer.m_executeFlushSendQueue)
 			{
-				var channel = m_sendChannels[i];
-				NetException.Assert(m_sendBufferWritePtr < 1 || m_sendBufferNumMessages > 0);
-				if (channel != null)
-					channel.SendQueuedMessages(now);
-				NetException.Assert(m_sendBufferWritePtr < 1 || m_sendBufferNumMessages > 0);
+				for (int i = m_sendChannels.Length - 1; i >= 0; i--)    // Reverse order so reliable messages are sent first
+				{
+					var channel = m_sendChannels[i];
+					NetException.Assert(m_sendBufferWritePtr < 1 || m_sendBufferNumMessages > 0);
+					if (channel != null)
+						channel.SendQueuedMessages(now);
+					NetException.Assert(m_sendBufferWritePtr < 1 || m_sendBufferNumMessages > 0);
+				}
 			}
 
 			//

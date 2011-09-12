@@ -40,6 +40,7 @@ namespace Lidgren.Network
 		internal bool m_useMessageRecycling;
 		internal float m_connectionTimeout;
 		internal bool m_enableUPnP;
+		internal bool m_autoFlushSendQueue;
 
 		internal NetIncomingMessageType m_disabledTypes;
 		internal int m_port;
@@ -86,6 +87,7 @@ namespace Lidgren.Network
 			m_useMessageRecycling = true;
 			m_resendHandshakeInterval = 3.0f;
 			m_maximumHandshakeAttempts = 5;
+			m_autoFlushSendQueue = true;
 
 			// Maximum transmission unit
 			// Ethernet can take 1500 bytes of payload, so lets stay below that.
@@ -256,6 +258,15 @@ namespace Lidgren.Network
 					throw new NetException(c_isLockedMessage);
 				m_enableUPnP = value;
 			}
+		}
+
+		/// <summary>
+		/// Enables or disables automatic flushing of the send queue. If disabled, you must manully call NetPeer.FlushSendQueue() to flush sent messages to network.
+		/// </summary>
+		public bool AutoFlushSendQueue
+		{
+			get { return m_autoFlushSendQueue; }
+			set { m_autoFlushSendQueue = value; }
 		}
 
 		/// <summary>
