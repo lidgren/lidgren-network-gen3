@@ -187,13 +187,15 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
-		/// Gets or sets the maximum amount of bytes to send in a single packet, excluding ip, udp and lidgren headers
+		/// Gets or sets the maximum amount of bytes to send in a single packet, excluding ip, udp and lidgren headers. Cannot be changed once NetPeer is initialized.
 		/// </summary>
 		public int MaximumTransmissionUnit
 		{
 			get { return m_maximumTransmissionUnit; }
 			set
 			{
+				if (m_isLocked)
+					throw new NetException(c_isLockedMessage);
 				if (value < 1 || value >= ((ushort.MaxValue + 1) / 8))
 					throw new NetException("MaximumTransmissionUnit must be between 1 and " + (((ushort.MaxValue + 1) / 8) - 1) + " bytes");
 				m_maximumTransmissionUnit = value;

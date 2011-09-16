@@ -62,6 +62,8 @@ namespace Lidgren.Network
 
 		internal int GetMTU(IList<NetConnection> recipients)
 		{
+			NetException.Assert(recipients.Count > 0);
+
 			int mtu = int.MaxValue;
 			foreach (NetConnection conn in recipients)
 			{
@@ -85,6 +87,8 @@ namespace Lidgren.Network
 				throw new ArgumentNullException("msg");
 			if (recipients == null)
 				throw new ArgumentNullException("recipients");
+			if (recipients.Count < 1)
+				throw new NetException("recipients must contain at least one item");
 			if (method == NetDeliveryMethod.Unreliable || method == NetDeliveryMethod.ReliableUnordered)
 				NetException.Assert(sequenceChannel == 0, "Delivery method " + method + " cannot use sequence channels other than 0!");
 			if (msg.m_isSent)
@@ -95,7 +99,7 @@ namespace Lidgren.Network
 			msg.m_isSent = true;
 
 			int len = msg.LengthBytes;
-			if (len <= m_configuration.MaximumTransmissionUnit)
+			if (len <= mtu)
 			{
 				Interlocked.Add(ref msg.m_recyclingCount, recipients.Count);
 				foreach (NetConnection conn in recipients)
@@ -176,6 +180,8 @@ namespace Lidgren.Network
 				throw new ArgumentNullException("msg");
 			if (recipients == null)
 				throw new ArgumentNullException("recipients");
+			if (recipients.Count < 1)
+				throw new NetException("recipients must contain at least one item");
 			if (msg.m_isSent)
 				throw new NetException("This message has already been sent! Use NetPeer.SendMessage() to send to multiple recipients efficiently");
 			if (msg.LengthBytes > m_configuration.MaximumTransmissionUnit)
