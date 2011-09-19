@@ -26,6 +26,7 @@ namespace ImageClient
 
 			NetPeerConfiguration config = copyConfig.Clone();
 			config.EnableMessageType(NetIncomingMessageType.DiscoveryResponse);
+			config.EnableMessageType(NetIncomingMessageType.DebugMessage);
 			m_readList = new List<NetIncomingMessage>();
 
 			Client = new NetClient(config);

@@ -26,15 +26,13 @@ namespace ImageServer
 			NetPeerConfiguration config = new NetPeerConfiguration("ImageTransfer");
 			config.EnableMessageType(NetIncomingMessageType.ConnectionApproval);
 			config.EnableMessageType(NetIncomingMessageType.DiscoveryRequest);
+			config.EnableMessageType(NetIncomingMessageType.DebugMessage);
 			config.AutoExpandMTU = true;
 
 			// listen on port 14242
 			config.Port = 14242;
 
 			Server = new NetServer(config);
-
-			System.IO.File.Delete("C:\\tmp\\clientlog.txt");
-			System.IO.File.Delete("C:\\tmp\\serverlog.txt");
 
 			Application.Idle += new EventHandler(AppLoop);
 			Application.Run(MainForm);
@@ -58,7 +56,6 @@ namespace ImageServer
 							// just print any message
 							string str = inc.ReadString();
 							NativeMethods.AppendText(MainForm.richTextBox1, str);
-							//System.IO.File.AppendAllText("C:\\tmp\\serverlog.txt", str + Environment.NewLine);
 							break;
 						case NetIncomingMessageType.DiscoveryRequest:
 							NetOutgoingMessage dom = Server.CreateMessage();
@@ -110,13 +107,14 @@ namespace ImageServer
 								}
 								*/
 
+								//
+								// A client connected; send the entire image in one very large message that will be fragmented automatically by the library
+								//
 								NetOutgoingMessage om = Server.CreateMessage(ImageData.Length + 5);
 
 								om.Write((ushort)ImageWidth);
 								om.Write((ushort)ImageHeight);
 								om.WriteVariableUInt32(0);
-
-								// send entire as a large message that will be automatically fragmented by the library
 								om.Write(ImageData);
 
 								Server.SendMessage(om, inc.SenderConnection, NetDeliveryMethod.ReliableOrdered, 0);

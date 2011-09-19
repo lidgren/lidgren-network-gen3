@@ -76,11 +76,12 @@ namespace Lidgren.Network
 						SendConnectResponse(now, true);
 						break;
 					case NetConnectionStatus.None:
-						if (m_peerConfiguration.IsMessageTypeEnabled(NetIncomingMessageType.ConnectionApproval))
-							break; // we're probably waiting for connection approval here
 						m_peer.LogWarning("Time to resend handshake, but status is " + m_status);
 						break;
-
+					case NetConnectionStatus.RespondedAwaitingApproval:
+						// awaiting approval
+						m_lastHandshakeSendTime = now; // postpone handshake resend
+						break;
 					default:
 						m_peer.LogWarning("Time to resend handshake, but status is " + m_status);
 						break;
@@ -212,6 +213,12 @@ namespace Lidgren.Network
 		/// </summary>
 		public void Approve()
 		{
+			if (m_status != NetConnectionStatus.RespondedAwaitingApproval)
+			{
+				m_peer.LogWarning("Approve() called in wrong status; expected RespondedAwaitingApproval; got " + m_status);
+				return;
+			}
+
 			m_localHailMessage = null;
 			m_handshakeAttempts = 0;
 			SendConnectResponse((float)NetTime.Now, false);
@@ -223,6 +230,12 @@ namespace Lidgren.Network
 		/// <param name="localHail">The local hail message that will be set as RemoteHailMessage on the remote host</param>
 		public void Approve(NetOutgoingMessage localHail)
 		{
+			if (m_status != NetConnectionStatus.RespondedAwaitingApproval)
+			{
+				m_peer.LogWarning("Approve() called in wrong status; expected RespondedAwaitingApproval; got " + m_status);
+				return;
+			}
+
 			m_localHailMessage = localHail;
 			m_handshakeAttempts = 0;
 			SendConnectResponse((float)NetTime.Now, false);
@@ -283,11 +296,17 @@ namespace Lidgren.Network
 								if (m_remoteHailMessage != null)
 									appMsg.Write(m_remoteHailMessage.m_data, 0, m_remoteHailMessage.LengthBytes);
 								m_peer.ReleaseMessage(appMsg);
+								SetStatus(NetConnectionStatus.RespondedAwaitingApproval, "Awaiting approval");
 								return;
 							}
 
 							SendConnectResponse((float)now, true);
 						}
+						return;
+					}
+					if (m_status == NetConnectionStatus.RespondedAwaitingApproval)
+					{
+						m_peer.LogWarning("Ignoring multiple Connect() most likely due to a delayed Approval");
 						return;
 					}
 					if (m_status == NetConnectionStatus.RespondedConnect)
