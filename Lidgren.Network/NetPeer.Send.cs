@@ -98,7 +98,7 @@ namespace Lidgren.Network
 
 			msg.m_isSent = true;
 
-			int len = msg.LengthBytes;
+			int len = msg.GetEncodedSize();
 			if (len <= mtu)
 			{
 				Interlocked.Add(ref msg.m_recyclingCount, recipients.Count);

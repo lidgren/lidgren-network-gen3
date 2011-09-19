@@ -110,7 +110,6 @@ namespace Lidgren.Network
 			if (m_fragmentGroup != 0)
 				retval += NetFragmentationHelper.GetFragmentationHeaderSize(m_fragmentGroup, m_fragmentGroupTotalBits / 8, m_fragmentChunkByteSize, m_fragmentChunkNumber);
 			retval += this.LengthBytes;
-
 			return retval;
 		}
 
