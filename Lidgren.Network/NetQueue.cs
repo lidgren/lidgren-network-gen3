@@ -21,6 +21,8 @@ using System;
 using System.Diagnostics;
 using System.Collections.Generic;
 
+// @TODO: examine performance characteristics of using SpinLock when using .Net 4.0
+
 namespace Lidgren.Network
 {
 	/// <summary>
@@ -80,6 +82,25 @@ namespace Lidgren.Network
 				int slot = (m_head + m_size) % m_items.Length;
 				m_items[slot] = item;
 				m_size++;
+			}
+		}
+
+		/// <summary>
+		/// Adds an item last/tail of the queue
+		/// </summary>
+		public void Enqueue(IEnumerable<T> items)
+		{
+			lock (m_lock)
+			{
+				foreach (var item in items)
+				{
+					if (m_size == m_items.Length)
+						SetCapacity(m_items.Length + 8); // @TODO move this out of loop
+
+					int slot = (m_head + m_size) % m_items.Length;
+					m_items[slot] = item;
+					m_size++;
+				}
 			}
 		}
 

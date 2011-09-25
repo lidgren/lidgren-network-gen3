@@ -80,7 +80,7 @@ namespace ManyClients
 		private void button1_Click(object sender, EventArgs e)
 		{
 			var om = Net.CreateMessage();
-			om.Write("Hi!");
+			om.Write("Manual hi!");
 
 			Net.SendMessage(om, NetDeliveryMethod.ReliableOrdered);
 		}

@@ -17,6 +17,8 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 */
+//#define USE_RELEASE_STATISTICS
+
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -228,6 +230,9 @@ namespace Lidgren.Network
 		//
 		internal void SendPacket(int numBytes, IPEndPoint target, int numMessages, out bool connectionReset)
 		{
+#if USE_RELEASE_STATISTICS
+			m_statistics.PacketSent(numBytes, numMessages);
+#endif
 			connectionReset = false;
 			try
 			{

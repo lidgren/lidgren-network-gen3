@@ -146,8 +146,13 @@ namespace Lidgren.Network
 		{
 			StringBuilder bdr = new StringBuilder();
 			bdr.AppendLine(m_peer.ConnectionsCount.ToString() + " connections");
+#if DEBUG || USE_RELEASE_STATISTICS
 			bdr.AppendLine("Sent " + m_sentBytes + " bytes in " + m_sentMessages + " messages in " + m_sentPackets + " packets");
 			bdr.AppendLine("Received " + m_receivedBytes + " bytes in " + m_receivedMessages + " messages in " + m_receivedPackets + " packets");
+#else
+			bdr.AppendLine("Sent (n/a) bytes in (n/a) messages in (n/a) packets");
+			bdr.AppendLine("Received (n/a) bytes in (n/a) messages in (n/a) packets");
+#endif
 			bdr.AppendLine("Storage allocated " + m_bytesAllocated + " bytes");
 			bdr.AppendLine("Recycled pool " + m_peer.m_storagePoolBytes + " bytes");
 			return bdr.ToString();

@@ -55,19 +55,18 @@ namespace Lidgren.Network
 			if (m_storagePool == null)
 				return;
 
-			int len = storage.Length;
 			lock (m_storagePool)
 			{
-				for (int i = 0; i < m_storagePool.Count; i++)
+				m_storagePoolBytes += storage.Length;
+				int cnt = m_storagePool.Count;
+				for (int i = 0; i < cnt; i++)
 				{
 					if (m_storagePool[i] == null)
 					{
-						m_storagePoolBytes += storage.Length;
 						m_storagePool[i] = storage;
 						return;
 					}
 				}
-				m_storagePoolBytes += storage.Length;
 				m_storagePool.Add(storage);
 			}
 		}
@@ -156,18 +155,33 @@ namespace Lidgren.Network
 			if (m_incomingMessagesPool == null)
 				return;
 
-			foreach (var msg in toRecycle)
+			// first recycle the storage of each message
+			if (m_storagePool != null)
 			{
-#if DEBUG
-				if (m_incomingMessagesPool.Contains(msg))
-					throw new NetException("Recyling already recycled message! Thread race?");
-#endif
-				byte[] storage = msg.m_data;
-				msg.m_data = null;
-				Recycle(storage);
-				msg.Reset();
-				m_incomingMessagesPool.Enqueue(msg);
+				lock (m_storagePool)
+				{
+					foreach (var msg in toRecycle)
+					{
+						var storage = msg.m_data;
+						msg.m_data = null;
+						m_storagePoolBytes += storage.Length;
+						int cnt = m_storagePool.Count;
+						for (int i = 0; i < cnt; i++)
+						{
+							if (m_storagePool[i] == null)
+							{
+								m_storagePool[i] = storage;
+								return;
+							}
+						}
+						msg.Reset();
+						m_storagePool.Add(storage);
+					}
+				}
 			}
+
+			// then recycle the message objects
+			m_incomingMessagesPool.Enqueue(toRecycle);
 		}
 
 		internal void Recycle(NetOutgoingMessage msg)
