@@ -32,6 +32,20 @@ namespace Lidgren.Network
 	/// </summary>
 	public static class NetUtility
 	{
+		public delegate void ResolveEndPointCallback(IPEndPoint endpoint);
+		public delegate void ResolveAddressCallback(IPAddress adr);
+
+		/// <summary>
+		/// Get IPv4 endpoint from notation (xxx.xxx.xxx.xxx) or hostname and port number (asynchronous version)
+		/// </summary>
+		public static void ResolveAsync(string ipOrHost, int port, ResolveEndPointCallback callback)
+		{
+			ResolveAsync(ipOrHost, delegate(IPAddress adr)
+			{
+				callback(new IPEndPoint(adr, port));
+			});
+		}
+
 		/// <summary>
 		/// Get IPv4 endpoint from notation (xxx.xxx.xxx.xxx) or hostname and port number
 		/// </summary>
@@ -39,6 +53,68 @@ namespace Lidgren.Network
 		{
 			IPAddress adr = Resolve(ipOrHost);
 			return new IPEndPoint(adr, port);
+		}
+
+		/// <summary>
+		/// Get IPv4 address from notation (xxx.xxx.xxx.xxx) or hostname (asynchronous version)
+		/// </summary>
+		public static void ResolveAsync(string ipOrHost, ResolveAddressCallback callback)
+		{
+			if (string.IsNullOrEmpty(ipOrHost))
+				throw new ArgumentException("Supplied string must not be empty", "ipOrHost");
+
+			ipOrHost = ipOrHost.Trim();
+
+			IPAddress ipAddress = null;
+			if (IPAddress.TryParse(ipOrHost, out ipAddress))
+			{
+				if (ipAddress.AddressFamily == AddressFamily.InterNetwork)
+				{
+					callback(ipAddress);
+					return;
+				}
+				throw new ArgumentException("This method will not currently resolve other than ipv4 addresses");
+			}
+
+			// ok must be a host name
+			IPHostEntry entry;
+			try
+			{
+				Dns.BeginGetHostEntry(ipOrHost, delegate(IAsyncResult result)
+				{
+					entry = Dns.EndGetHostEntry(result);
+
+					if (entry == null)
+					{
+						callback(null);
+						return;
+					}
+
+					// check each entry for a valid IP address
+					foreach (IPAddress ipCurrent in entry.AddressList)
+					{
+						if (ipCurrent.AddressFamily == AddressFamily.InterNetwork)
+						{
+							callback(ipCurrent);
+							return;
+						}
+					}
+
+					callback(null);
+				}, null);
+			}
+			catch (SocketException ex)
+			{
+				if (ex.SocketErrorCode == SocketError.HostNotFound)
+				{
+					//LogWrite(string.Format(CultureInfo.InvariantCulture, "Failed to resolve host '{0}'.", ipOrHost));
+					callback(null);
+				}
+				else
+				{
+					throw;
+				}
+			}
 		}
 
 		/// <summary>
