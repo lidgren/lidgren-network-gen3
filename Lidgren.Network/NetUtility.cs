@@ -42,7 +42,14 @@ namespace Lidgren.Network
 		{
 			ResolveAsync(ipOrHost, delegate(IPAddress adr)
 			{
-				callback(new IPEndPoint(adr, port));
+				if (adr == null)
+				{
+					callback(null);
+				}
+				else
+				{
+					callback(new IPEndPoint(adr, port));
+				}
 			});
 		}
 
@@ -82,7 +89,23 @@ namespace Lidgren.Network
 			{
 				Dns.BeginGetHostEntry(ipOrHost, delegate(IAsyncResult result)
 				{
-					entry = Dns.EndGetHostEntry(result);
+					try
+					{
+						entry = Dns.EndGetHostEntry(result);
+					}
+					catch (SocketException ex)
+					{
+						if (ex.SocketErrorCode == SocketError.HostNotFound)
+						{
+							//LogWrite(string.Format(CultureInfo.InvariantCulture, "Failed to resolve host '{0}'.", ipOrHost));
+							callback(null);
+							return;
+						}
+						else
+						{
+							throw;
+						}
+					}
 
 					if (entry == null)
 					{
