@@ -169,6 +169,8 @@ namespace Lidgren.Network
 				{
 					//m_connection.m_peer.LogDebug("Using early ack for #" + m_windowStart + "...");
 					m_receivedAcks[m_windowStart] = false;
+					DestoreMessage(m_windowStart % m_windowSize);
+
 					NetException.Assert(m_storedMessages[m_windowStart % m_windowSize].Message == null); // should already be destored
 					m_windowStart = (m_windowStart + 1) % NetConstants.NumSequenceNumbers;
 					//m_connection.m_peer.LogDebug("Advancing window to #" + m_windowStart);
@@ -196,13 +198,13 @@ namespace Lidgren.Network
 				}
 				else
 				{
-					DestoreMessage(seqNr % m_windowSize);
 					m_receivedAcks[seqNr] = true;
 				}
 			}
 			else if (sendRelate > 0)
 			{
 				// uh... we haven't sent this message yet? Weird, dupe or error...
+				NetException.Assert(false, "Got ack for message not yet sent?");
 				return;
 			}
 

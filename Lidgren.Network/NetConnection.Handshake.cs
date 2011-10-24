@@ -295,8 +295,8 @@ namespace Lidgren.Network
 								appMsg.m_senderEndpoint = this.m_remoteEndpoint;
 								if (m_remoteHailMessage != null)
 									appMsg.Write(m_remoteHailMessage.m_data, 0, m_remoteHailMessage.LengthBytes);
-								m_peer.ReleaseMessage(appMsg);
 								SetStatus(NetConnectionStatus.RespondedAwaitingApproval, "Awaiting approval");
+								m_peer.ReleaseMessage(appMsg);
 								return;
 							}
 
