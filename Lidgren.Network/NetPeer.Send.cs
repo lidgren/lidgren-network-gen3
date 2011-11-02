@@ -145,6 +145,7 @@ namespace Lidgren.Network
 				throw new NetException("Failed to resolve " + host);
 
 			msg.m_messageType = NetMessageType.Unconnected;
+			msg.m_isSent = true;
 
 			Interlocked.Increment(ref msg.m_recyclingCount);
 			m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(new IPEndPoint(adr, port), msg));
@@ -193,6 +194,32 @@ namespace Lidgren.Network
 			Interlocked.Add(ref msg.m_recyclingCount, recipients.Count);
 			foreach(IPEndPoint ep in recipients)
 				m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(ep, msg));
+		}
+
+		/// <summary>
+		/// Send a message to this exact same netpeer (loopback)
+		/// </summary>
+		public void SendUnconnectedToSelf(NetOutgoingMessage msg)
+		{
+			if (msg == null)
+				throw new ArgumentNullException("msg");
+			if (msg.m_isSent)
+				throw new NetException("This message has already been sent! Use NetPeer.SendMessage() to send to multiple recipients efficiently");
+
+			msg.m_messageType = NetMessageType.Unconnected;
+			msg.m_isSent = true;
+
+			if (m_configuration.IsMessageTypeEnabled(NetIncomingMessageType.UnconnectedData) == false)
+				return; // dropping unconnected message since it's not enabled for receiving
+
+			NetIncomingMessage om = CreateIncomingMessage(NetIncomingMessageType.UnconnectedData, msg.LengthBytes);
+			om.m_isFragment = false;
+			om.m_receiveTime = NetTime.Now;
+			om.m_senderConnection = null;
+			om.m_senderEndpoint = m_socket.LocalEndPoint as IPEndPoint;
+			om.m_bitLength = msg.LengthBits;
+
+			ReleaseMessage(om);
 		}
 	}
 }
