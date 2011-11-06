@@ -106,6 +106,11 @@ namespace Lidgren.Network
 				m_socket.Blocking = false;
 				m_socket.Bind(ep);
 
+				const uint IOC_IN = 0x80000000;
+				const uint IOC_VENDOR = 0x18000000;
+				uint SIO_UDP_CONNRESET = IOC_IN | IOC_VENDOR | 12;
+				m_socket.IOControl((int)SIO_UDP_CONNRESET, new byte[] { Convert.ToByte(false) }, null);
+
 				IPEndPoint boundEp = m_socket.LocalEndPoint as IPEndPoint;
 				LogDebug("Socket bound to " + boundEp + ": " + m_socket.IsBound);
 				m_listenPort = boundEp.Port;
@@ -349,6 +354,7 @@ namespace Lidgren.Network
 						// connection reset by peer, aka connection forcibly closed aka "ICMP port unreachable" 
 						// we should shut down the connection; but m_senderRemote seemingly cannot be trusted, so which connection should we shut down?!
 						// So, what to do?
+						LogWarning("ConnectionReset");
 						return;
 					}
 

@@ -71,10 +71,12 @@ namespace ChatServer
 							List<NetConnection> all = s_server.Connections; // get copy
 							all.Remove(im.SenderConnection);
 
-							NetOutgoingMessage om = s_server.CreateMessage();
-							om.Write(NetUtility.ToHexString(im.SenderConnection.RemoteUniqueIdentifier) + " said: " + chat);
-
-							s_server.SendMessage(om, all, NetDeliveryMethod.ReliableOrdered, 0);
+							if (all.Count > 0)
+							{
+								NetOutgoingMessage om = s_server.CreateMessage();
+								om.Write(NetUtility.ToHexString(im.SenderConnection.RemoteUniqueIdentifier) + " said: " + chat);
+								s_server.SendMessage(om, all, NetDeliveryMethod.ReliableOrdered, 0);
+							}
 							break;
 						default:
 							Output("Unhandled type: " + im.MessageType + " " + im.LengthBytes + " bytes " + im.DeliveryMethod + "|" + im.SequenceChannel);
