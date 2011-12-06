@@ -69,7 +69,13 @@ namespace UnitTests
 			bdr.Append(inc.ReadBoolean());
 			bdr.Append(inc.ReadInt32(6));
 			bdr.Append(inc.ReadInt32());
-			bdr.Append(inc.ReadString());
+
+			string strResult;
+			bool ok = inc.ReadString(out strResult);
+			if (ok == false)
+				throw new NetException("Read/write failure");
+			bdr.Append(strResult);
+			
 			bdr.Append(inc.ReadByte());
 
 			if (inc.PeekUInt16() != (ushort)44)
