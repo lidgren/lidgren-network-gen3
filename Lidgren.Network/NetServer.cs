@@ -24,7 +24,11 @@ namespace Lidgren.Network
 		/// <param name="method">How to deliver the message</param>
 		public void SendToAll(NetOutgoingMessage msg, NetDeliveryMethod method)
 		{
-			SendMessage(msg, this.Connections, method, 0);
+			var all = this.Connections;
+			if (all.Count <= 0)
+				return;
+
+			SendMessage(msg, all, method, 0);
 		}
 
 		/// <summary>
