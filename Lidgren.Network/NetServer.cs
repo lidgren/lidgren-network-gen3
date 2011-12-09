@@ -40,6 +40,12 @@ namespace Lidgren.Network
 			if (all.Count <= 0)
 				return;
 
+			if (except == null)
+			{
+				SendMessage(msg, all, method, sequenceChannel);
+				return;
+			}
+
 			List<NetConnection> recipients = new List<NetConnection>(all.Count - 1);
 			foreach (var conn in all)
 				if (conn != except)
