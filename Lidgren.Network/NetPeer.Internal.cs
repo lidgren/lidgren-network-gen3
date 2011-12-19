@@ -221,7 +221,11 @@ namespace Lidgren.Network
 				{
 					if (m_socket != null)
 					{
-						m_socket.Shutdown(SocketShutdown.Receive);
+						try
+						{
+							m_socket.Shutdown(SocketShutdown.Receive);
+						}
+						catch { }
 						m_socket.Close(2); // 2 seconds timeout
 					}
 					if (m_messageReceivedEvent != null)
