@@ -233,6 +233,22 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
+		/// Reads a 32 bit signed integer written using Write(Int32)
+		/// </summary>
+		public bool ReadInt32(out Int32 result)
+		{
+			if (m_bitLength - m_readPosition < 32)
+			{
+				result = 0;
+				return false;
+			}
+
+			result = (Int32)NetBitWriter.ReadUInt32(m_data, 32, m_readPosition);
+			m_readPosition += 32;
+			return true;
+		}
+
+		/// <summary>
 		/// Reads a signed integer stored in 1 to 32 bits, written using Write(Int32, Int32)
 		/// </summary>
 		public Int32 ReadInt32(int numberOfBits)
@@ -389,6 +405,29 @@ namespace Lidgren.Network
 
 			byte[] bytes = ReadBytes(4);
 			return BitConverter.ToSingle(bytes, 0);
+		}
+
+		/// <summary>
+		/// Reads a 32 bit floating point value written using Write(Single)
+		/// </summary>
+		public bool ReadSingle(out float result)
+		{
+			if (m_bitLength - m_readPosition < 32)
+			{
+				result = 0.0f;
+				return false;
+			}
+
+			if ((m_readPosition & 7) == 0) // read directly
+			{
+				result = BitConverter.ToSingle(m_data, m_readPosition >> 3);
+				m_readPosition += 32;
+				return true;
+			}
+
+			byte[] bytes = ReadBytes(4);
+			result = BitConverter.ToSingle(bytes, 0);
+			return true;
 		}
 
 		/// <summary>
