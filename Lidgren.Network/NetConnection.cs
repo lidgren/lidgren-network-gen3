@@ -292,6 +292,9 @@ namespace Lidgren.Network
 		// called by SendMessage() and NetPeer.SendMessage; ie. may be user thread
 		internal NetSendResult EnqueueMessage(NetOutgoingMessage msg, NetDeliveryMethod method, int sequenceChannel)
 		{
+			if (m_status != NetConnectionStatus.Connected)
+				return NetSendResult.FailedNotConnected;
+
 			NetMessageType tp = (NetMessageType)((int)method + sequenceChannel);
 			msg.m_messageType = tp;
 

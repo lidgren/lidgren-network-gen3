@@ -128,7 +128,7 @@ namespace Lidgren.Network
 			if (serverConnection == null)
 			{
 				LogWarning("Cannot send message, no server connection!");
-				return NetSendResult.Failed;
+				return NetSendResult.FailedNotConnected;
 			}
 
 			return serverConnection.SendMessage(msg, method, 0);
@@ -143,7 +143,7 @@ namespace Lidgren.Network
 			if (serverConnection == null)
 			{
 				LogWarning("Cannot send message, no server connection!");
-				return NetSendResult.Failed;
+				return NetSendResult.FailedNotConnected;
 			}
 
 			return serverConnection.SendMessage(msg, method, sequenceChannel);

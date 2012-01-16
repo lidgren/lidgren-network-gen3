@@ -55,6 +55,8 @@ namespace Lidgren.Network
 			else
 			{
 				// message must be fragmented!
+				if (recipient.m_status != NetConnectionStatus.Connected)
+					return NetSendResult.FailedNotConnected;
 				SendFragmentedMessage(msg, new NetConnection[] { recipient }, method, sequenceChannel);
 				return NetSendResult.Queued; // could be different for each connection; Queued is "most true"
 			}
@@ -110,11 +112,8 @@ namespace Lidgren.Network
 						continue;
 					}
 					NetSendResult res = conn.EnqueueMessage(msg, method, sequenceChannel);
-					if (res == NetSendResult.Dropped)
-					{
-						LogDebug(msg + " dropped immediately due to full queues");
+					if (res != NetSendResult.Queued && res != NetSendResult.Sent)
 						Interlocked.Decrement(ref msg.m_recyclingCount);
-					}
 				}
 			}
 			else
