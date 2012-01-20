@@ -21,9 +21,21 @@ using System.Collections.Generic;
 using System.Net;
 using System.Reflection;
 using System.Text;
+using System.Runtime.InteropServices;
 
 namespace Lidgren.Network
 {
+	[StructLayout(LayoutKind.Explicit)]
+	public struct SingleUIntUnion
+	{
+		[FieldOffset(0)]
+		public float SingleValue;
+
+		[FieldOffset(0)]
+		[CLSCompliant(false)]
+		public uint UIntValue;
+	}
+
 	public sealed partial class NetOutgoingMessage
 	{
 		private const int c_overAllocateAmount = 4;
@@ -386,17 +398,16 @@ namespace Lidgren.Network
 		/// </summary>
 		public void Write(float source)
 		{
-			byte[] val = BitConverter.GetBytes(source);
+			// Use union to avoid BitConverter.GetBytes() which allocates memory on the heap
+			SingleUIntUnion su;
+			su.UIntValue = 0; // must initialize every member of the union to avoid warning
+			su.SingleValue = source;
+
 #if BIGENDIAN
 			// swap byte order
-			byte tmp = val[3];
-			val[3] = val[0];
-			val[0] = tmp;
-			tmp = val[2];
-			val[2] = val[1];
-			val[1] = tmp;
+			su.UIntValue = NetUtility.SwapByteOrder(su.UIntValue);
 #endif
-			Write(val);
+			Write(su.UIntValue);
 		}
 #endif
 
