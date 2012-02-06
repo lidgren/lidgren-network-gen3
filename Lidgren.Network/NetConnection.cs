@@ -20,7 +20,8 @@ namespace Lidgren.Network
 		internal NetReceiverChannelBase[] m_receiveChannels;
 		internal NetOutgoingMessage m_localHailMessage;
 		internal long m_remoteUniqueIdentifier;
-		internal NetQueue<NetTuple<NetMessageType, int>> m_queuedAcks;
+		internal NetQueue<NetTuple<NetMessageType, int>> m_queuedOutgoingAcks;
+		internal NetQueue<NetTuple<NetMessageType, int>> m_queuedIncomingAcks;
 		private int m_sendBufferWritePtr;
 		private int m_sendBufferNumMessages;
 		private object m_tag;
@@ -83,7 +84,8 @@ namespace Lidgren.Network
 			m_remoteEndpoint = remoteEndpoint;
 			m_sendChannels = new NetSenderChannelBase[NetConstants.NumTotalChannels];
 			m_receiveChannels = new NetReceiverChannelBase[NetConstants.NumTotalChannels];
-			m_queuedAcks = new NetQueue<NetTuple<NetMessageType, int>>(4);
+			m_queuedOutgoingAcks = new NetQueue<NetTuple<NetMessageType, int>>(4);
+			m_queuedIncomingAcks = new NetQueue<NetTuple<NetMessageType, int>>(4);
 			m_statistics = new NetConnectionStatistics(this);
 			m_averageRoundtripTime = -1.0f;
 			m_currentMTU = m_peerConfiguration.MaximumTransmissionUnit;
@@ -179,11 +181,11 @@ namespace Lidgren.Network
 				//
 				// send ack messages
 				//
-				while (m_queuedAcks.Count > 0)
+				while (m_queuedOutgoingAcks.Count > 0)
 				{
 					int acks = (mtu - (m_sendBufferWritePtr + 5)) / 3; // 3 bytes per actual ack
-					if (acks > m_queuedAcks.Count)
-						acks = m_queuedAcks.Count;
+					if (acks > m_queuedOutgoingAcks.Count)
+						acks = m_queuedOutgoingAcks.Count;
 
 					NetException.Assert(acks > 0);
 
@@ -201,7 +203,7 @@ namespace Lidgren.Network
 					for (int i = 0; i < acks; i++)
 					{
 						NetTuple<NetMessageType, int> tuple;
-						m_queuedAcks.TryDequeue(out tuple);
+						m_queuedOutgoingAcks.TryDequeue(out tuple);
 
 						//m_peer.LogVerbose("Sending ack for " + tuple.Item1 + "#" + tuple.Item2);
 
@@ -210,7 +212,7 @@ namespace Lidgren.Network
 						sendBuffer[m_sendBufferWritePtr++] = (byte)(tuple.Item2 >> 8);
 					}
 
-					if (m_queuedAcks.Count > 0)
+					if (m_queuedOutgoingAcks.Count > 0)
 					{
 						// send packet and go for another round of acks
 						NetException.Assert(m_sendBufferWritePtr > 0 && m_sendBufferNumMessages > 0);
@@ -219,6 +221,19 @@ namespace Lidgren.Network
 						m_sendBufferWritePtr = 0;
 						m_sendBufferNumMessages = 0;
 					}
+				}
+
+				//
+				// Parse incoming acks (may trigger resends)
+				//
+				NetTuple<NetMessageType, int> incAck;
+				while (m_queuedIncomingAcks.TryDequeue(out incAck))
+				{
+					//m_peer.LogVerbose("Received ack for " + acktp + "#" + seqNr);
+					NetSenderChannelBase chan = m_sendChannels[(int)incAck.Item1 - 1];
+					if (chan == null)
+						chan = CreateSenderChannel(incAck.Item1);
+					chan.ReceiveAcknowledge(now, incAck.Item2);
 				}
 			}
 
@@ -362,13 +377,8 @@ namespace Lidgren.Network
 						int seqNr = m_peer.m_receiveBuffer[ptr++];
 						seqNr |= (m_peer.m_receiveBuffer[ptr++] << 8);
 
-						NetSenderChannelBase chan = m_sendChannels[(int)acktp - 1];
-						if (chan == null)
-							chan = CreateSenderChannel(acktp);
-
-						//m_peer.LogVerbose("Received ack for " + acktp + "#" + seqNr);
-
-						chan.ReceiveAcknowledge(now, seqNr);
+						// need to enqueue this and handle it in the netconnection heartbeat; so be able to send resends together with normal sends
+						m_queuedIncomingAcks.Enqueue(new NetTuple<NetMessageType, int>(acktp, seqNr));
 					}
 					break;
 				case NetMessageType.Ping:
@@ -446,7 +456,7 @@ namespace Lidgren.Network
 
 		internal void QueueAck(NetMessageType tp, int sequenceNumber)
 		{
-			m_queuedAcks.Enqueue(new NetTuple<NetMessageType, int>(tp, sequenceNumber));
+			m_queuedOutgoingAcks.Enqueue(new NetTuple<NetMessageType, int>(tp, sequenceNumber));
 		}
 
 		/// <summary>
