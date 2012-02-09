@@ -332,27 +332,38 @@ namespace Lidgren.Network
 		private NetSenderChannelBase CreateSenderChannel(NetMessageType tp)
 		{
 			NetSenderChannelBase chan;
-			NetDeliveryMethod method = NetUtility.GetDeliveryMethod(tp);
-			int sequenceChannel = (int)tp - (int)method;
-			switch (method)
+			lock (m_sendChannels)
 			{
-				case NetDeliveryMethod.Unreliable:
-				case NetDeliveryMethod.UnreliableSequenced:
-					chan = new NetUnreliableSenderChannel(this, NetUtility.GetWindowSize(method));
-					break;
-				case NetDeliveryMethod.ReliableOrdered:
-					chan = new NetReliableSenderChannel(this, NetUtility.GetWindowSize(method));
-					break;
-				case NetDeliveryMethod.ReliableSequenced:
-				case NetDeliveryMethod.ReliableUnordered:
-				default:
-					chan = new NetReliableSenderChannel(this, NetUtility.GetWindowSize(method));
-					break;
-			}
+				NetDeliveryMethod method = NetUtility.GetDeliveryMethod(tp);
+				int sequenceChannel = (int)tp - (int)method;
 
-			int channelSlot = (int)method - 1 + sequenceChannel;
-			NetException.Assert(m_sendChannels[channelSlot] == null);
-			m_sendChannels[channelSlot] = chan;
+				int channelSlot = (int)method - 1 + sequenceChannel;
+				if (m_sendChannels[channelSlot] != null)
+				{
+					// we were pre-empted by another call to this method
+					chan = m_sendChannels[channelSlot];
+				}
+				else
+				{
+
+					switch (method)
+					{
+						case NetDeliveryMethod.Unreliable:
+						case NetDeliveryMethod.UnreliableSequenced:
+							chan = new NetUnreliableSenderChannel(this, NetUtility.GetWindowSize(method));
+							break;
+						case NetDeliveryMethod.ReliableOrdered:
+							chan = new NetReliableSenderChannel(this, NetUtility.GetWindowSize(method));
+							break;
+						case NetDeliveryMethod.ReliableSequenced:
+						case NetDeliveryMethod.ReliableUnordered:
+						default:
+							chan = new NetReliableSenderChannel(this, NetUtility.GetWindowSize(method));
+							break;
+					}
+					m_sendChannels[channelSlot] = chan;
+				}
+			}
 
 			return chan;
 		}
