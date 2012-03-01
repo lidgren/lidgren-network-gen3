@@ -235,6 +235,7 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Reads a 32 bit signed integer written using Write(Int32)
 		/// </summary>
+		[CLSCompliant(false)]
 		public bool ReadInt32(out Int32 result)
 		{
 			if (m_bitLength - m_readPosition < 32)
