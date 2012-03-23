@@ -60,7 +60,7 @@ namespace UnitTests
 			if (bcnt != 2)
 				throw new NetException("WriteVariable* wrote too many bytes!");
 
-			byte[] data = msg.PeekDataBuffer();
+			byte[] data = msg.Data;
 
 			NetIncomingMessage inc = Program.CreateIncomingMessage(data, msg.LengthBits);
 
@@ -119,7 +119,7 @@ namespace UnitTests
 
 			tmp.WriteAllFields(test, BindingFlags.Public | BindingFlags.Instance);
 
-			data = tmp.PeekDataBuffer();
+			data = tmp.Data;
 
 			inc = Program.CreateIncomingMessage(data, tmp.LengthBits);
 
@@ -135,7 +135,7 @@ namespace UnitTests
 			byte[] tmparr = new byte[] { 5, 6, 7, 8, 9 };
 			msg.Write(tmparr);
 
-			inc = Program.CreateIncomingMessage(msg.PeekDataBuffer(), msg.LengthBits);
+			inc = Program.CreateIncomingMessage(msg.Data, msg.LengthBits);
 			byte[] result = inc.ReadBytes(tmparr.Length);
 
 			for (int i = 0; i < tmparr.Length; i++)

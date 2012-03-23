@@ -26,10 +26,8 @@ namespace Lidgren.Network
 	/// Incoming message either sent from a remote peer or generated within the library
 	/// </summary>
 	[DebuggerDisplay("Type={MessageType} LengthBits={LengthBits}")]
-	public partial class NetIncomingMessage
+	public sealed class NetIncomingMessage : NetBuffer
 	{
-		internal byte[] m_data;
-		internal int m_bitLength;
 		internal NetIncomingMessageType m_incomingMessageType;
 		internal IPEndPoint m_senderEndpoint;
 		internal NetConnection m_senderConnection;
@@ -67,23 +65,6 @@ namespace Lidgren.Network
 		/// What local time the message was received from the network
 		/// </summary>
 		public double ReceiveTime { get { return m_receiveTime; } }
-
-		/// <summary>
-		/// Gets the length of the message payload in bytes
-		/// </summary>
-		public int LengthBytes
-		{
-			get { return ((m_bitLength + 7) >> 3); }
-		}
-
-		/// <summary>
-		/// Gets the length of the message payload in bits
-		/// </summary>
-		public int LengthBits
-		{
-			get { return m_bitLength; }
-			internal set { m_bitLength = value; }
-		}
 
 		internal NetIncomingMessage()
 		{
