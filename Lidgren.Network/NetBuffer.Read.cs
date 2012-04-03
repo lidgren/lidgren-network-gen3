@@ -602,6 +602,20 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
+		/// Reads a value, in local time comparable to NetTime.Now, written using WriteTime() for the connection supplied
+		/// </summary>
+		public double ReadTime(NetConnection connection, bool highPrecision)
+		{
+			double remoteTime = (highPrecision ? ReadDouble() : (double)ReadSingle());
+
+			if (connection == null)
+				throw new NetException("Cannot call ReadTime() on message without a connected sender (ie. unconnected messages)");
+
+			// lets bypass NetConnection.GetLocalTime for speed
+			return remoteTime - connection.m_remoteTimeOffset;
+		}
+
+		/// <summary>
 		/// Reads a stored IPv4 endpoint description
 		/// </summary>
 		public IPEndPoint ReadIPEndpoint()

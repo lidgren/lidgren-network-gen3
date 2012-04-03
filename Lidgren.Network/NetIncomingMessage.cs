@@ -96,6 +96,15 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
+		/// Reads a value, in local time comparable to NetTime.Now, written using WriteTime()
+		/// Must have a connected sender
+		/// </summary>
+		public double ReadTime(bool highPrecision)
+		{
+			return ReadTime(m_senderConnection, highPrecision);
+		}
+
+		/// <summary>
 		/// Returns a string that represents this object
 		/// </summary>
 		public override string ToString()

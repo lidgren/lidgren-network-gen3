@@ -6,7 +6,6 @@ namespace Lidgren.Network
 {
 	public partial class NetBuffer
 	{
-		// @TODO Add ReadTime() to incomingmessage class
 		private const int c_overAllocateAmount = 4;
 
 		private static readonly Dictionary<Type, MethodInfo> s_readMethods;

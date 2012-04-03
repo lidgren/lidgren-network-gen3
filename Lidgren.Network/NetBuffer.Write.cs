@@ -547,7 +547,19 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
-		/// Writes the local time to a message; readable (and convertable to local time) by the remote host using ReadTime()
+		/// Writes the current local time to a message; readable (and convertable to local time) by the remote host using ReadTime()
+		/// </summary>
+		public void WriteTime(bool highPrecision)
+		{
+			double localTime = NetTime.Now;
+			if (highPrecision)
+				Write(localTime);
+			else
+				Write((float)localTime);
+		}
+
+		/// <summary>
+		/// Writes a local timestamp to a message; readable (and convertable to local time) by the remote host using ReadTime()
 		/// </summary>
 		public void WriteTime(double localTime, bool highPrecision)
 		{
