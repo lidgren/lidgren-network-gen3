@@ -6,7 +6,7 @@ namespace Lidgren.Network
 {
 	public partial class NetBuffer
 	{
-		private const int c_overAllocateAmount = 4;
+		protected const int c_overAllocateAmount = 4;
 
 		private static readonly Dictionary<Type, MethodInfo> s_readMethods;
 		private static readonly Dictionary<Type, MethodInfo> s_writeMethods;
@@ -75,14 +75,9 @@ namespace Lidgren.Network
 			MethodInfo[] methods = typeof(NetIncomingMessage).GetMethods(BindingFlags.Instance | BindingFlags.Public);
 			foreach (MethodInfo mi in methods)
 			{
-				if (mi.GetParameters().Length == 0 && mi.Name.StartsWith("Read", StringComparison.InvariantCulture))
+				if (mi.GetParameters().Length == 0 && mi.Name.StartsWith("Read", StringComparison.InvariantCulture) && mi.Name.Substring(4) == mi.ReturnType.Name)
 				{
-					string n = mi.Name.Substring(4);
-					foreach (Type it in integralTypes)
-					{
-						if (it.Name == n)
-							s_readMethods[it] = mi;
-					}
+					s_readMethods[mi.ReturnType] = mi;
 				}
 			}
 
