@@ -23,6 +23,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <PlatformTarget>x86</PlatformTarget>
@@ -32,6 +33,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -72,8 +74,8 @@
       <Project>{49BA1C69-6104-41AC-A5D8-B54FA9F696E8}</Project>
       <Name>Lidgren.Network</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\SamplesCommon\SamplesCommon\SamplesCommon.csproj">
-      <Project>{64D2482A-3C16-4D1F-A3F6-058FC3D73E21}</Project>
+    <ProjectReference Include="..\..\SamplesCommon\SamplesCommon.csproj">
+      <Project>{773069DA-B66E-4667-ADCB-0D215AD8CF3E}</Project>
       <Name>SamplesCommon</Name>
     </ProjectReference>
   </ItemGroup>
