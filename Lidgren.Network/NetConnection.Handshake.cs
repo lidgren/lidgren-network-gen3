@@ -93,7 +93,7 @@ namespace Lidgren.Network
 		{
 			m_peer.VerifyNetworkThread();
 
-			// m_peer.LogDebug("Executing disconnect");
+			//m_peer.LogDebug("Executing disconnect");
 
 			// clear send queues
 			for (int i = 0; i < m_sendChannels.Length; i++)

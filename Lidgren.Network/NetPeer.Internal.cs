@@ -212,8 +212,12 @@ namespace Lidgren.Network
 				}
 			}
 
+			FlushDelayedPackets();
+
 			// one final heartbeat, will send stuff and do disconnect
 			Heartbeat();
+
+			Thread.Sleep(10);
 
 			lock (m_initializeLock)
 			{

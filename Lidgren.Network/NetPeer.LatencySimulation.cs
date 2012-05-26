@@ -112,6 +112,18 @@ namespace Lidgren.Network
 			}
 		}
 
+		private void FlushDelayedPackets()
+		{
+			try
+			{
+				bool connectionReset;
+				foreach (DelayedPacket p in m_delayedPackets)
+					ActuallySendPacket(p.Data, p.Data.Length, p.Target, out connectionReset);
+				m_delayedPackets.Clear();
+			}
+			catch { }
+		}
+
 		internal bool ActuallySendPacket(byte[] data, int numBytes, IPEndPoint target, out bool connectionReset)
 		{
 			connectionReset = false;
@@ -270,6 +282,10 @@ namespace Lidgren.Network
 					m_socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Broadcast, false);
 			}
 			return;
+		}
+
+		private void FlushDelayedPackets()
+		{
 		}
 
 		private void SendCallBack(IAsyncResult res)
