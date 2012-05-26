@@ -18,7 +18,7 @@
     <HtmlHelpName>Documentation</HtmlHelpName>
     <Language>en-US</Language>
     <DocumentationSources>
-      <DocumentationSource sourceFile="..\Lidgren.Network\Lidgren.Network.csproj" configuration="Release" />
+      <DocumentationSource sourceFile="..\Lidgren.Network\Lidgren.Network.csproj" />
     </DocumentationSources>
     <HelpTitle>Lidgren Network Library documentation</HelpTitle>
     <BuildLogFile>
