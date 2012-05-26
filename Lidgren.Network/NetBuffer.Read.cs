@@ -146,7 +146,7 @@ namespace Lidgren.Network
 		public Int16 ReadInt16()
 		{
 			NetException.Assert(m_bitLength - m_readPosition >= 16, c_readOverflowError);
-			uint retval = NetBitWriter.ReadUInt32(m_data, 16, m_readPosition);
+			uint retval = NetBitWriter.ReadUInt16(m_data, 16, m_readPosition);
 			m_readPosition += 16;
 			return (short)retval;
 		}
@@ -158,7 +158,7 @@ namespace Lidgren.Network
 		public UInt16 ReadUInt16()
 		{
 			NetException.Assert(m_bitLength - m_readPosition >= 16, c_readOverflowError);
-			uint retval = NetBitWriter.ReadUInt32(m_data, 16, m_readPosition);
+			uint retval = NetBitWriter.ReadUInt16(m_data, 16, m_readPosition);
 			m_readPosition += 16;
 			return (ushort)retval;
 		}

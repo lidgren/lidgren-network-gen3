@@ -1,4 +1,6 @@
-﻿/* Copyright (c) 2010 Michael Lidgren
+﻿//#define UNSAFE
+//#define BIGENDIAN
+/* Copyright (c) 2010 Michael Lidgren
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software
 and associated documentation files (the "Software"), to deal in the Software without
@@ -169,6 +171,49 @@ namespace Lidgren.Network
 			return;
 		}
 
+		[CLSCompliant(false)]
+#if UNSAFE
+		public static unsafe ushort ReadUInt16(byte[] fromBuffer, int numberOfBits, int readBitOffset)
+		{
+			Debug.Assert(((numberOfBits > 0) && (numberOfBits <= 16)), "ReadUInt16() can only read between 1 and 16 bits");
+
+			if (numberOfBits == 16 && ((readBitOffset % 8) == 0))
+			{
+				fixed (byte* ptr = &(fromBuffer[readBitOffset / 8]))
+				{
+					return *(((ushort*)ptr));
+				}
+			}
+#else
+		public static ushort ReadUInt16(byte[] fromBuffer, int numberOfBits, int readBitOffset)
+		{
+			Debug.Assert(((numberOfBits > 0) && (numberOfBits <= 16)), "ReadUInt16() can only read between 1 and 16 bits");
+#endif
+			ushort returnValue;
+			if (numberOfBits <= 8)
+			{
+				returnValue = ReadByte(fromBuffer, numberOfBits, readBitOffset);
+				return returnValue;
+			}
+			returnValue = ReadByte(fromBuffer, 8, readBitOffset);
+			numberOfBits -= 8;
+			readBitOffset += 8;
+
+			if (numberOfBits <= 8)
+			{
+				returnValue |= (ushort)(ReadByte(fromBuffer, numberOfBits, readBitOffset) << 8);
+			}
+
+#if BIGENDIAN
+			// reorder bytes
+			uint retVal = returnValue;
+			retVal = ((retVal & 0x0000ff00) >> 8) | ((retVal & 0x000000ff) << 8);
+			return (ushort)retVal;
+#else
+			return returnValue;
+#endif
+		}
+
 		/// <summary>
 		/// Reads the specified number of bits into an UInt32
 		/// </summary>
@@ -226,17 +271,46 @@ namespace Lidgren.Network
 #if BIGENDIAN
 			// reorder bytes
 			return
-				((a & 0xff000000) >> 24) |
-				((a & 0x00ff0000) >> 8) |
-				((a & 0x0000ff00) << 8) |
-				((a & 0x000000ff) << 24);
-#endif
-
+				((returnValue & 0xff000000) >> 24) |
+				((returnValue & 0x00ff0000) >> 8) |
+				((returnValue & 0x0000ff00) << 8) |
+				((returnValue & 0x000000ff) << 24);
+#else
 			return returnValue;
+#endif
 		}
 
 		//[CLSCompliant(false)]
 		//public static ulong ReadUInt64(byte[] fromBuffer, int numberOfBits, int readBitOffset)
+
+		[CLSCompliant(false)]
+		public static int WriteUInt16(ushort source, int numberOfBits, byte[] destination, int destinationBitOffset)
+		{
+#if BIGENDIAN
+			// reorder bytes
+			uint intSource = source;
+			intSource = ((intSource & 0x0000ff00) >> 8) | ((intSource & 0x000000ff) << 8);
+			source = (ushort)intSource;
+#endif
+
+			int returnValue = destinationBitOffset + numberOfBits;
+			if (numberOfBits <= 8)
+			{
+				NetBitWriter.WriteByte((byte)source, numberOfBits, destination, destinationBitOffset);
+				return returnValue;
+			}
+			NetBitWriter.WriteByte((byte)source, 8, destination, destinationBitOffset);
+			destinationBitOffset += 8;
+			numberOfBits -= 8;
+
+			if (numberOfBits <= 8)
+			{
+				NetBitWriter.WriteByte((byte)(source >> 8), numberOfBits, destination, destinationBitOffset);
+				return returnValue;
+			}
+
+			return returnValue;
+		}
 
 		/// <summary>
 		/// Writes the specified number of bits into a byte array

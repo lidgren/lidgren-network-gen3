@@ -109,7 +109,7 @@ namespace Lidgren.Network
 		public Int16 PeekInt16()
 		{
 			NetException.Assert(m_bitLength - m_readPosition >= 16, c_readOverflowError);
-			uint retval = NetBitWriter.ReadUInt32(m_data, 16, m_readPosition);
+			uint retval = NetBitWriter.ReadUInt16(m_data, 16, m_readPosition);
 			return (short)retval;
 		}
 
@@ -120,7 +120,7 @@ namespace Lidgren.Network
 		public UInt16 PeekUInt16()
 		{
 			NetException.Assert(m_bitLength - m_readPosition >= 16, c_readOverflowError);
-			uint retval = NetBitWriter.ReadUInt32(m_data, 16, m_readPosition);
+			uint retval = NetBitWriter.ReadUInt16(m_data, 16, m_readPosition);
 			return (ushort)retval;
 		}
 

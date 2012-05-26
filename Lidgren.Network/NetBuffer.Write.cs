@@ -1,4 +1,6 @@
-﻿/* Copyright (c) 2010 Michael Lidgren
+﻿//#define UNSAFE
+//#define BIGENDIAN
+/* Copyright (c) 2010 Michael Lidgren
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software
 and associated documentation files (the "Software"), to deal in the Software without
@@ -146,7 +148,7 @@ namespace Lidgren.Network
 		public void Write(UInt16 source)
 		{
 			EnsureBufferSize(m_bitLength + 16);
-			NetBitWriter.WriteUInt32((uint)source, 16, m_data, m_bitLength);
+			NetBitWriter.WriteUInt16(source, 16, m_data, m_bitLength);
 			m_bitLength += 16;
 		}
 
@@ -158,7 +160,7 @@ namespace Lidgren.Network
 		{
 			NetException.Assert((numberOfBits > 0 && numberOfBits <= 16), "Write(ushort, numberOfBits) can only write between 1 and 16 bits");
 			EnsureBufferSize(m_bitLength + numberOfBits);
-			NetBitWriter.WriteUInt32((uint)source, numberOfBits, m_data, m_bitLength);
+			NetBitWriter.WriteUInt16(source, numberOfBits, m_data, m_bitLength);
 			m_bitLength += numberOfBits;
 		}
 
@@ -168,7 +170,7 @@ namespace Lidgren.Network
 		public void Write(Int16 source)
 		{
 			EnsureBufferSize(m_bitLength + 16);
-			NetBitWriter.WriteUInt32((uint)source, 16, m_data, m_bitLength);
+			NetBitWriter.WriteUInt16((ushort)source, 16, m_data, m_bitLength);
 			m_bitLength += 16;
 		}
 
