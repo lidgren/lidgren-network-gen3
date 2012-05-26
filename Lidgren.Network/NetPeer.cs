@@ -150,7 +150,11 @@ namespace Lidgren.Network
 		public NetConnection GetConnection(IPEndPoint ep)
 		{
 			NetConnection retval;
-			m_connectionLookup.TryGetValue(ep, out retval); // this should not pose a threading problem, afaict
+
+			// this should not pose a threading problem, m_connectionLookup is never added to concurrently
+			// and TryGetValue will not throw an exception on fail, only yield null, which is acceptable
+			m_connectionLookup.TryGetValue(ep, out retval);
+
 			return retval;
 		}
 
