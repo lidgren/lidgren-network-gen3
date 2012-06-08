@@ -131,7 +131,13 @@ namespace Lidgren.Network
 			{
 				// TODO: refactor this check outta here
 				if (target.Address == IPAddress.Broadcast)
+				{
+					// Some networks do not allow 
+					// a global broadcast so we use the BroadcastAddress from the configuration
+					// this can be resolved to a local broadcast addresss e.g 192.168.x.255                    
+					target.Address = m_configuration.BroadcastAddress;
 					m_socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Broadcast, true);
+				}
 
 				int bytesSent = m_socket.SendTo(data, 0, numBytes, SocketFlags.None, target);
 				if (numBytes != bytesSent)
@@ -175,7 +181,7 @@ namespace Lidgren.Network
 				int bytesSent = m_socket.SendTo(m_sendBuffer, 0, numBytes, SocketFlags.None, target);
 				if (numBytes != bytesSent)
 					LogWarning("Failed to send the full " + numBytes + "; only " + bytesSent + " bytes sent in packet!");
-			
+
 				m_statistics.PacketSent(numBytes, 1);
 			}
 			catch (SocketException sx)

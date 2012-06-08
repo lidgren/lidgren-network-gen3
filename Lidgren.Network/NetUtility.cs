@@ -16,7 +16,9 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRA
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
+#if !__ANDROID__ && !IOS
 #define IS_FULL_NET_AVAILABLE
+#endif
 
 using System;
 using System.Net;
@@ -256,12 +258,95 @@ namespace Lidgren.Network
 			}
 			return new string(c);
 		}
+		
+		public static IPAddress GetBroadcastAddress()
+		{
+#if __ANDROID__
+			try{
+			Android.Net.Wifi.WifiManager wifi = (Android.Net.Wifi.WifiManager)Android.App.Application.Context.GetSystemService(Android.App.Activity.WifiService);
+			if (wifi.IsWifiEnabled)
+			{
+				var dhcp = wifi.DhcpInfo;
+					
+				int broadcast = (dhcp.IpAddress & dhcp.Netmask) | ~dhcp.Netmask;
+	    		byte[] quads = new byte[4];
+	    		for (int k = 0; k < 4; k++)
+				{
+	      			quads[k] = (byte) ((broadcast >> k * 8) & 0xFF);
+				}
+				return new IPAddress(quads);
+			}
+			}
+			catch // Catch Access Denied Errors
+			{
+				return IPAddress.Broadcast;
+			}
+#endif		
+#if IS_FULL_NET_AVAILABLE
+			try
+			{
+				NetworkInterface ni = GetNetworkInterface();
+				if (ni == null)
+				{
+					return null;
+				}
+	
+				IPInterfaceProperties properties = ni.GetIPProperties();
+				foreach (UnicastIPAddressInformation unicastAddress in properties.UnicastAddresses)
+				{
+					if (unicastAddress != null && unicastAddress.Address != null && unicastAddress.Address.AddressFamily == AddressFamily.InterNetwork)
+					{
+						var mask = unicastAddress.IPv4Mask;
+						byte[] ipAdressBytes = unicastAddress.Address.GetAddressBytes();
+				        byte[] subnetMaskBytes = mask.GetAddressBytes();
+				
+				        if (ipAdressBytes.Length != subnetMaskBytes.Length)
+				            throw new ArgumentException("Lengths of IP address and subnet mask do not match.");
+				
+				        byte[] broadcastAddress = new byte[ipAdressBytes.Length];
+				        for (int i = 0; i < broadcastAddress.Length; i++)
+				        {
+				            broadcastAddress[i] = (byte)(ipAdressBytes[i] | (subnetMaskBytes[i] ^ 255));
+				        }
+				        return new IPAddress(broadcastAddress);				
+					}
+				}
+			}
+			catch // Catch any errors 
+			{
+			    return IPAddress.Broadcast;
+			}
+#endif		
+			return IPAddress.Broadcast;
+		}
 
 		/// <summary>
 		/// Gets my local IP address (not necessarily external) and subnet mask
 		/// </summary>
 		public static IPAddress GetMyAddress(out IPAddress mask)
 		{
+			mask = null;
+#if __ANDROID__
+			try
+			{
+				Android.Net.Wifi.WifiManager wifi = (Android.Net.Wifi.WifiManager)Android.App.Application.Context.GetSystemService(Android.App.Activity.WifiService);
+				if (!wifi.IsWifiEnabled) return null;
+				var dhcp = wifi.DhcpInfo;
+					
+				int addr = dhcp.IpAddress;
+	    		byte[] quads = new byte[4];
+	    		for (int k = 0; k < 4; k++)
+				{
+	      			quads[k] = (byte) ((addr >> k * 8) & 0xFF);
+				}			
+				return new IPAddress(quads);
+			}
+			catch // Catch Access Denied errors
+			{
+				return null;
+			}
+				
+#endif			
 #if IS_FULL_NET_AVAILABLE
 			NetworkInterface ni = GetNetworkInterface();
 			if (ni == null)
@@ -280,7 +365,6 @@ namespace Lidgren.Network
 				}
 			}
 #endif
-			mask = null;
 			return null;
 		}
 
