@@ -64,11 +64,13 @@ namespace Lidgren.Network
 
 		internal int GetMTU(IList<NetConnection> recipients)
 		{
-			NetException.Assert(recipients.Count > 0);
+			int count = recipients.Count;
+			NetException.Assert(count > 0);
 
 			int mtu = int.MaxValue;
-			foreach (NetConnection conn in recipients)
+			for(int i=0;i<count;i++)
 			{
+				var conn = recipients[i];
 				int cmtu = conn.m_currentMTU;
 				if (cmtu < mtu)
 					mtu = cmtu;
