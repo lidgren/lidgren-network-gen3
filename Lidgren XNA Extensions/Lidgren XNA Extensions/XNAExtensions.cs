@@ -13,7 +13,7 @@ namespace Lidgren.Network.Xna
 		/// <summary>
 		/// Write a Point
 		/// </summary>
-		public static void Write(this NetOutgoingMessage message, Point value)
+		public static void Write(this NetBuffer message, Point value)
 		{
 			message.Write(value.X);
 			message.Write(value.Y);
@@ -22,7 +22,7 @@ namespace Lidgren.Network.Xna
 		/// <summary>
 		/// Read a Point
 		/// </summary>
-		public static Point ReadPoint(this NetIncomingMessage message)
+		public static Point ReadPoint(this NetBuffer message)
 		{
 			return new Point(message.ReadInt32(), message.ReadInt32());
 		}
@@ -30,7 +30,7 @@ namespace Lidgren.Network.Xna
 		/// <summary>
 		/// Write a Single with half precision (16 bits)
 		/// </summary>
-		public static void WriteHalfPrecision(this NetOutgoingMessage message, float value)
+		public static void WriteHalfPrecision(this NetBuffer message, float value)
 		{
 			message.Write(new HalfSingle(value).PackedValue);
 		}
@@ -38,7 +38,7 @@ namespace Lidgren.Network.Xna
 		/// <summary>
 		/// Reads a half precision Single written using WriteHalfPrecision(float)
 		/// </summary>
-		public static float ReadHalfPrecisionSingle(this NetIncomingMessage message)
+		public static float ReadHalfPrecisionSingle(this NetBuffer message)
 		{
 			HalfSingle h = new HalfSingle();
 			h.PackedValue = message.ReadUInt16();
@@ -48,7 +48,7 @@ namespace Lidgren.Network.Xna
 		/// <summary>
 		/// Writes a Vector2
 		/// </summary>
-		public static void Write(this NetOutgoingMessage message, Vector2 vector)
+		public static void Write(this NetBuffer message, Vector2 vector)
 		{
 			message.Write(vector.X);
 			message.Write(vector.Y);
@@ -57,7 +57,7 @@ namespace Lidgren.Network.Xna
 		/// <summary>
 		/// Reads a Vector2
 		/// </summary>
-		public static Vector2 ReadVector2(this NetIncomingMessage message)
+		public static Vector2 ReadVector2(this NetBuffer message)
 		{
 			Vector2 retval;
 			retval.X = message.ReadSingle();
@@ -68,7 +68,7 @@ namespace Lidgren.Network.Xna
 		/// <summary>
 		/// Writes a Vector3
 		/// </summary>
-		public static void Write(this NetOutgoingMessage message, Vector3 vector)
+		public static void Write(this NetBuffer message, Vector3 vector)
 		{
 			message.Write(vector.X);
 			message.Write(vector.Y);
@@ -78,7 +78,7 @@ namespace Lidgren.Network.Xna
 		/// <summary>
 		/// Writes a Vector3 at half precision
 		/// </summary>
-		public static void WriteHalfPrecision(this NetOutgoingMessage message, Vector3 vector)
+		public static void WriteHalfPrecision(this NetBuffer message, Vector3 vector)
 		{
 			message.Write(new HalfSingle(vector.X).PackedValue);
 			message.Write(new HalfSingle(vector.Y).PackedValue);
@@ -88,7 +88,7 @@ namespace Lidgren.Network.Xna
 		/// <summary>
 		/// Reads a Vector3
 		/// </summary>
-		public static Vector3 ReadVector3(this NetIncomingMessage message)
+		public static Vector3 ReadVector3(this NetBuffer message)
 		{
 			Vector3 retval;
 			retval.X = message.ReadSingle();
@@ -100,7 +100,7 @@ namespace Lidgren.Network.Xna
 		/// <summary>
 		/// Writes a Vector3 at half precision
 		/// </summary>
-		public static Vector3 ReadHalfPrecisionVector3(this NetIncomingMessage message)
+		public static Vector3 ReadHalfPrecisionVector3(this NetBuffer message)
 		{
 			HalfSingle hx = new HalfSingle();
 			hx.PackedValue = message.ReadUInt16();
@@ -121,7 +121,7 @@ namespace Lidgren.Network.Xna
 		/// <summary>
 		/// Writes a Vector4
 		/// </summary>
-		public static void Write(this NetOutgoingMessage message, Vector4 vector)
+		public static void Write(this NetBuffer message, Vector4 vector)
 		{
 			message.Write(vector.X);
 			message.Write(vector.Y);
@@ -132,7 +132,7 @@ namespace Lidgren.Network.Xna
 		/// <summary>
 		/// Reads a Vector4
 		/// </summary>
-		public static Vector4 ReadVector4(this NetIncomingMessage message)
+		public static Vector4 ReadVector4(this NetBuffer message)
 		{
 			Vector4 retval;
 			retval.X = message.ReadSingle();
@@ -147,7 +147,7 @@ namespace Lidgren.Network.Xna
 		/// Writes a unit vector (ie. a vector of length 1.0, for example a surface normal) 
 		/// using specified number of bits
 		/// </summary>
-		public static void WriteUnitVector3(this NetOutgoingMessage message, Vector3 unitVector, int numberOfBits)
+		public static void WriteUnitVector3(this NetBuffer message, Vector3 unitVector, int numberOfBits)
 		{
 			float x = unitVector.X;
 			float y = unitVector.Y;
@@ -164,7 +164,7 @@ namespace Lidgren.Network.Xna
 		/// <summary>
 		/// Reads a unit vector written using WriteUnitVector3(numberOfBits)
 		/// </summary>
-		public static Vector3 ReadUnitVector3(this NetIncomingMessage message, int numberOfBits)
+		public static Vector3 ReadUnitVector3(this NetBuffer message, int numberOfBits)
 		{
 			int halfBits = numberOfBits / 2;
 			float phi = message.ReadSignedSingle(halfBits) * (float)Math.PI;
@@ -182,7 +182,7 @@ namespace Lidgren.Network.Xna
 		/// Writes a unit quaternion using the specified number of bits per element
 		/// for a total of 4 x bitsPerElements bits. Suggested value is 8 to 24 bits.
 		/// </summary>
-		public static void WriteRotation(this NetOutgoingMessage message, Quaternion quaternion, int bitsPerElement)
+		public static void WriteRotation(this NetBuffer message, Quaternion quaternion, int bitsPerElement)
 		{
 			if (quaternion.X > 1.0f)
 				quaternion.X = 1.0f;
@@ -210,7 +210,7 @@ namespace Lidgren.Network.Xna
 		/// <summary>
 		/// Reads a unit quaternion written using WriteRotation(... ,bitsPerElement)
 		/// </summary>
-		public static Quaternion ReadRotation(this NetIncomingMessage message, int bitsPerElement)
+		public static Quaternion ReadRotation(this NetBuffer message, int bitsPerElement)
 		{
 			Quaternion retval;
 			retval.X = message.ReadSignedSingle(bitsPerElement);
@@ -223,7 +223,7 @@ namespace Lidgren.Network.Xna
 		/// <summary>
 		/// Writes an orthonormal matrix (rotation, translation but not scaling or projection)
 		/// </summary>
-		public static void WriteMatrix(this NetOutgoingMessage message, ref Matrix matrix)
+		public static void WriteMatrix(this NetBuffer message, ref Matrix matrix)
 		{
 			Quaternion rot = Quaternion.CreateFromRotationMatrix(matrix);
 			WriteRotation(message, rot, 24);
@@ -235,7 +235,7 @@ namespace Lidgren.Network.Xna
 		/// <summary>
 		/// Writes an orthonormal matrix (rotation, translation but no scaling or projection)
 		/// </summary>
-		public static void WriteMatrix(this NetOutgoingMessage message, Matrix matrix)
+		public static void WriteMatrix(this NetBuffer message, Matrix matrix)
 		{
 			Quaternion rot = Quaternion.CreateFromRotationMatrix(matrix);
 			WriteRotation(message, rot, 24);
@@ -247,7 +247,7 @@ namespace Lidgren.Network.Xna
 		/// <summary>
 		/// Reads a matrix written using WriteMatrix()
 		/// </summary>
-		public static Matrix ReadMatrix(this NetIncomingMessage message)
+		public static Matrix ReadMatrix(this NetBuffer message)
 		{
 			Quaternion rot = ReadRotation(message, 24);
 			Matrix retval = Matrix.CreateFromQuaternion(rot);
@@ -260,7 +260,7 @@ namespace Lidgren.Network.Xna
 		/// <summary>
 		/// Reads a matrix written using WriteMatrix()
 		/// </summary>
-		public static void ReadMatrix(this NetIncomingMessage message, ref Matrix destination)
+		public static void ReadMatrix(this NetBuffer message, ref Matrix destination)
 		{
 			Quaternion rot = ReadRotation(message, 24);
 			destination = Matrix.CreateFromQuaternion(rot);
@@ -272,7 +272,7 @@ namespace Lidgren.Network.Xna
 		/// <summary>
 		/// Writes a bounding sphere
 		/// </summary>
-		public static void Write(this NetOutgoingMessage message, BoundingSphere bounds)
+		public static void Write(this NetBuffer message, BoundingSphere bounds)
 		{
 			message.Write(bounds.Center.X);
 			message.Write(bounds.Center.Y);
@@ -283,7 +283,7 @@ namespace Lidgren.Network.Xna
 		/// <summary>
 		/// Reads a bounding sphere written using Write(message, BoundingSphere)
 		/// </summary>
-		public static BoundingSphere ReadBoundingSphere(this NetIncomingMessage message)
+		public static BoundingSphere ReadBoundingSphere(this NetBuffer message)
 		{
 			BoundingSphere retval;
 			retval.Center.X = message.ReadSingle();
