@@ -76,6 +76,7 @@ namespace Lidgren.Network
 						SendConnectResponse(now, true);
 						break;
 					case NetConnectionStatus.None:
+					case NetConnectionStatus.ReceivedInitiation:
 						m_peer.LogWarning("Time to resend handshake, but status is " + m_status);
 						break;
 					case NetConnectionStatus.RespondedAwaitingApproval:
@@ -345,6 +346,7 @@ namespace Lidgren.Network
 							break;
 						case NetConnectionStatus.Disconnecting:
 						case NetConnectionStatus.Disconnected:
+						case NetConnectionStatus.ReceivedInitiation:
 						case NetConnectionStatus.None:
 							// wtf? anyway, bye!
 							break;
@@ -365,8 +367,11 @@ namespace Lidgren.Network
 						case NetConnectionStatus.None:
 							// too bad, almost made it
 							break;
+						case NetConnectionStatus.ReceivedInitiation:
+							// uh, a little premature... ignore
+							break;
 						case NetConnectionStatus.InitiatedConnect:
-							// weird, should have been ConnectResponse...
+							// weird, should have been RespondedConnect...
 							break;
 						case NetConnectionStatus.RespondedConnect:
 							// awesome
