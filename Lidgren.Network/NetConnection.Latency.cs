@@ -71,7 +71,7 @@ namespace Lidgren.Network
 
 			int len = om.Encode(m_peer.m_sendBuffer, 0, 0);
 			bool connectionReset;
-			m_peer.SendPacket(len, m_remoteEndpoint, 1, out connectionReset);
+			m_peer.SendPacket(len, m_remoteEndPoint, 1, out connectionReset);
 
 			m_statistics.PacketSent(len, 1);
 		}
@@ -88,7 +88,7 @@ namespace Lidgren.Network
 			int len = om.Encode(m_peer.m_sendBuffer, 0, 0);
 			bool connectionReset;
 
-			m_peer.SendPacket(len, m_remoteEndpoint, 1, out connectionReset);
+			m_peer.SendPacket(len, m_remoteEndPoint, 1, out connectionReset);
 
 			m_statistics.PacketSent(len, 1);
 		}
@@ -138,7 +138,7 @@ namespace Lidgren.Network
 			{
 				NetIncomingMessage update = m_peer.CreateIncomingMessage(NetIncomingMessageType.ConnectionLatencyUpdated, 4);
 				update.m_senderConnection = this;
-				update.m_senderEndpoint = this.m_remoteEndpoint;
+				update.m_senderEndPoint = this.m_remoteEndPoint;
 				update.Write(rtt);
 				m_peer.ReleaseMessage(update);
 			}

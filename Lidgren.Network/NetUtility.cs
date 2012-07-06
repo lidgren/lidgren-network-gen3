@@ -34,7 +34,7 @@ namespace Lidgren.Network
 	/// </summary>
 	public static class NetUtility
 	{
-		public delegate void ResolveEndPointCallback(IPEndPoint endpoint);
+		public delegate void ResolveEndPointCallback(IPEndPoint endPoint);
 		public delegate void ResolveAddressCallback(IPAddress adr);
 
 		/// <summary>
@@ -371,11 +371,11 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Returns true if the IPEndPoint supplied is on the same subnet as this host
 		/// </summary>
-		public static bool IsLocal(IPEndPoint endpoint)
+		public static bool IsLocal(IPEndPoint endPoint)
 		{
-			if (endpoint == null)
+			if (endPoint == null)
 				return false;
-			return IsLocal(endpoint.Address);
+			return IsLocal(endPoint.Address);
 		}
 
 		/// <summary>

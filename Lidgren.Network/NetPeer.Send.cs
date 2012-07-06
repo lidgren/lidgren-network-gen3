@@ -217,7 +217,7 @@ namespace Lidgren.Network
 			om.m_isFragment = false;
 			om.m_receiveTime = NetTime.Now;
 			om.m_senderConnection = null;
-			om.m_senderEndpoint = m_socket.LocalEndPoint as IPEndPoint;
+			om.m_senderEndPoint = m_socket.LocalEndPoint as IPEndPoint;
 			om.m_bitLength = msg.LengthBits;
 
 			ReleaseMessage(om);

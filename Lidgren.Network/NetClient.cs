@@ -77,10 +77,10 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Connect to a remote server
 		/// </summary>
-		/// <param name="remoteEndpoint">The remote endpoint to connect to</param>
+		/// <param name="remoteEndPoint">The remote endpoint to connect to</param>
 		/// <param name="hailMessage">The hail message to pass</param>
 		/// <returns>server connection, or null if already connected</returns>
-		public override NetConnection Connect(IPEndPoint remoteEndpoint, NetOutgoingMessage hailMessage)
+		public override NetConnection Connect(IPEndPoint remoteEndPoint, NetOutgoingMessage hailMessage)
 		{
 			lock (m_connections)
 			{
@@ -90,7 +90,7 @@ namespace Lidgren.Network
 					return null;
 				}
 			}
-			return base.Connect(remoteEndpoint, hailMessage);
+			return base.Connect(remoteEndPoint, hailMessage);
 		}
 
 		/// <summary>

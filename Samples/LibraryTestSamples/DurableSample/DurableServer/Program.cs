@@ -79,7 +79,7 @@ namespace DurableServer
 							break;
 						case NetIncomingMessageType.DiscoveryRequest:
 							// just send a no-info response
-							Server.SendDiscoveryResponse(null, msg.SenderEndpoint);
+							Server.SendDiscoveryResponse(null, msg.SenderEndPoint);
 							break;
 						case NetIncomingMessageType.ConnectionApproval:
 							string ok = msg.ReadString();

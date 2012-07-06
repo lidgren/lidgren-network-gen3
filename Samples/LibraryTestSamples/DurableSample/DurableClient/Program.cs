@@ -67,10 +67,10 @@ namespace DurableClient
 							Display("Received data?!");
 							break;
 						case NetIncomingMessageType.DiscoveryResponse:
-							Display("Got discovery response from " + msg.SenderEndpoint);
+							Display("Got discovery response from " + msg.SenderEndPoint);
 							NetOutgoingMessage approval = Client.CreateMessage();
 							approval.Write("durableschmurable");
-							Client.Connect(msg.SenderEndpoint, approval);
+							Client.Connect(msg.SenderEndPoint, approval);
 							break;
 
 						case NetIncomingMessageType.StatusChanged:

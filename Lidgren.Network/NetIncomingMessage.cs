@@ -29,7 +29,7 @@ namespace Lidgren.Network
 	public sealed class NetIncomingMessage : NetBuffer
 	{
 		internal NetIncomingMessageType m_incomingMessageType;
-		internal IPEndPoint m_senderEndpoint;
+		internal IPEndPoint m_senderEndPoint;
 		internal NetConnection m_senderConnection;
 		internal int m_sequenceNumber;
 		internal NetMessageType m_receivedMessageType;
@@ -54,7 +54,7 @@ namespace Lidgren.Network
 		/// <summary>
 		/// IPEndPoint of sender, if any
 		/// </summary>
-		public IPEndPoint SenderEndpoint { get { return m_senderEndpoint; } }
+		public IPEndPoint SenderEndPoint { get { return m_senderEndPoint; } }
 
 		/// <summary>
 		/// NetConnection of sender, if any

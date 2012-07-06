@@ -8,14 +8,14 @@ namespace Lidgren.Network
 	/// <summary>
 	/// Represents a connection to a remote peer
 	/// </summary>
-	[DebuggerDisplay("RemoteUniqueIdentifier={RemoteUniqueIdentifier} RemoteEndpoint={RemoteEndpoint}")]
+	[DebuggerDisplay("RemoteUniqueIdentifier={RemoteUniqueIdentifier} RemoteEndPoint={remoteEndPoint}")]
 	public partial class NetConnection
 	{
 		internal NetPeer m_peer;
 		internal NetPeerConfiguration m_peerConfiguration;
 		internal NetConnectionStatus m_status;
 		internal NetConnectionStatus m_visibleStatus;
-		internal IPEndPoint m_remoteEndpoint;
+		internal IPEndPoint m_remoteEndPoint;
 		internal NetSenderChannelBase[] m_sendChannels;
 		internal NetReceiverChannelBase[] m_receiveChannels;
 		internal NetOutgoingMessage m_localHailMessage;
@@ -54,7 +54,7 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Gets the remote endpoint for the connection
 		/// </summary>
-		public IPEndPoint RemoteEndpoint { get { return m_remoteEndpoint; } }
+		public IPEndPoint RemoteEndPoint { get { return m_remoteEndPoint; } }
 
 		/// <summary>
 		/// Gets the unique identifier of the remote NetPeer for this connection
@@ -75,13 +75,13 @@ namespace Lidgren.Network
 			return 0.02f + (avgRtt * 2.0f); // 20 ms + double rtt
 		}
 
-		internal NetConnection(NetPeer peer, IPEndPoint remoteEndpoint)
+		internal NetConnection(NetPeer peer, IPEndPoint remoteEndPoint)
 		{
 			m_peer = peer;
 			m_peerConfiguration = m_peer.Configuration;
 			m_status = NetConnectionStatus.None;
 			m_visibleStatus = NetConnectionStatus.None;
-			m_remoteEndpoint = remoteEndpoint;
+			m_remoteEndPoint = remoteEndPoint;
 			m_sendChannels = new NetSenderChannelBase[NetConstants.NumTotalChannels];
 			m_receiveChannels = new NetReceiverChannelBase[NetConstants.NumTotalChannels];
 			m_queuedOutgoingAcks = new NetQueue<NetTuple<NetMessageType, int>>(4);
@@ -94,10 +94,9 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Change the internal endpoint to this new one. Used when, during handshake, a switch in port is detected (due to NAT)
 		/// </summary>
-		internal void MutateEndpoint(IPEndPoint endpoint)
+		internal void MutateEndPoint(IPEndPoint endPoint)
 		{
-			m_remoteEndpoint = endpoint;
-
+			m_remoteEndPoint = endPoint;
 		}
 
 		internal void SetStatus(NetConnectionStatus status, string reason)
@@ -121,7 +120,7 @@ namespace Lidgren.Network
 			{
 				NetIncomingMessage info = m_peer.CreateIncomingMessage(NetIncomingMessageType.StatusChanged, 4 + reason.Length + (reason.Length > 126 ? 2 : 1));
 				info.m_senderConnection = this;
-				info.m_senderEndpoint = m_remoteEndpoint;
+				info.m_senderEndPoint = m_remoteEndPoint;
 				info.Write((byte)m_status);
 				info.Write(reason);
 				m_peer.ReleaseMessage(info);
@@ -216,7 +215,7 @@ namespace Lidgren.Network
 					{
 						// send packet and go for another round of acks
 						NetException.Assert(m_sendBufferWritePtr > 0 && m_sendBufferNumMessages > 0);
-						m_peer.SendPacket(m_sendBufferWritePtr, m_remoteEndpoint, m_sendBufferNumMessages, out connectionReset);
+						m_peer.SendPacket(m_sendBufferWritePtr, m_remoteEndPoint, m_sendBufferNumMessages, out connectionReset);
 						m_statistics.PacketSent(m_sendBufferWritePtr, 1);
 						m_sendBufferWritePtr = 0;
 						m_sendBufferNumMessages = 0;
@@ -259,7 +258,7 @@ namespace Lidgren.Network
 			{
 				m_peer.VerifyNetworkThread();
 				NetException.Assert(m_sendBufferWritePtr > 0 && m_sendBufferNumMessages > 0);
-				m_peer.SendPacket(m_sendBufferWritePtr, m_remoteEndpoint, m_sendBufferNumMessages, out connectionReset);
+				m_peer.SendPacket(m_sendBufferWritePtr, m_remoteEndPoint, m_sendBufferNumMessages, out connectionReset);
 				m_statistics.PacketSent(m_sendBufferWritePtr, m_sendBufferNumMessages);
 				m_sendBufferWritePtr = 0;
 				m_sendBufferNumMessages = 0;
@@ -280,7 +279,7 @@ namespace Lidgren.Network
 			{
 				bool connReset; // TODO: handle connection reset
 				NetException.Assert(m_sendBufferWritePtr > 0 && m_sendBufferNumMessages > 0); // or else the message should have been fragmented earlier
-				m_peer.SendPacket(m_sendBufferWritePtr, m_remoteEndpoint, m_sendBufferNumMessages, out connReset);
+				m_peer.SendPacket(m_sendBufferWritePtr, m_remoteEndPoint, m_sendBufferNumMessages, out connReset);
 				m_statistics.PacketSent(m_sendBufferWritePtr, m_sendBufferNumMessages);
 				m_sendBufferWritePtr = 0;
 				m_sendBufferNumMessages = 0;
@@ -500,7 +499,7 @@ namespace Lidgren.Network
 		/// </summary>
 		public override string ToString()
 		{
-			return "[NetConnection to " + m_remoteEndpoint + "]";
+			return "[NetConnection to " + m_remoteEndPoint + "]";
 		}
 	}
 }

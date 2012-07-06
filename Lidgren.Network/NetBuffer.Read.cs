@@ -618,7 +618,7 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Reads a stored IPv4 endpoint description
 		/// </summary>
-		public IPEndPoint ReadIPEndpoint()
+		public IPEndPoint ReadIPEndPoint()
 		{
 			byte len = ReadByte();
 			byte[] addressBytes = ReadBytes(len);
