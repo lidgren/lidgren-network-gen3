@@ -265,7 +265,7 @@ namespace Lidgren.Network
 				if (m_handshakes.TryGetValue(remoteEndpoint, out hs))
 				{
 					// already trying to connect to that endpoint; make another try
-					switch (hs.Status)
+					switch (hs.m_status)
 					{
 						case NetConnectionStatus.InitiatedConnect:
 							// send another connect
@@ -277,7 +277,7 @@ namespace Lidgren.Network
 							break;
 						default:
 							// weird
-							LogWarning("Weird situation; Connect() already in progress to remote endpoint; but hs status is " + hs.Status);
+							LogWarning("Weird situation; Connect() already in progress to remote endpoint; but hs status is " + hs.m_status);
 							break;
 					}
 					return hs;

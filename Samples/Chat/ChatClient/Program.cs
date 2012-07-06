@@ -59,6 +59,10 @@ namespace ChatClient
 							s_form.EnableInput();
 						else
 							s_form.DisableInput();
+
+						if (status == NetConnectionStatus.Disconnected)
+							s_form.button2.Text = "Connect";
+
 						string reason = im.ReadString();
 						Output(status.ToString() + ": " + reason);
 

@@ -270,7 +270,7 @@ namespace Lidgren.Network
 			switch (tp)
 			{
 				case NetMessageType.Connect:
-					if (m_status == NetConnectionStatus.None)
+					if (m_status == NetConnectionStatus.ReceivedInitiation)
 					{
 						// Whee! Server full has already been checked
 						bool ok = ValidateHandshakeData(ptr, payloadLength, out hail);

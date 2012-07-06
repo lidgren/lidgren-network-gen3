@@ -36,6 +36,11 @@ namespace Lidgren.Network
 		InitiatedConnect,
 
 		/// <summary>
+		/// Connect was received, but ConnectResponse hasn't been sent yet
+		/// </summary>
+		ReceivedInitiation,
+
+		/// <summary>
 		/// Connect was received and ApprovalMessage released to the application; awaiting Approve() or Deny()
 		/// </summary>
 		RespondedAwaitingApproval, // We got Connect, released ApprovalMessage

@@ -623,6 +623,7 @@ namespace Lidgren.Network
 
 			// Ok, start handshake!
 			NetConnection conn = new NetConnection(this, senderEndpoint);
+			conn.m_status = NetConnectionStatus.ReceivedInitiation;
 			m_handshakes.Add(senderEndpoint, conn);
 			conn.ReceivedHandshake(now, tp, ptr, payloadByteLength);
 
