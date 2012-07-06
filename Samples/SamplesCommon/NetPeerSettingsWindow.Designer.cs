@@ -33,10 +33,10 @@
 			this.groupBox1 = new System.Windows.Forms.GroupBox();
 			this.label8 = new System.Windows.Forms.Label();
 			this.label9 = new System.Windows.Forms.Label();
-			this.textBox2 = new System.Windows.Forms.TextBox();
+			this.DupesTextBox = new System.Windows.Forms.TextBox();
 			this.label5 = new System.Windows.Forms.Label();
 			this.label4 = new System.Windows.Forms.Label();
-			this.textBox3 = new System.Windows.Forms.TextBox();
+			this.MaxLatencyTextBox = new System.Windows.Forms.TextBox();
 			this.label3 = new System.Windows.Forms.Label();
 			this.label2 = new System.Windows.Forms.Label();
 			this.label1 = new System.Windows.Forms.Label();
@@ -45,7 +45,7 @@
 			this.groupBox2 = new System.Windows.Forms.GroupBox();
 			this.label7 = new System.Windows.Forms.Label();
 			this.label6 = new System.Windows.Forms.Label();
-			this.textBox1 = new System.Windows.Forms.TextBox();
+			this.PingFrequencyTextBox = new System.Windows.Forms.TextBox();
 			this.button1 = new System.Windows.Forms.Button();
 			this.groupBox3 = new System.Windows.Forms.GroupBox();
 			this.StatisticsLabel = new System.Windows.Forms.Label();
@@ -64,7 +64,6 @@
 			this.DebugCheckBox.TabIndex = 0;
 			this.DebugCheckBox.Text = "Display Debug messages";
 			this.DebugCheckBox.UseVisualStyleBackColor = true;
-			this.DebugCheckBox.CheckedChanged += new System.EventHandler(this.DebugCheckBox_CheckedChanged);
 			// 
 			// VerboseCheckBox
 			// 
@@ -75,16 +74,15 @@
 			this.VerboseCheckBox.TabIndex = 1;
 			this.VerboseCheckBox.Text = "Display Verbose debug messages";
 			this.VerboseCheckBox.UseVisualStyleBackColor = true;
-			this.VerboseCheckBox.CheckedChanged += new System.EventHandler(this.VerboseCheckBox_CheckedChanged);
 			// 
 			// groupBox1
 			// 
 			this.groupBox1.Controls.Add(this.label8);
 			this.groupBox1.Controls.Add(this.label9);
-			this.groupBox1.Controls.Add(this.textBox2);
+			this.groupBox1.Controls.Add(this.DupesTextBox);
 			this.groupBox1.Controls.Add(this.label5);
 			this.groupBox1.Controls.Add(this.label4);
-			this.groupBox1.Controls.Add(this.textBox3);
+			this.groupBox1.Controls.Add(this.MaxLatencyTextBox);
 			this.groupBox1.Controls.Add(this.label3);
 			this.groupBox1.Controls.Add(this.label2);
 			this.groupBox1.Controls.Add(this.label1);
@@ -92,7 +90,7 @@
 			this.groupBox1.Controls.Add(this.MinLatencyTextBox);
 			this.groupBox1.Location = new System.Drawing.Point(291, 12);
 			this.groupBox1.Name = "groupBox1";
-			this.groupBox1.Size = new System.Drawing.Size(300, 110);
+			this.groupBox1.Size = new System.Drawing.Size(330, 110);
 			this.groupBox1.TabIndex = 2;
 			this.groupBox1.TabStop = false;
 			this.groupBox1.Text = "Simulation";
@@ -115,13 +113,12 @@
 			this.label9.TabIndex = 9;
 			this.label9.Text = "Duplicates";
 			// 
-			// textBox2
+			// DupesTextBox
 			// 
-			this.textBox2.Location = new System.Drawing.Point(103, 77);
-			this.textBox2.Name = "textBox2";
-			this.textBox2.Size = new System.Drawing.Size(54, 22);
-			this.textBox2.TabIndex = 8;
-			this.textBox2.TextChanged += new System.EventHandler(this.textBox2_TextChanged);
+			this.DupesTextBox.Location = new System.Drawing.Point(103, 77);
+			this.DupesTextBox.Name = "DupesTextBox";
+			this.DupesTextBox.Size = new System.Drawing.Size(54, 22);
+			this.DupesTextBox.TabIndex = 8;
 			// 
 			// label5
 			// 
@@ -141,22 +138,21 @@
 			this.label4.TabIndex = 6;
 			this.label4.Text = "ms";
 			// 
-			// textBox3
+			// MaxLatencyTextBox
 			// 
-			this.textBox3.Location = new System.Drawing.Point(185, 21);
-			this.textBox3.Name = "textBox3";
-			this.textBox3.Size = new System.Drawing.Size(54, 22);
-			this.textBox3.TabIndex = 5;
-			this.textBox3.TextChanged += new System.EventHandler(this.textBox3_TextChanged);
+			this.MaxLatencyTextBox.Location = new System.Drawing.Point(180, 21);
+			this.MaxLatencyTextBox.Name = "MaxLatencyTextBox";
+			this.MaxLatencyTextBox.Size = new System.Drawing.Size(54, 22);
+			this.MaxLatencyTextBox.TabIndex = 5;
 			// 
 			// label3
 			// 
 			this.label3.AutoSize = true;
 			this.label3.Location = new System.Drawing.Point(163, 24);
 			this.label3.Name = "label3";
-			this.label3.Size = new System.Drawing.Size(18, 13);
+			this.label3.Size = new System.Drawing.Size(11, 13);
 			this.label3.TabIndex = 4;
-			this.label3.Text = "to";
+			this.label3.Text = "-";
 			// 
 			// label2
 			// 
@@ -182,7 +178,6 @@
 			this.LossTextBox.Name = "LossTextBox";
 			this.LossTextBox.Size = new System.Drawing.Size(54, 22);
 			this.LossTextBox.TabIndex = 1;
-			this.LossTextBox.TextChanged += new System.EventHandler(this.LossTextBox_TextChanged);
 			// 
 			// MinLatencyTextBox
 			// 
@@ -190,7 +185,6 @@
 			this.MinLatencyTextBox.Name = "MinLatencyTextBox";
 			this.MinLatencyTextBox.Size = new System.Drawing.Size(54, 22);
 			this.MinLatencyTextBox.TabIndex = 0;
-			this.MinLatencyTextBox.TextChanged += new System.EventHandler(this.MinLatencyTextBox_TextChanged);
 			// 
 			// groupBox2
 			// 
@@ -198,7 +192,7 @@
 			this.groupBox2.Controls.Add(this.DebugCheckBox);
 			this.groupBox2.Controls.Add(this.VerboseCheckBox);
 			this.groupBox2.Controls.Add(this.label6);
-			this.groupBox2.Controls.Add(this.textBox1);
+			this.groupBox2.Controls.Add(this.PingFrequencyTextBox);
 			this.groupBox2.Location = new System.Drawing.Point(12, 12);
 			this.groupBox2.Name = "groupBox2";
 			this.groupBox2.Size = new System.Drawing.Size(273, 110);
@@ -224,22 +218,21 @@
 			this.label6.TabIndex = 9;
 			this.label6.Text = "Ping frequency";
 			// 
-			// textBox1
+			// PingFrequencyTextBox
 			// 
-			this.textBox1.Location = new System.Drawing.Point(98, 67);
-			this.textBox1.Name = "textBox1";
-			this.textBox1.Size = new System.Drawing.Size(76, 22);
-			this.textBox1.TabIndex = 8;
-			this.textBox1.TextChanged += new System.EventHandler(this.textBox1_TextChanged);
+			this.PingFrequencyTextBox.Location = new System.Drawing.Point(98, 67);
+			this.PingFrequencyTextBox.Name = "PingFrequencyTextBox";
+			this.PingFrequencyTextBox.Size = new System.Drawing.Size(76, 22);
+			this.PingFrequencyTextBox.TabIndex = 8;
 			// 
 			// button1
 			// 
 			this.button1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-			this.button1.Location = new System.Drawing.Point(494, 367);
+			this.button1.Location = new System.Drawing.Point(524, 409);
 			this.button1.Name = "button1";
 			this.button1.Size = new System.Drawing.Size(101, 36);
 			this.button1.TabIndex = 5;
-			this.button1.Text = "Refresh";
+			this.button1.Text = "Save";
 			this.button1.UseVisualStyleBackColor = true;
 			this.button1.Click += new System.EventHandler(this.button1_Click);
 			// 
@@ -251,7 +244,7 @@
 			this.groupBox3.Controls.Add(this.StatisticsLabel);
 			this.groupBox3.Location = new System.Drawing.Point(12, 128);
 			this.groupBox3.Name = "groupBox3";
-			this.groupBox3.Size = new System.Drawing.Size(579, 233);
+			this.groupBox3.Size = new System.Drawing.Size(609, 275);
 			this.groupBox3.TabIndex = 6;
 			this.groupBox3.TabStop = false;
 			this.groupBox3.Text = "Statistics";
@@ -268,7 +261,7 @@
 			// button2
 			// 
 			this.button2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-			this.button2.Location = new System.Drawing.Point(389, 367);
+			this.button2.Location = new System.Drawing.Point(419, 409);
 			this.button2.Name = "button2";
 			this.button2.Size = new System.Drawing.Size(99, 36);
 			this.button2.TabIndex = 7;
@@ -280,7 +273,7 @@
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(603, 411);
+			this.ClientSize = new System.Drawing.Size(633, 453);
 			this.Controls.Add(this.button2);
 			this.Controls.Add(this.groupBox3);
 			this.Controls.Add(this.button1);
@@ -312,16 +305,16 @@
 		public System.Windows.Forms.CheckBox VerboseCheckBox;
 		public System.Windows.Forms.TextBox LossTextBox;
 		public System.Windows.Forms.TextBox MinLatencyTextBox;
-		public System.Windows.Forms.TextBox textBox3;
+		public System.Windows.Forms.TextBox MaxLatencyTextBox;
 		private System.Windows.Forms.Button button1;
 		private System.Windows.Forms.Label label7;
 		private System.Windows.Forms.Label label6;
-		private System.Windows.Forms.TextBox textBox1;
+		private System.Windows.Forms.TextBox PingFrequencyTextBox;
 		private System.Windows.Forms.GroupBox groupBox3;
 		public System.Windows.Forms.Label StatisticsLabel;
 		private System.Windows.Forms.Button button2;
 		private System.Windows.Forms.Label label8;
 		private System.Windows.Forms.Label label9;
-		public System.Windows.Forms.TextBox textBox2;
+		public System.Windows.Forms.TextBox DupesTextBox;
 	}
 }

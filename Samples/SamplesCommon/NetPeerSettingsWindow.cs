@@ -19,6 +19,7 @@ namespace SamplesCommon
 		{
 			Peer = peer;
 			InitializeComponent();
+			UpdateLabelsAndBoxes();
 			RefreshData();
 			this.Text = title;
 
@@ -40,24 +41,32 @@ namespace SamplesCommon
 			RefreshData();
 		}
 
-		private void RefreshData()
+		private void UpdateLabelsAndBoxes()
 		{
-#if DEBUG
-			LossTextBox.Text = ((int)(Peer.Configuration.SimulatedLoss * 100)).ToString();
-			textBox2.Text = ((int)(Peer.Configuration.SimulatedDuplicatesChance * 100)).ToString();
-			MinLatencyTextBox.Text = ((int)(Peer.Configuration.SimulatedMinimumLatency * 1000)).ToString();
-			textBox3.Text = ((int)((Peer.Configuration.SimulatedMinimumLatency + Peer.Configuration.SimulatedRandomLatency) * 1000)).ToString();
-#else
-			LossTextBox.Text = "0";
-			MinLatencyTextBox.Text = "0";
-			textBox3.Text = "0";
-			textBox2.Text = "0";
-#endif
+			var pc = Peer.Configuration;
+
+			var loss = (pc.SimulatedLoss * 100.0f).ToString();
+			label5.Text = loss + " %";
+			LossTextBox.Text = loss;
+
+			var dupes = (pc.SimulatedDuplicatesChance * 100.0f).ToString();
+			label8.Text = dupes + " %";
+			DupesTextBox.Text = dupes;
+
+			var minLat = (pc.SimulatedMinimumLatency * 1000.0f).ToString();
+			var maxLat = ((pc.SimulatedMinimumLatency + pc.SimulatedRandomLatency) * 1000.0f).ToString();
+
+			label4.Text = minLat + " to " + maxLat + " ms";
+			MinLatencyTextBox.Text = minLat;
+			MaxLatencyTextBox.Text = maxLat;
+
 			DebugCheckBox.Checked = Peer.Configuration.IsMessageTypeEnabled(NetIncomingMessageType.DebugMessage);
 			VerboseCheckBox.Checked = Peer.Configuration.IsMessageTypeEnabled(NetIncomingMessageType.VerboseDebugMessage);
-			textBox1.Text = (Peer.Configuration.PingInterval * 1000).ToString();
-			//ThrottleTextBox.Text = Peer.Configuration.ThrottleBytesPerSecond.ToString();
+			PingFrequencyTextBox.Text = (Peer.Configuration.PingInterval * 1000).ToString();
+		}
 
+		private void RefreshData()
+		{
 			StringBuilder bdr = new StringBuilder();
 			bdr.AppendLine(Peer.Statistics.ToString());
 
@@ -65,58 +74,27 @@ namespace SamplesCommon
 			{
 				NetConnection conn = Peer.Connections[0];
 				bdr.AppendLine("Connection 0:");
-				//bdr.AppendLine("Average RTT: " + ((int)(conn.AverageRoundtripTime * 1000.0f)) + " ms");
-				//bdr.AppendLine("Last response: " + (int)(NetTime.Now - conn.Statistics.LastSendRespondedTo) + "s ago");
-				//bdr.AppendLine("Most sends: " + conn.Statistics.MostSends);
 				bdr.Append(conn.Statistics.ToString());
 			}
 
 			StatisticsLabel.Text = bdr.ToString();
 		}
 
-		private void DebugCheckBox_CheckedChanged(object sender, EventArgs e)
+		private void Save()
 		{
 			Peer.Configuration.SetMessageTypeEnabled(NetIncomingMessageType.DebugMessage, DebugCheckBox.Checked);
-		}
-
-		private void VerboseCheckBox_CheckedChanged(object sender, EventArgs e)
-		{
 			Peer.Configuration.SetMessageTypeEnabled(NetIncomingMessageType.VerboseDebugMessage, VerboseCheckBox.Checked);
-		}
-
-		private void LossTextBox_TextChanged(object sender, EventArgs e)
-		{
-#if DEBUG
-			float ms;
-			if (Single.TryParse(LossTextBox.Text, out ms))
-				Peer.Configuration.SimulatedLoss = (float)((double)ms / 100.0);
-#endif
-		}
-
-		private void textBox2_TextChanged(object sender, EventArgs e)
-		{
-#if DEBUG
-			float ms;
-			if (Single.TryParse(textBox2.Text, out ms))
-				Peer.Configuration.SimulatedDuplicatesChance = (float)((double)ms / 100.0);
-#endif
-		}
-
-		private void MinLatencyTextBox_TextChanged(object sender, EventArgs e)
-		{
-#if DEBUG
-			float min;
-			if (float.TryParse(MinLatencyTextBox.Text, out min))
-				Peer.Configuration.SimulatedMinimumLatency = (float)(min / 1000.0);
-			MinLatencyTextBox.Text = ((int)(Peer.Configuration.SimulatedMinimumLatency * 1000)).ToString();
-#endif
-		}
-			
-		private void textBox3_TextChanged(object sender, EventArgs e)
-		{
-#if DEBUG
+			float f;
+			if (Single.TryParse(LossTextBox.Text, out f))
+				Peer.Configuration.SimulatedLoss = (float)((double)f / 100.0);
+			if (Single.TryParse(DupesTextBox.Text, out f))
+				Peer.Configuration.SimulatedDuplicatesChance = (float)((double)f / 100.0);
+			if (float.TryParse(MinLatencyTextBox.Text, out f))
+				Peer.Configuration.SimulatedMinimumLatency = (float)(f / 1000.0);
+			if (float.TryParse(PingFrequencyTextBox.Text, out f))
+				Peer.Configuration.PingInterval = (float)(f / 1000.0);
 			float max;
-			if (float.TryParse(textBox3.Text, out max))
+			if (float.TryParse(MaxLatencyTextBox.Text, out max))
 			{
 				max = (float)((double)max / 1000.0);
 				float r = max - Peer.Configuration.SimulatedMinimumLatency;
@@ -124,35 +102,22 @@ namespace SamplesCommon
 				{
 					Peer.Configuration.SimulatedRandomLatency = r;
 					double nm = (double)Peer.Configuration.SimulatedMinimumLatency + (double)Peer.Configuration.SimulatedRandomLatency;
-					textBox3.Text = ((int)(max * 1000)).ToString();
+					MaxLatencyTextBox.Text = ((int)(max * 1000)).ToString();
 				}
 			}
-#endif
+
 		}
 
 		private void button1_Click(object sender, EventArgs e)
 		{
+			Save();
+			UpdateLabelsAndBoxes();
 			RefreshData();
-		}
-
-		private void textBox1_TextChanged(object sender, EventArgs e)
-		{
-			float d;
-			if (float.TryParse(textBox1.Text, out d))
-				Peer.Configuration.PingInterval = (float)(d / 1000.0);
 		}
 
 		private void button2_Click(object sender, EventArgs e)
 		{
 			this.Close();
 		}
-
-		private void ThrottleTextBox_TextChanged(object sender, EventArgs e)
-		{
-			//uint bps;
-			//if (UInt32.TryParse(ThrottleTextBox.Text, out bps))
-			//	Peer.Configuration.ThrottleBytesPerSecond = (int)bps;
-		}
-
 	}
 }
