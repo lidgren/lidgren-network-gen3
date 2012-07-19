@@ -93,7 +93,7 @@ namespace ChatServer
 
 			foreach (NetConnection conn in s_server.Connections)
 			{
-				string str = NetUtility.ToHexString(conn.RemoteUniqueIdentifier) + " from " + conn.RemoteEndpoint.ToString() + " [" + conn.Status + "]";
+				string str = NetUtility.ToHexString(conn.RemoteUniqueIdentifier) + " from " + conn.RemoteEndPoint.ToString() + " [" + conn.Status + "]";
 				s_form.listBox1.Items.Add(str);
 			}
 		}

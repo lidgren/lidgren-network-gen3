@@ -60,7 +60,7 @@ namespace ImageServer
 						case NetIncomingMessageType.DiscoveryRequest:
 							NetOutgoingMessage dom = Server.CreateMessage();
 							dom.Write("Kokosboll");
-							Server.SendDiscoveryResponse(dom, inc.SenderEndpoint);
+							Server.SendDiscoveryResponse(dom, inc.SenderEndPoint);
 							break;
 						case NetIncomingMessageType.ConnectionApproval:
 

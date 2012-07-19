@@ -63,7 +63,7 @@ namespace ImageClient
 					case NetIncomingMessageType.DiscoveryResponse:
 						// found server! just connect...
 						string serverResponseHello = inc.ReadString();
-						Client.Connect(inc.SenderEndpoint, GetApproveData());
+						Client.Connect(inc.SenderEndPoint, GetApproveData());
 						break;
 					case NetIncomingMessageType.DebugMessage:
 					case NetIncomingMessageType.VerboseDebugMessage:
