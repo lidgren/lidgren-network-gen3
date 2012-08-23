@@ -26,6 +26,7 @@ using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Collections.Generic;
 
 namespace Lidgren.Network
 {
@@ -554,6 +555,19 @@ namespace Lidgren.Network
 			else if (mtp >= NetMessageType.UserSequenced1)
 				return NetDeliveryMethod.UnreliableSequenced;
 			return NetDeliveryMethod.Unreliable;
+		}
+
+		public static string MakeCommaDelimitedList<T>(IList<T> list)
+		{
+			var cnt = list.Count;
+			StringBuilder bdr = new StringBuilder(cnt * 5); // educated guess
+			for(int i=0;i<cnt;i++)
+			{
+				bdr.Append(list[i].ToString());
+				if (i != cnt - 1)
+					bdr.Append(", ");
+			}
+			return bdr.ToString();
 		}
 	}
 }

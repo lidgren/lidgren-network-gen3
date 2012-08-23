@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -55,18 +54,11 @@ namespace Lidgren.Network
 		public NetRC2Encryption(byte[] key, byte[] iv)
 		{
 			if (!m_keysizes.Contains(key.Length * 8))
-			{
-				string lengths = m_keysizes.Aggregate("", (current, i) => current + string.Format("{0}, ", i));
-				lengths = lengths.Remove(lengths.Length - 3);
-				throw new NetException(string.Format("Not a valid key size. (Valid values are: {0})", lengths));
-			}
+				throw new NetException(string.Format("Not a valid key size. (Valid values are: {0})", NetUtility.MakeCommaDelimitedList(m_keysizes)));
 
 			if (!m_blocksizes.Contains(iv.Length * 8))
-			{
-				string lengths = m_blocksizes.Aggregate("", (current, i) => current + string.Format("{0}, ", i));
-				lengths = lengths.Remove(lengths.Length - 3);
-				throw new NetException(string.Format("Not a valid iv size. (Valid values are: {0})", lengths));
-			}
+				throw new NetException(string.Format("Not a valid iv size. (Valid values are: {0})", NetUtility.MakeCommaDelimitedList(m_blocksizes)));
+
 			m_key = key;
 			m_iv = iv;
 			m_bitSize = m_key.Length * 8;
@@ -78,11 +70,8 @@ namespace Lidgren.Network
 		public NetRC2Encryption(string key, int bitsize)
 		{
 			if (!m_keysizes.Contains(bitsize))
-			{
-				string lengths = m_keysizes.Aggregate("", (current, i) => current + string.Format("{0}, ", i));
-				lengths = lengths.Remove(lengths.Length - 3);
-				throw new NetException(string.Format("Not a valid key size. (Valid values are: {0})", lengths));
-			}
+				throw new NetException(string.Format("Not a valid key size. (Valid values are: {0})", NetUtility.MakeCommaDelimitedList(m_keysizes)));
+				
 			byte[] entropy = Encoding.UTF32.GetBytes(key);
 			// I know hardcoding salts is bad, but in this case I think it is acceptable.
 			HMACSHA512 hmacsha512 = new HMACSHA512(Convert.FromBase64String("i88NEiez3c50bHqr3YGasDc4p8jRrxJAaiRiqixpvp4XNAStP5YNoC2fXnWkURtkha6M8yY901Gj07IRVIRyGL=="));
@@ -105,7 +94,7 @@ namespace Lidgren.Network
 		/// </summary>
 		/// <param name="key"></param>
 		public NetRC2Encryption(string key)
-			: this(key, m_keysizes.Max())
+			: this(key, m_keysizes[0])
 		{
 		}
 
