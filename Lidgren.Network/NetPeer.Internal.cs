@@ -270,7 +270,7 @@ namespace Lidgren.Network
 			int maxCHBpS = 1250 - m_connections.Count;
 			if (maxCHBpS < 250)
 				maxCHBpS = 250;
-			if (delta > (1.0 / (double)maxCHBpS)) // max connection heartbeats/second max
+			if (delta > (1.0 / (double)maxCHBpS) || delta < 0.0) // max connection heartbeats/second max
 			{
 				m_frameCounter++;
 				m_lastHeartbeat = dnow;
