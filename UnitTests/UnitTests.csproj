@@ -41,6 +41,7 @@
     <Compile Include="BitVectorTests.cs" />
     <Compile Include="EncryptionTests.cs" />
     <Compile Include="MiscTests.cs" />
+    <Compile Include="NetBitWriterTests.cs" />
     <Compile Include="NetQueueTests.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
