@@ -475,10 +475,13 @@ namespace Lidgren.Network
 
 		internal static int RelativeSequenceNumber(int nr, int expected)
 		{
-			int retval = ((nr + NetConstants.NumSequenceNumbers) - expected) % NetConstants.NumSequenceNumbers;
-			if (retval > (NetConstants.NumSequenceNumbers / 2))
-				retval -= NetConstants.NumSequenceNumbers;
-			return retval;
+			return (nr - expected + NetConstants.NumSequenceNumbers + (NetConstants.NumSequenceNumbers / 2)) % NetConstants.NumSequenceNumbers - (NetConstants.NumSequenceNumbers / 2);
+
+			// old impl:
+			//int retval = ((nr + NetConstants.NumSequenceNumbers) - expected) % NetConstants.NumSequenceNumbers;
+			//if (retval > (NetConstants.NumSequenceNumbers / 2))
+			//	retval -= NetConstants.NumSequenceNumbers;
+			//return retval;
 		}
 
 		/// <summary>
