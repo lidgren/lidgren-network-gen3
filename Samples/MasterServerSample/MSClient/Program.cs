@@ -51,11 +51,11 @@ namespace MSClient
 							NativeMethods.AppendText(m_mainForm.richTextBox1, inc.ReadString());
 							break;
 						case NetIncomingMessageType.UnconnectedData:
-							if (inc.SenderEndpoint.Equals(m_masterServer))
+							if (inc.SenderEndPoint.Equals(m_masterServer))
 							{
 								// it's from the master server - must be a host
-								IPEndPoint hostInternal = inc.ReadIPEndpoint();
-								IPEndPoint hostExternal = inc.ReadIPEndpoint();
+								IPEndPoint hostInternal = inc.ReadIPEndPoint();
+								IPEndPoint hostExternal = inc.ReadIPEndPoint();
 		
 								m_hostList.Add(new IPEndPoint[] { hostInternal, hostExternal });
 
@@ -64,7 +64,7 @@ namespace MSClient
 							break;
 						case NetIncomingMessageType.NatIntroductionSuccess:
 							string token = inc.ReadString();
-							MessageBox.Show("Nat introduction success to " + inc.SenderEndpoint + " token is: " + token);
+							MessageBox.Show("Nat introduction success to " + inc.SenderEndPoint + " token is: " + token);
 							break;
 					}
 				}

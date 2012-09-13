@@ -42,8 +42,8 @@ namespace MasterServer
 									// It's a host wanting to register its presence
 									IPEndPoint[] eps = new IPEndPoint[]
 									{
-										msg.ReadIPEndpoint(), // internal
-										msg.SenderEndpoint // external
+										msg.ReadIPEndPoint(), // internal
+										msg.SenderEndPoint // external
 									};
 									Console.WriteLine("Got registration for host " + eps[1]);
 									registeredHosts.Add(eps);
@@ -51,24 +51,24 @@ namespace MasterServer
 
 								case MasterServerMessageType.RequestHostList:
 									// It's a client wanting a list of registered hosts
-									Console.WriteLine("Sending list of " + registeredHosts.Count + " hosts to client " + msg.SenderEndpoint);
+									Console.WriteLine("Sending list of " + registeredHosts.Count + " hosts to client " + msg.SenderEndPoint);
 									foreach (IPEndPoint[] ep in registeredHosts)
 									{
 										// send registered host to client
 										NetOutgoingMessage om = peer.CreateMessage();
 										om.Write(ep[0]);
 										om.Write(ep[1]);
-										peer.SendUnconnectedMessage(om, msg.SenderEndpoint);
+										peer.SendUnconnectedMessage(om, msg.SenderEndPoint);
 									}
 
 									break;
 								case MasterServerMessageType.RequestIntroduction:
 									// It's a client wanting to connect to a specific (external) host
-									IPEndPoint clientInternal = msg.ReadIPEndpoint();
-									IPEndPoint hostExternal = msg.ReadIPEndpoint();
+									IPEndPoint clientInternal = msg.ReadIPEndPoint();
+									IPEndPoint hostExternal = msg.ReadIPEndPoint();
 									string token = msg.ReadString();
 
-									Console.WriteLine(msg.SenderEndpoint + " requesting introduction to " + hostExternal + " (token " + token + ")");
+									Console.WriteLine(msg.SenderEndPoint + " requesting introduction to " + hostExternal + " (token " + token + ")");
 
 									// find in list
 									foreach (IPEndPoint[] elist in registeredHosts)
@@ -81,7 +81,7 @@ namespace MasterServer
 												elist[0], // host internal
 												elist[1], // host external
 												clientInternal, // client internal
-												msg.SenderEndpoint, // client external
+												msg.SenderEndPoint, // client external
 												token // request token
 											);
 											break;
