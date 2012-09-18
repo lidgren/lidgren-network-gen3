@@ -56,6 +56,18 @@ namespace Lidgren.Network
 			m_receiveCallbacks.Add(new NetTuple<SynchronizationContext, SendOrPostCallback>(SynchronizationContext.Current, callback));
 		}
 
+		/// <summary>
+		/// Call this to unregister a callback, but remember to do it in the same synchronization context!
+		/// </summary>
+		public void UnregisterReceivedCallback(SendOrPostCallback callback)
+		{
+			if (m_receiveCallbacks == null)
+				return;
+			m_receiveCallbacks.Remove(new NetTuple<SynchronizationContext, SendOrPostCallback>(SynchronizationContext.Current, callback));
+			if (m_receiveCallbacks.Count < 1)
+				m_receiveCallbacks = null;
+		}
+
 		internal void ReleaseMessage(NetIncomingMessage msg)
 		{
 			NetException.Assert(msg.m_incomingMessageType != NetIncomingMessageType.Error);
