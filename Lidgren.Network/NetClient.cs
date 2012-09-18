@@ -90,6 +90,16 @@ namespace Lidgren.Network
 					return null;
 				}
 			}
+
+			lock (m_handshakes)
+			{
+				if (m_handshakes.Count > 0)
+				{
+					LogWarning("Connect attempt failed; Handshake already in progress");
+					return null;
+				}
+			}
+
 			return base.Connect(remoteEndPoint, hailMessage);
 		}
 
