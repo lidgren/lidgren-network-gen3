@@ -171,6 +171,9 @@ namespace Lidgren.Network
 			return;
 		}
 
+		/// <summary>
+		/// Reads an unsigned 16 bit integer
+		/// </summary>
 		[CLSCompliant(false)]
 #if UNSAFE
 		public static unsafe ushort ReadUInt16(byte[] fromBuffer, int numberOfBits, int readBitOffset)
@@ -283,6 +286,9 @@ namespace Lidgren.Network
 		//[CLSCompliant(false)]
 		//public static ulong ReadUInt64(byte[] fromBuffer, int numberOfBits, int readBitOffset)
 
+		/// <summary>
+		/// Writes un unsigned 16 bit integer
+		/// </summary>
 		[CLSCompliant(false)]
 		public static int WriteUInt16(ushort source, int numberOfBits, byte[] destination, int destinationBitOffset)
 		{

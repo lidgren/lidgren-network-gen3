@@ -35,7 +35,14 @@ namespace Lidgren.Network
 	/// </summary>
 	public static class NetUtility
 	{
+		/// <summary>
+		/// Resolve endpoint callback
+		/// </summary>
 		public delegate void ResolveEndPointCallback(IPEndPoint endPoint);
+
+		/// <summary>
+		/// Resolve address callback
+		/// </summary>
 		public delegate void ResolveAddressCallback(IPAddress adr);
 
 		/// <summary>
@@ -260,6 +267,9 @@ namespace Lidgren.Network
 			return new string(c);
 		}
 		
+		/// <summary>
+		/// Gets the local broadcast address
+		/// </summary>
 		public static IPAddress GetBroadcastAddress()
 		{
 #if __ANDROID__
@@ -560,6 +570,9 @@ namespace Lidgren.Network
 			return NetDeliveryMethod.Unreliable;
 		}
 
+		/// <summary>
+		/// Creates a comma delimited string from a lite of items
+		/// </summary>
 		public static string MakeCommaDelimitedList<T>(IList<T> list)
 		{
 			var cnt = list.Count;

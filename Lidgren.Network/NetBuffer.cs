@@ -6,6 +6,9 @@ namespace Lidgren.Network
 {
 	public partial class NetBuffer
 	{
+		/// <summary>
+		/// Number of bytes to overallocate for each message to avoid resizing
+		/// </summary>
 		protected const int c_overAllocateAmount = 4;
 
 		private static readonly Dictionary<Type, MethodInfo> s_readMethods;
