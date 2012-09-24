@@ -122,7 +122,10 @@ namespace Lidgren.Network
 		{
 			m_peer.VerifyNetworkThread();
 
-			NetOutgoingMessage om = m_peer.CreateMessage(m_peerConfiguration.AppIdentifier.Length + 1 + 4);
+			int preAllocate = 13 + m_peerConfiguration.AppIdentifier.Length;
+			preAllocate += (m_localHailMessage == null ? 0 : m_localHailMessage.LengthBytes);
+
+			NetOutgoingMessage om = m_peer.CreateMessage(preAllocate);
 			om.m_messageType = NetMessageType.Connect;
 			om.Write(m_peerConfiguration.AppIdentifier);
 			om.Write(m_peer.m_uniqueIdentifier);
@@ -146,7 +149,7 @@ namespace Lidgren.Network
 			if (onLibraryThread)
 				m_peer.VerifyNetworkThread();
 
-			NetOutgoingMessage om = m_peer.CreateMessage(m_peerConfiguration.AppIdentifier.Length + 1 + 4);
+			NetOutgoingMessage om = m_peer.CreateMessage(m_peerConfiguration.AppIdentifier.Length + 13);
 			om.m_messageType = NetMessageType.ConnectResponse;
 			om.Write(m_peerConfiguration.AppIdentifier);
 			om.Write(m_peer.m_uniqueIdentifier);
@@ -197,7 +200,7 @@ namespace Lidgren.Network
 
 		internal void SendConnectionEstablished()
 		{
-			NetOutgoingMessage om = m_peer.CreateMessage(0);
+			NetOutgoingMessage om = m_peer.CreateMessage(4);
 			om.m_messageType = NetMessageType.ConnectionEstablished;
 			om.Write((float)NetTime.Now);
 			m_peer.SendLibrary(om, m_remoteEndPoint);

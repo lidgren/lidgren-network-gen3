@@ -143,7 +143,7 @@ namespace Lidgren.Network
 
 		private void SendMTUSuccess(int size)
 		{
-			NetOutgoingMessage om = m_peer.CreateMessage(1);
+			NetOutgoingMessage om = m_peer.CreateMessage(4);
 			om.Write(size);
 			om.m_messageType = NetMessageType.ExpandMTUSuccess;
 			int len = om.Encode(m_peer.m_sendBuffer, 0, 0);

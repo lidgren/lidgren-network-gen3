@@ -82,8 +82,7 @@ namespace ChatClient
 		public static void Connect(string host, int port)
 		{
 			s_client.Start();
-			NetOutgoingMessage hail = s_client.CreateMessage();
-			hail.Write("This is the hail message");
+			NetOutgoingMessage hail = s_client.CreateMessage("This is the hail message");
 			s_client.Connect(host, port, hail);
 		}
 
