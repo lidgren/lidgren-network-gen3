@@ -149,7 +149,7 @@ namespace Lidgren.Network
 			if (onLibraryThread)
 				m_peer.VerifyNetworkThread();
 
-			NetOutgoingMessage om = m_peer.CreateMessage(m_peerConfiguration.AppIdentifier.Length + 13);
+			NetOutgoingMessage om = m_peer.CreateMessage(m_peerConfiguration.AppIdentifier.Length + 13 + (m_localHailMessage == null ? 0 : m_localHailMessage.LengthBytes));
 			om.m_messageType = NetMessageType.ConnectResponse;
 			om.Write(m_peerConfiguration.AppIdentifier);
 			om.Write(m_peer.m_uniqueIdentifier);
@@ -250,7 +250,7 @@ namespace Lidgren.Network
 		/// </summary>
 		public void Deny()
 		{
-			Deny("");
+			Deny(string.Empty);
 		}
 
 		/// <summary>

@@ -214,7 +214,7 @@ namespace Lidgren.Network
 			if (string.IsNullOrEmpty(text))
 			{
 				retval = CreateIncomingMessage(tp, 1);
-				retval.Write("");
+				retval.Write(string.Empty);
 				return retval;
 			}
 
