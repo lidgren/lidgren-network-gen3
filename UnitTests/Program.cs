@@ -17,8 +17,6 @@ namespace UnitTests
 
 			Console.WriteLine("Unique identifier is " + NetUtility.ToHexString(peer.UniqueIdentifier));
 
-			NetBitWriterTests.Run();
-
 			ReadWriteTests.Run(peer);
 
 			NetQueueTests.Run();
