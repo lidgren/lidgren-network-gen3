@@ -12,7 +12,7 @@ namespace MasterServer
 	{
 		static void Main(string[] args)
 		{
-			List<IPEndPoint[]> registeredHosts = new List<IPEndPoint[]>();
+			Dictionary<long, IPEndPoint[]> registeredHosts = new Dictionary<long, IPEndPoint[]>();
 
 			NetPeerConfiguration config = new NetPeerConfiguration("masterserver");
 			config.SetMessageTypeEnabled(NetIncomingMessageType.UnconnectedData, true);
@@ -39,25 +39,28 @@ namespace MasterServer
 							switch ((MasterServerMessageType)msg.ReadByte())
 							{
 								case MasterServerMessageType.RegisterHost:
+
 									// It's a host wanting to register its presence
-									IPEndPoint[] eps = new IPEndPoint[]
+									var id = msg.ReadInt64(); // server unique identifier
+
+									Console.WriteLine("Got registration for host " + id);
+									registeredHosts[id] = new IPEndPoint[]
 									{
 										msg.ReadIPEndPoint(), // internal
 										msg.SenderEndPoint // external
 									};
-									Console.WriteLine("Got registration for host " + eps[1]);
-									registeredHosts.Add(eps);
 									break;
 
 								case MasterServerMessageType.RequestHostList:
 									// It's a client wanting a list of registered hosts
 									Console.WriteLine("Sending list of " + registeredHosts.Count + " hosts to client " + msg.SenderEndPoint);
-									foreach (IPEndPoint[] ep in registeredHosts)
+									foreach (var kvp in registeredHosts)
 									{
 										// send registered host to client
 										NetOutgoingMessage om = peer.CreateMessage();
-										om.Write(ep[0]);
-										om.Write(ep[1]);
+										om.Write(kvp.Key);
+										om.Write(kvp.Value[0]);
+										om.Write(kvp.Value[1]);
 										peer.SendUnconnectedMessage(om, msg.SenderEndPoint);
 									}
 
@@ -65,27 +68,28 @@ namespace MasterServer
 								case MasterServerMessageType.RequestIntroduction:
 									// It's a client wanting to connect to a specific (external) host
 									IPEndPoint clientInternal = msg.ReadIPEndPoint();
-									IPEndPoint hostExternal = msg.ReadIPEndPoint();
+									long hostId = msg.ReadInt64();
 									string token = msg.ReadString();
 
-									Console.WriteLine(msg.SenderEndPoint + " requesting introduction to " + hostExternal + " (token " + token + ")");
+									Console.WriteLine(msg.SenderEndPoint + " requesting introduction to " + hostId + " (token " + token + ")");
 
 									// find in list
-									foreach (IPEndPoint[] elist in registeredHosts)
+									IPEndPoint[] elist;
+									if (registeredHosts.TryGetValue(hostId, out elist))
 									{
-										if (elist[1].Equals(hostExternal))
-										{
-											// found in list - introduce client and host to eachother
-											Console.WriteLine("Sending introduction...");
-											peer.Introduce(
-												elist[0], // host internal
-												elist[1], // host external
-												clientInternal, // client internal
-												msg.SenderEndPoint, // client external
-												token // request token
-											);
-											break;
-										}
+										// found in list - introduce client and host to eachother
+										Console.WriteLine("Sending introduction...");
+										peer.Introduce(
+											elist[0], // host internal
+											elist[1], // host external
+											clientInternal, // client internal
+											msg.SenderEndPoint, // client external
+											token // request token
+										);
+									}
+									else
+									{
+										Console.WriteLine("Client requested introduction to nonlisted host!");
 									}
 									break;
 							}

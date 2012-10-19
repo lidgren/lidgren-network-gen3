@@ -14,7 +14,7 @@ namespace MSClient
 		private static Form1 m_mainForm;
 		private static NetClient m_client;
 		private static IPEndPoint m_masterServer;
-		private static List<IPEndPoint[]> m_hostList;
+		private static Dictionary<long, IPEndPoint[]> m_hostList;
 
 		[STAThread]
 		static void Main()
@@ -23,7 +23,7 @@ namespace MSClient
 			Application.SetCompatibleTextRenderingDefault(false);
 			m_mainForm = new Form1();
 
-			m_hostList = new List<IPEndPoint[]>();
+			m_hostList = new Dictionary<long, IPEndPoint[]>();
 
 			NetPeerConfiguration config = new NetPeerConfiguration("game");
 			config.EnableMessageType(NetIncomingMessageType.UnconnectedData);
@@ -54,12 +54,16 @@ namespace MSClient
 							if (inc.SenderEndPoint.Equals(m_masterServer))
 							{
 								// it's from the master server - must be a host
-								IPEndPoint hostInternal = inc.ReadIPEndPoint();
-								IPEndPoint hostExternal = inc.ReadIPEndPoint();
+								var id = inc.ReadInt64();
+								var hostInternal = inc.ReadIPEndPoint();
+								var hostExternal = inc.ReadIPEndPoint();
 		
-								m_hostList.Add(new IPEndPoint[] { hostInternal, hostExternal });
+								m_hostList[id] = new IPEndPoint[] { hostInternal, hostExternal };
 
-								m_mainForm.comboBox1.Items.Add(hostExternal.Address.ToString());
+								// update combo box
+								m_mainForm.comboBox1.Items.Clear();
+								foreach (var kvp in m_hostList)
+									m_mainForm.comboBox1.Items.Add(kvp.Key.ToString() + " (" + kvp.Value[1] + ")");
 							}
 							break;
 						case NetIncomingMessageType.NatIntroductionSuccess:
@@ -83,9 +87,9 @@ namespace MSClient
 			m_client.SendUnconnectedMessage(listRequest, m_masterServer);
 		}
 
-		public static void RequestNATIntroduction(string host)
+		public static void RequestNATIntroduction(long hostid)
 		{
-			if (string.IsNullOrEmpty(host))
+			if (hostid == 0)
 			{
 				MessageBox.Show("Select a host in the list first");
 				return;
@@ -97,13 +101,14 @@ namespace MSClient
 			NetOutgoingMessage om = m_client.CreateMessage();
 			om.Write((byte)MasterServerMessageType.RequestIntroduction);
 
-			// write internal ipendpoint
+			// write my internal ipendpoint
 			IPAddress mask;
 			om.Write(new IPEndPoint(NetUtility.GetMyAddress(out mask), m_client.Port));
 
-			// write external address of host to request introduction to
-			IPEndPoint hostEp = new IPEndPoint(NetUtility.Resolve(host), CommonConstants.GameServerPort);
-			om.Write(hostEp);
+			// write requested host id
+			om.Write(hostid);
+
+			// write token
 			om.Write("mytoken");
 
 			m_client.SendUnconnectedMessage(om, m_masterServer);

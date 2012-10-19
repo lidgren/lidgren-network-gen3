@@ -19,8 +19,7 @@ namespace Lidgren.Network
 			// send message to client
 			NetOutgoingMessage msg = CreateMessage(10 + token.Length + 1);
 			msg.m_messageType = NetMessageType.NatIntroduction;
-			msg.Write(false);
-			msg.WritePadBits();
+			msg.Write((byte)0);
 			msg.Write(hostInternal);
 			msg.Write(hostExternal);
 			msg.Write(token);
@@ -29,8 +28,7 @@ namespace Lidgren.Network
 			// send message to host
 			msg = CreateMessage(10 + token.Length + 1);
 			msg.m_messageType = NetMessageType.NatIntroduction;
-			msg.Write(true);
-			msg.WritePadBits();
+			msg.Write((byte)1);
 			msg.Write(clientInternal);
 			msg.Write(clientExternal);
 			msg.Write(token);
@@ -100,6 +98,13 @@ namespace Lidgren.Network
 			punchSuccess.m_senderEndPoint = senderEndPoint;
 			punchSuccess.Write(token);
 			ReleaseMessage(punchSuccess);
+
+			// send a return punch just for good measure
+			var punch = CreateMessage(1);
+			punch.m_messageType = NetMessageType.NatPunchMessage;
+			punch.Write((byte)0);
+			punch.Write(token);
+			m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(senderEndPoint, punch));
 		}
 	}
 }

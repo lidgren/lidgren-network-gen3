@@ -23,7 +23,11 @@ namespace MSClient
 
 		private void button2_Click(object sender, EventArgs e)
 		{
-			string host = comboBox1.SelectedItem.ToString();
+			if (comboBox1.SelectedItem == null)
+				return;
+
+			var splits = comboBox1.SelectedItem.ToString().Split(' ');
+			var host = Int64.Parse(splits[0]);
 			Program.RequestNATIntroduction(host);
 		}
 	}
