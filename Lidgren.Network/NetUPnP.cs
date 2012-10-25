@@ -22,6 +22,7 @@ namespace Lidgren.Network
 		private const int c_discoveryTimeOutMillis = 1000;
 
 		private string m_serviceUrl;
+		private string m_serviceName = "";
 		private NetPeer m_peer;
 		private ManualResetEvent m_discoveryComplete = new ManualResetEvent(false);
 
@@ -78,9 +79,18 @@ namespace Lidgren.Network
 			XmlNode typen = desc.SelectSingleNode("//tns:device/tns:deviceType/text()", nsMgr);
 			if (!typen.Value.Contains("InternetGatewayDevice"))
 				return;
-			XmlNode node = desc.SelectSingleNode("//tns:service[tns:serviceType=\"urn:schemas-upnp-org:service:WANIPConnection:1\"]/tns:controlURL/text()", nsMgr);
+
+			m_serviceName = "WANIPConnection";
+			XmlNode node = desc.SelectSingleNode("//tns:service[tns:serviceType=\"urn:schemas-upnp-org:service:" + m_serviceName + ":1\"]/tns:controlURL/text()", nsMgr);
 			if (node == null)
-				return;
+			{
+				//try another service name
+				m_serviceName = "WANPPPConnection";
+				node = desc.SelectSingleNode("//tns:service[tns:serviceType=\"urn:schemas-upnp-org:service:" + m_serviceName + ":1\"]/tns:controlURL/text()", nsMgr);
+				if (node == null)
+					return;
+			}
+
 			m_serviceUrl = CombineUrls(resp, node.Value);
 			m_peer.LogDebug("UPnP service ready");
 			m_status = UPnPStatus.Available;
@@ -138,8 +148,9 @@ namespace Lidgren.Network
 			try
 			{
 				XmlDocument xdoc = SOAPRequest(m_serviceUrl,
-					"<u:AddPortMapping xmlns:u=\"urn:schemas-upnp-org:service:WANIPConnection:1\">" +
-					"<NewRemoteHost></NewRemoteHost><NewExternalPort>" + port.ToString() + "</NewExternalPort>" +
+					"<u:AddPortMapping xmlns:u=\"urn:schemas-upnp-org:service:" + m_serviceName + ":1\">" +
+					"<NewRemoteHost></NewRemoteHost>" +
+					"<NewExternalPort>" + port.ToString() + "</NewExternalPort>" +
 					"<NewProtocol>" + ProtocolType.Udp.ToString().ToUpper() + "</NewProtocol>" +
 					"<NewInternalPort>" + port.ToString() + "</NewInternalPort>" +
 					"<NewInternalClient>" + client.ToString() + "</NewInternalClient>" +
@@ -171,7 +182,7 @@ namespace Lidgren.Network
 			try
 			{
 				XmlDocument xdoc = SOAPRequest(m_serviceUrl,
-				"<u:DeletePortMapping xmlns:u=\"urn:schemas-upnp-org:service:WANIPConnection:1\">" +
+				"<u:DeletePortMapping xmlns:u=\"urn:schemas-upnp-org:service:" + m_serviceName + ":1\">" +
 				"<NewRemoteHost>" +
 				"</NewRemoteHost>" +
 				"<NewExternalPort>" + port + "</NewExternalPort>" +
@@ -195,7 +206,7 @@ namespace Lidgren.Network
 				return null;
 			try
 			{
-				XmlDocument xdoc = SOAPRequest(m_serviceUrl, "<u:GetExternalIPAddress xmlns:u=\"urn:schemas-upnp-org:service:WANIPConnection:1\">" +
+				XmlDocument xdoc = SOAPRequest(m_serviceUrl, "<u:GetExternalIPAddress xmlns:u=\"urn:schemas-upnp-org:service:" + m_serviceName + ":1\">" +
 				"</u:GetExternalIPAddress>", "GetExternalIPAddress");
 				XmlNamespaceManager nsMgr = new XmlNamespaceManager(xdoc.NameTable);
 				nsMgr.AddNamespace("tns", "urn:schemas-upnp-org:device-1-0");
@@ -220,7 +231,7 @@ namespace Lidgren.Network
 			WebRequest r = HttpWebRequest.Create(url);
 			r.Method = "POST";
 			byte[] b = System.Text.Encoding.UTF8.GetBytes(req);
-			r.Headers.Add("SOAPACTION", "\"urn:schemas-upnp-org:service:WANIPConnection:1#" + function + "\"");
+			r.Headers.Add("SOAPACTION", "\"urn:schemas-upnp-org:service:" + m_serviceName + ":1#" + function + "\""); 
 			r.ContentType = "text/xml; charset=\"utf-8\"";
 			r.ContentLength = b.Length;
 			r.GetRequestStream().Write(b, 0, b.Length);
