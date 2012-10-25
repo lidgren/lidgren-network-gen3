@@ -398,9 +398,9 @@ namespace Lidgren.Network
 
 				IPEndPoint ipsender = (IPEndPoint)m_senderRemote;
 
-				if (ipsender.Port == 1900)
+				if (m_upnp != null && now < m_upnp.m_discoveryResponseDeadline)
 				{
-					// UPnP response
+					// is this an UPnP response?
 					try
 					{
 						string resp = System.Text.Encoding.ASCII.GetString(m_receiveBuffer, 0, bytesReceived);

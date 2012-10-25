@@ -7,6 +7,13 @@ using System.Threading;
 
 namespace Lidgren.Network
 {
+	public enum UPnPStatus
+	{
+		Discovering,
+		NotAvailable,
+		Available
+	}
+
 	/// <summary>
 	/// UPnP support class
 	/// </summary>
@@ -18,12 +25,19 @@ namespace Lidgren.Network
 		private NetPeer m_peer;
 		private ManualResetEvent m_discoveryComplete = new ManualResetEvent(false);
 
+		internal float m_discoveryResponseDeadline;
+
+		private UPnPStatus m_status;
+
+		public UPnPStatus Status { get { return m_status; } }
+
 		/// <summary>
 		/// NetUPnP constructor
 		/// </summary>
 		public NetUPnP(NetPeer peer)
 		{
 			m_peer = peer;
+			m_discoveryResponseDeadline = float.MinValue;
 		}
 
 		internal void Discover(NetPeer peer)
@@ -35,21 +49,27 @@ namespace Lidgren.Network
 "MAN:\"ssdp:discover\"\r\n" +
 "MX:3\r\n\r\n";
 
+			m_status = UPnPStatus.Discovering;
+
 			byte[] arr = System.Text.Encoding.UTF8.GetBytes(str);
 
+			m_peer.LogDebug("Attempting UPnP discovery");
 			peer.Socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Broadcast, true);
 			peer.RawSend(arr, 0, arr.Length, new IPEndPoint(IPAddress.Broadcast, 1900));
 			peer.Socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Broadcast, false);
 
 			// allow some extra time for router to respond
 			// System.Threading.Thread.Sleep(50);
+
+			m_discoveryResponseDeadline = (float)NetTime.Now + 6.0f; // arbitrarily chosen number, router gets 6 seconds to respond
+			m_status = UPnPStatus.Discovering;
 		}
 
 		internal void ExtractServiceUrl(string resp)
 		{
 #if !DEBUG
-            try
-            {
+			try
+			{
 #endif
 			XmlDocument desc = new XmlDocument();
 			desc.Load(WebRequest.Create(resp).GetResponse().GetResponseStream());
@@ -63,10 +83,11 @@ namespace Lidgren.Network
 				return;
 			m_serviceUrl = CombineUrls(resp, node.Value);
 			m_peer.LogDebug("UPnP service ready");
+			m_status = UPnPStatus.Available;
 			m_discoveryComplete.Set();
 #if !DEBUG
-            }
-            catch { return; }
+			}
+			catch { return; }
 #endif
 		}
 
@@ -83,12 +104,30 @@ namespace Lidgren.Network
 			return "http://" + gatewayURL + subURL;
 		}
 
+		private bool CheckAvailability()
+		{
+			switch (m_status)
+			{
+				case UPnPStatus.NotAvailable:
+					return false;
+				case UPnPStatus.Available:
+					return true;
+				case UPnPStatus.Discovering:
+					if (m_discoveryComplete.WaitOne(c_discoveryTimeOutMillis))
+						return true;
+					if (NetTime.Now > m_discoveryResponseDeadline)
+						m_status = UPnPStatus.NotAvailable;
+					return false;
+			}
+			return false;
+		}
+
 		/// <summary>
 		/// Add a forwarding rule to the router using UPnP
 		/// </summary>
 		public bool ForwardPort(int port, string description)
 		{
-			if (m_serviceUrl == null && !m_discoveryComplete.WaitOne(c_discoveryTimeOutMillis))
+			if (!CheckAvailability())
 				return false;
 
 			IPAddress mask;
@@ -126,8 +165,9 @@ namespace Lidgren.Network
 		/// </summary>
 		public bool DeleteForwardingRule(int port)
 		{
-			if (m_serviceUrl == null && !m_discoveryComplete.WaitOne(c_discoveryTimeOutMillis))
+			if (!CheckAvailability())
 				return false;
+
 			try
 			{
 				XmlDocument xdoc = SOAPRequest(m_serviceUrl,
@@ -151,7 +191,7 @@ namespace Lidgren.Network
 		/// </summary>
 		public IPAddress GetExternalIP()
 		{
-			if (m_serviceUrl == null && !m_discoveryComplete.WaitOne(c_discoveryTimeOutMillis))
+			if (!CheckAvailability())
 				return null;
 			try
 			{
