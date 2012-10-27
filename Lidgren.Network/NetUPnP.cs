@@ -7,10 +7,24 @@ using System.Threading;
 
 namespace Lidgren.Network
 {
+	/// <summary>
+	/// Status of the UPnP capabilities
+	/// </summary>
 	public enum UPnPStatus
 	{
+		/// <summary>
+		/// Still discovering UPnP capabilities
+		/// </summary>
 		Discovering,
+
+		/// <summary>
+		/// UPnP is not available
+		/// </summary>
 		NotAvailable,
+
+		/// <summary>
+		/// UPnP is available and ready to use
+		/// </summary>
 		Available
 	}
 
@@ -30,6 +44,9 @@ namespace Lidgren.Network
 
 		private UPnPStatus m_status;
 
+		/// <summary>
+		/// Status of the UPnP capabilities of this NetPeer
+		/// </summary>
 		public UPnPStatus Status { get { return m_status; } }
 
 		/// <summary>

@@ -332,7 +332,7 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
-		/// Gets my local IP address (not necessarily external) and subnet mask
+		/// Gets my local IPv4 address (not necessarily external) and subnet mask
 		/// </summary>
 		public static IPAddress GetMyAddress(out IPAddress mask)
 		{
