@@ -38,7 +38,7 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Called when host/client receives a NatIntroduction message from a master server
 		/// </summary>
-		private void HandleNatIntroduction(int ptr)
+		internal void HandleNatIntroduction(int ptr)
 		{
 			VerifyNetworkThread();
 
