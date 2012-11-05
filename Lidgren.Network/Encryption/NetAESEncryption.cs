@@ -19,6 +19,7 @@ namespace Lidgren.Network
 
 		static NetAESEncryption()
 		{
+#if !IOS && !__ANDROID__
 			AesCryptoServiceProvider aes = new AesCryptoServiceProvider();
 			List<int> temp = new List<int>();
 			foreach (KeySizes keysize in aes.LegalKeySizes)
@@ -45,6 +46,7 @@ namespace Lidgren.Network
 				}
 			}
 			m_blocksizes = temp;
+#endif
 		}
 
 		/// <summary>
@@ -101,6 +103,7 @@ namespace Lidgren.Network
 		/// </summary>
 		public bool Encrypt(NetOutgoingMessage msg)
 		{
+#if !IOS && !__ANDROID__
 			try
 			{
 				// nested usings are fun!
@@ -110,8 +113,7 @@ namespace Lidgren.Network
 					{
 						using (MemoryStream memoryStream = new MemoryStream())
 						{
-							using (CryptoStream cryptoStream = new CryptoStream(memoryStream, cryptoTransform,
-																			 CryptoStreamMode.Write))
+							using (CryptoStream cryptoStream = new CryptoStream(memoryStream, cryptoTransform, CryptoStreamMode.Write))
 							{
 								cryptoStream.Write(msg.m_data, 0, msg.m_data.Length);
 							}
@@ -126,6 +128,9 @@ namespace Lidgren.Network
 				return false;
 			}
 			return true;
+#else
+			return false;
+#endif
 		}
 
 		/// <summary>
@@ -133,6 +138,7 @@ namespace Lidgren.Network
 		/// </summary>
 		public bool Decrypt(NetIncomingMessage msg)
 		{
+#if !IOS && !__ANDROID__
 			try
 			{
 				// nested usings are fun!
@@ -158,6 +164,9 @@ namespace Lidgren.Network
 				return false;
 			}
 			return true;
+#else
+			return false;
+#endif
 		}
 	}
 }
