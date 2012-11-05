@@ -11,6 +11,9 @@ namespace Lidgren.Network
 	[DebuggerDisplay("RemoteUniqueIdentifier={RemoteUniqueIdentifier} RemoteEndPoint={remoteEndPoint}")]
 	public partial class NetConnection
 	{
+		private const int m_infrequentEventsSkipFrames = 8; // number of heartbeats to skip checking for infrequent events (ping, timeout etc)
+		private const int m_messageCoalesceFrames = 3; // number of heartbeats to wait for more incoming messages before sending packet
+
 		internal NetPeer m_peer;
 		internal NetPeerConfiguration m_peerConfiguration;
 		internal NetConnectionStatus m_status;
@@ -138,7 +141,7 @@ namespace Lidgren.Network
 
 			NetException.Assert(m_status != NetConnectionStatus.InitiatedConnect && m_status != NetConnectionStatus.RespondedConnect);
 
-			if ((frameCounter % 5) == 0)
+			if ((frameCounter % m_infrequentEventsSkipFrames) == 0)
 			{
 				if (now > m_timeoutDeadline)
 				{
@@ -175,7 +178,7 @@ namespace Lidgren.Network
 			byte[] sendBuffer = m_peer.m_sendBuffer;
 			int mtu = m_currentMTU;
 
-			if ((frameCounter % 3) == 0) // coalesce a few frames
+			if ((frameCounter % m_messageCoalesceFrames) == 0) // coalesce a few frames
 			{
 				//
 				// send ack messages

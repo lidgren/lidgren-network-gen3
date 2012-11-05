@@ -31,7 +31,15 @@ namespace Lidgren.Network
 		/// find the message in the queue. Other user created threads could be preempted and dequeue 
 		/// the message before the waiting thread wakes up.
 		/// </summary>
-		public AutoResetEvent MessageReceivedEvent { get { return m_messageReceivedEvent; } }
+		public AutoResetEvent MessageReceivedEvent
+		{
+			get
+			{
+				if (m_messageReceivedEvent == null)
+					m_messageReceivedEvent = new AutoResetEvent(false);
+				return m_messageReceivedEvent;
+			}
+		}
 
 		/// <summary>
 		/// Gets a unique identifier for this NetPeer based on Mac address and ip/port. Note! Not available until Start() has been called!

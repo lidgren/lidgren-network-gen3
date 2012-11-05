@@ -45,6 +45,7 @@ namespace SamplesCommon
 		{
 			var pc = Peer.Configuration;
 
+#if DEBUG
 			var loss = (pc.SimulatedLoss * 100.0f).ToString();
 			label5.Text = loss + " %";
 			LossTextBox.Text = loss;
@@ -55,7 +56,12 @@ namespace SamplesCommon
 
 			var minLat = (pc.SimulatedMinimumLatency * 1000.0f).ToString();
 			var maxLat = ((pc.SimulatedMinimumLatency + pc.SimulatedRandomLatency) * 1000.0f).ToString();
-
+#else
+			var loss = 0;
+			var dupes = 0;
+			var minLat = "";
+			var maxLat = "";
+#endif
 			label4.Text = minLat + " to " + maxLat + " ms";
 			MinLatencyTextBox.Text = minLat;
 			MaxLatencyTextBox.Text = maxLat;
@@ -84,6 +90,7 @@ namespace SamplesCommon
 		{
 			Peer.Configuration.SetMessageTypeEnabled(NetIncomingMessageType.DebugMessage, DebugCheckBox.Checked);
 			Peer.Configuration.SetMessageTypeEnabled(NetIncomingMessageType.VerboseDebugMessage, VerboseCheckBox.Checked);
+#if DEBUG
 			float f;
 			if (Single.TryParse(LossTextBox.Text, out f))
 				Peer.Configuration.SimulatedLoss = (float)((double)f / 100.0);
@@ -105,6 +112,7 @@ namespace SamplesCommon
 					MaxLatencyTextBox.Text = ((int)(max * 1000)).ToString();
 				}
 			}
+#endif
 
 		}
 

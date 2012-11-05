@@ -36,7 +36,7 @@ namespace Lidgren.Network
 		internal long m_uniqueIdentifier;
 		internal bool m_executeFlushSendQueue;
 
-		private AutoResetEvent m_messageReceivedEvent = new AutoResetEvent(false);
+		private AutoResetEvent m_messageReceivedEvent;
 		private List<NetTuple<SynchronizationContext, SendOrPostCallback>> m_receiveCallbacks;
 
 		/// <summary>
@@ -369,6 +369,10 @@ namespace Lidgren.Network
 			//if (m_socket == null || m_socket.Available < 1)
 			//	return;
 
+			// update now
+			dnow = NetTime.Now;
+			now = (float)dnow;
+
 			do
 			{
 				int bytesReceived = 0;
@@ -418,7 +422,6 @@ namespace Lidgren.Network
 				NetConnection sender = null;
 				m_connectionLookup.TryGetValue(ipsender, out sender);
 
-				double receiveTime = NetTime.Now;
 				//
 				// parse packet into messages
 				//
@@ -460,7 +463,7 @@ namespace Lidgren.Network
 							if (sender != null)
 								sender.ReceivedLibraryMessage(tp, ptr, payloadByteLength);
 							else
-								ReceivedUnconnectedLibraryMessage(receiveTime, ipsender, tp, ptr, payloadByteLength);
+								ReceivedUnconnectedLibraryMessage(dnow, ipsender, tp, ptr, payloadByteLength);
 						}
 						else
 						{
@@ -469,7 +472,7 @@ namespace Lidgren.Network
 
 							NetIncomingMessage msg = CreateIncomingMessage(NetIncomingMessageType.Data, payloadByteLength);
 							msg.m_isFragment = isFragment;
-							msg.m_receiveTime = receiveTime;
+							msg.m_receiveTime = dnow;
 							msg.m_sequenceNumber = sequenceNumber;
 							msg.m_receivedMessageType = tp;
 							msg.m_senderConnection = sender;
