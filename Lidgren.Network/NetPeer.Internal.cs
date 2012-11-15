@@ -408,7 +408,7 @@ namespace Lidgren.Network
 					try
 					{
 						string resp = System.Text.Encoding.ASCII.GetString(m_receiveBuffer, 0, bytesReceived);
-						if (resp.Contains("upnp:rootdevice"))
+						if (resp.Contains("upnp:rootdevice") || resp.Contains("UPnP/1.0"))
 						{
 							resp = resp.Substring(resp.ToLower().IndexOf("location:") + 9);
 							resp = resp.Substring(0, resp.IndexOf("\r")).Trim();

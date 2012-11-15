@@ -114,7 +114,11 @@ namespace Lidgren.Network
 			m_discoveryComplete.Set();
 #if !DEBUG
 			}
-			catch { return; }
+			catch
+			{
+				m_peer.LogVerbose("Exception ignored trying to parse UPnP XML response");
+				return;
+			}
 #endif
 		}
 
