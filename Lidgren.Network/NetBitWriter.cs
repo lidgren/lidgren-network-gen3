@@ -97,44 +97,54 @@ namespace Lidgren.Network
 			return;
 		}
 
-		/// <summary>
-		/// Write a byte consisting of 1-8 bits to a buffer; assumes buffer is previously allocated
-		/// </summary>
 		public static void WriteByte(byte source, int numberOfBits, byte[] destination, int destBitOffset)
 		{
-			NetException.Assert(((numberOfBits >= 1) && (numberOfBits <= 8)), "Must write between 1 and 8 bits!");
+			if (numberOfBits == 0)
+				return;
 
-			// mask out unwanted bits in the source
-			byte isrc = (byte)(source & (0x000000FF >> (8 - numberOfBits)));
+			NetException.Assert(((numberOfBits >= 0) && (numberOfBits <= 8)), "Must write between 0 and 8 bits!");
 
-			int bytePtr = destBitOffset >> 3;
+			// Mask out all the bits we dont want
+			source = (byte)(source & (0xFF >> (8 - numberOfBits)));
 
-			int localBitLen = (destBitOffset % 8);
-			if (localBitLen == 0)
+			int p = destBitOffset >> 3;
+			int bitsUsed = destBitOffset & 0x7; // mod 8
+			int bitsFree = 8 - bitsUsed;
+			int bitsLeft = bitsFree - numberOfBits;
+
+			// Fast path, everything fits in the first byte
+			if (bitsLeft >= 0)
 			{
-				destination[bytePtr] = (byte)isrc;
+				int mask = (0xFF >> bitsFree) | (0xFF << (8 - bitsLeft));
+
+				destination[p] = (byte)(
+					// Mask out lower and upper bits
+					(destination[p] & mask) |
+
+					// Insert new bits
+					(source << bitsUsed)
+				);
+
 				return;
 			}
 
-			//destination[bytePtr] &= (byte)(255 >> (8 - localBitLen)); // clear before writing
-			//destination[bytePtr] |= (byte)(isrc << localBitLen); // write first half
-			destination[bytePtr] = (byte)(
-				(uint)(destination[bytePtr] & (255 >> (8 - localBitLen))) |
-				(uint)(isrc << localBitLen)
+			destination[p] = (byte)(
+				// Mask out upper bits
+				(destination[p] & (0xFF >> bitsFree)) |
+
+				// Write the lower bits to the upper bits in the first byte
+				(source << bitsUsed)
 			);
 
-			// need write into next byte?
-			if (localBitLen + numberOfBits > 8)
-			{
-				//destination[bytePtr + 1] &= (byte)(255 << localBitLen); // clear before writing
-				//destination[bytePtr + 1] |= (byte)(isrc >> (8 - localBitLen)); // write second half
-				destination[bytePtr + 1] = (byte)(
-					(uint)(destination[bytePtr + 1] & (255 << localBitLen)) |
-					(uint)(isrc >> (8 - localBitLen))
-				);
-			}
+			p += 1;
 
-			return;
+			destination[p] = (byte)(
+				// Mask out lower bits
+				(destination[p] & (0xFF << (numberOfBits - bitsFree))) |
+
+				// Write the upper bits to the lower bits of the second byte
+				(source >> bitsFree)
+			);
 		}
 
 		/// <summary>
@@ -287,35 +297,32 @@ namespace Lidgren.Network
 		//public static ulong ReadUInt64(byte[] fromBuffer, int numberOfBits, int readBitOffset)
 
 		/// <summary>
-		/// Writes un unsigned 16 bit integer
+		/// Writes an unsigned 16 bit integer
 		/// </summary>
 		[CLSCompliant(false)]
-		public static int WriteUInt16(ushort source, int numberOfBits, byte[] destination, int destinationBitOffset)
+		public static void WriteUInt16(ushort source, int numberOfBits, byte[] destination, int destinationBitOffset)
 		{
+			if (numberOfBits == 0)
+				return;
+
+			NetException.Assert((numberOfBits >= 0 && numberOfBits <= 16), "numberOfBits must be between 0 and 16");
 #if BIGENDIAN
 			// reorder bytes
 			uint intSource = source;
 			intSource = ((intSource & 0x0000ff00) >> 8) | ((intSource & 0x000000ff) << 8);
 			source = (ushort)intSource;
 #endif
-
-			int returnValue = destinationBitOffset + numberOfBits;
 			if (numberOfBits <= 8)
 			{
 				NetBitWriter.WriteByte((byte)source, numberOfBits, destination, destinationBitOffset);
-				return returnValue;
+				return;
 			}
+
 			NetBitWriter.WriteByte((byte)source, 8, destination, destinationBitOffset);
-			destinationBitOffset += 8;
+
 			numberOfBits -= 8;
-
-			if (numberOfBits <= 8)
-			{
-				NetBitWriter.WriteByte((byte)(source >> 8), numberOfBits, destination, destinationBitOffset);
-				return returnValue;
-			}
-
-			return returnValue;
+			if (numberOfBits > 0)
+				NetBitWriter.WriteByte((byte)(source >> 8), numberOfBits, destination, destinationBitOffset + 8);
 		}
 
 		/// <summary>

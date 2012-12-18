@@ -52,6 +52,7 @@ namespace UnitTests
 			msg.Write(567845.0f);
 			msg.WriteVariableInt32(2115998022);
 			msg.Write(46.0);
+			msg.Write((ushort)14, 9);
 			bcnt += msg.WriteVariableInt32(-47);
 			msg.WriteVariableInt32(470000);
 			msg.WriteVariableUInt32(48);
@@ -89,12 +90,13 @@ namespace UnitTests
 			bdr.Append(inc.ReadSingle());
 			bdr.Append(inc.ReadVariableInt32());
 			bdr.Append(inc.ReadDouble());
+			bdr.Append(inc.ReadUInt32(9));
 			bdr.Append(inc.ReadVariableInt32());
 			bdr.Append(inc.ReadVariableInt32());
 			bdr.Append(inc.ReadVariableUInt32());
 			bdr.Append(inc.ReadVariableInt64());
 
-			if (bdr.ToString().Equals("False-342duke of earl4344True567845211599802246-4747000048-49"))
+			if (bdr.ToString().Equals("False-342duke of earl4344True56784521159980224614-4747000048-49"))
 				Console.WriteLine("Read/write tests OK");
 			else
 				throw new NetException("Read/write tests FAILED!");
