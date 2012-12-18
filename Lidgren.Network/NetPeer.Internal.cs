@@ -24,8 +24,8 @@ namespace Lidgren.Network
 		private object m_initializeLock = new object();
 		private uint m_frameCounter;
 		private double m_lastHeartbeat;
-		private NetPortForwarding m_portForwarding;
-		
+		private NetUPnP m_upnp;
+
 		internal readonly NetPeerConfiguration m_configuration;
 		private readonly NetQueue<NetIncomingMessage> m_releasedIncomingMessages;
 		internal readonly NetQueue<NetTuple<IPEndPoint, NetOutgoingMessage>> m_unsentUnconnectedMessages;
@@ -99,8 +99,8 @@ namespace Lidgren.Network
 				if (m_status == NetPeerStatus.Running)
 					return;
 
-				if (m_configuration.m_enablePortForwarding)
-					m_portForwarding = new NetPortForwarding(this);
+				if (m_configuration.m_enableUPnP)
+					m_upnp = new NetUPnP(this);
 
 				InitializePools();
 
@@ -403,8 +403,22 @@ namespace Lidgren.Network
 
 				IPEndPoint ipsender = (IPEndPoint)m_senderRemote;
 
-				if (m_portForwarding != null && m_portForwarding.IsDiscovering)
-					m_portForwarding.HandlePotentialDiscovery(ipsender, m_receiveBuffer, bytesReceived);
+				if (m_upnp != null && now < m_upnp.m_discoveryResponseDeadline)
+				{
+					// is this an UPnP response?
+					try
+					{
+						string resp = System.Text.Encoding.ASCII.GetString(m_receiveBuffer, 0, bytesReceived);
+						if (resp.Contains("upnp:rootdevice") || resp.Contains("UPnP/1.0"))
+						{
+							resp = resp.Substring(resp.ToLower().IndexOf("location:") + 9);
+							resp = resp.Substring(0, resp.IndexOf("\r")).Trim();
+							m_upnp.ExtractServiceUrl(resp);
+							return;
+						}
+					}
+					catch { }
+				}
 
 				NetConnection sender = null;
 				m_connectionLookup.TryGetValue(ipsender, out sender);
