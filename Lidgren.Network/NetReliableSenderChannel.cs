@@ -76,6 +76,7 @@ namespace Lidgren.Network
 				if (t > 0 && (now - t) > m_resendDelay)
 				{
 					// deduce sequence number
+					/*
 					int startSlot = m_windowStart % m_windowSize;
 					int seqNr = m_windowStart;
 					while (startSlot != i)
@@ -85,11 +86,12 @@ namespace Lidgren.Network
 							startSlot = m_windowSize - 1;
 						seqNr--;
 					}
+					*/
 
-					//m_connection.m_peer.LogVerbose("Resending due to delay #" + seqNr + " " + om.ToString());
+					//m_connection.m_peer.LogVerbose("Resending due to delay #" + m_storedMessages[i].SequenceNumber + " " + om.ToString());
 					m_connection.m_statistics.MessageResent(MessageResendReason.Delay);
 
-					m_connection.QueueSendMessage(om, seqNr);
+					m_connection.QueueSendMessage(om, m_storedMessages[i].SequenceNumber);
 
 					m_storedMessages[i].LastSent = now;
 					m_storedMessages[i].NumSent++;
@@ -124,6 +126,7 @@ namespace Lidgren.Network
 			m_storedMessages[storeIndex].NumSent++;
 			m_storedMessages[storeIndex].Message = message;
 			m_storedMessages[storeIndex].LastSent = now;
+			m_storedMessages[storeIndex].SequenceNumber = seqNr;
 
 			return;
 		}
