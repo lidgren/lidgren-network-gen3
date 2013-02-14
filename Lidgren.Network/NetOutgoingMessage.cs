@@ -126,7 +126,10 @@ namespace Lidgren.Network
 		/// </summary>
 		public override string ToString()
 		{
-			return "[NetOutgoingMessage " + m_messageType + " " + this.LengthBytes + " bytes]";
+			if (m_isSent)
+				return "[NetOutgoingMessage " + m_messageType + " " + this.LengthBytes + " bytes]";
+
+			return "[NetOutgoingMessage " + this.LengthBytes + " bytes]";
 		}
 	}
 }
