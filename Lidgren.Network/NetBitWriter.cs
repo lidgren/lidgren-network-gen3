@@ -97,6 +97,9 @@ namespace Lidgren.Network
 			return;
 		}
 
+		/// <summary>
+		/// Write 0-8 bits of data to buffer
+		/// </summary>
 		public static void WriteByte(byte source, int numberOfBits, byte[] destination, int destBitOffset)
 		{
 			if (numberOfBits == 0)

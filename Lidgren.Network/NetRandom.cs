@@ -75,7 +75,7 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Create a semi-random seed based on an object
 		/// </summary>
-		public int GetSeed(object forObject)
+		public static int GetSeed(object forObject)
 		{
 			// mix some semi-random properties
 			int seed = (int)Environment.TickCount;

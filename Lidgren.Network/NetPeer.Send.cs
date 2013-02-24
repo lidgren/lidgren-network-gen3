@@ -62,7 +62,7 @@ namespace Lidgren.Network
 			}
 		}
 
-		internal int GetMTU(IList<NetConnection> recipients)
+		internal static int GetMTU(IList<NetConnection> recipients)
 		{
 			int count = recipients.Count;
 			NetException.Assert(count > 0);

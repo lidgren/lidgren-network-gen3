@@ -601,32 +601,14 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Append all the bits of message to this message
 		/// </summary>
-		public void Write(NetOutgoingMessage message)
+		public void Write(NetBuffer buffer)
 		{
-			EnsureBufferSize(m_bitLength + (message.LengthBytes * 8));
+			EnsureBufferSize(m_bitLength + (buffer.LengthBytes * 8));
 
-			Write(message.m_data, 0, message.LengthBytes);
+			Write(buffer.m_data, 0, buffer.LengthBytes);
 
 			// did we write excessive bits?
-			int bitsInLastByte = (message.m_bitLength % 8);
-			if (bitsInLastByte != 0)
-			{
-				int excessBits = 8 - bitsInLastByte;
-				m_bitLength -= excessBits;
-			}
-		}
-
-		/// <summary>
-		/// Append all the bits of message to this message
-		/// </summary>
-		public void Write(NetIncomingMessage message)
-		{
-			EnsureBufferSize(m_bitLength + (message.LengthBytes * 8));
-
-			Write(message.m_data, 0, message.LengthBytes);
-
-			// did we write excessive bits?
-			int bitsInLastByte = (message.m_bitLength % 8);
+			int bitsInLastByte = (buffer.m_bitLength % 8);
 			if (bitsInLastByte != 0)
 			{
 				int excessBits = 8 - bitsInLastByte;

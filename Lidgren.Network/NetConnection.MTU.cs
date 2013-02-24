@@ -46,7 +46,7 @@ namespace Lidgren.Network
 				}
 
 				// begin expansion
-				ExpandMTU(now, true);
+				ExpandMTU(now);
 				return;
 			}
 
@@ -61,11 +61,11 @@ namespace Lidgren.Network
 
 				// timed out; ie. failed
 				m_smallestFailedMTU = m_lastSentMTUAttemptSize;
-				ExpandMTU(now, false);
+				ExpandMTU(now);
 			}
 		}
 
-		private void ExpandMTU(double now, bool succeeded)
+		private void ExpandMTU(double now)
 		{
 			int tryMTU;
 
@@ -120,7 +120,7 @@ namespace Lidgren.Network
 						return;
 					}
 				}
-				ExpandMTU(now, false);
+				ExpandMTU(now);
 				return;
 			}
 
@@ -169,7 +169,7 @@ namespace Lidgren.Network
 			//m_peer.LogDebug("Expanding MTU to " + size);
 			m_currentMTU = size;
 
-			ExpandMTU(now, true);
+			ExpandMTU(now);
 		}
 	}
 }

@@ -65,12 +65,12 @@ namespace Lidgren.Network
 			{
 				NetOutgoingMessage om;
 				if (m_queuedSends.TryDequeue(out om))
-					ExecuteSend(now, om);
+					ExecuteSend(om);
 				num--;
 			}
 		}
 
-		private void ExecuteSend(float now, NetOutgoingMessage message)
+		private void ExecuteSend(NetOutgoingMessage message)
 		{
 			m_connection.m_peer.VerifyNetworkThread();
 
