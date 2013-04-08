@@ -223,9 +223,16 @@ namespace Lidgren.Network
 				if (adapter.OperationalStatus != OperationalStatus.Up)
 					continue;
 
-				// A computer could have several adapters (more than one network card)
-				// here but just return the first one for now...
-				return adapter;
+				// make sure this adapter has any ipv4 addresses
+				IPInterfaceProperties properties = adapter.GetIPProperties();
+				foreach (UnicastIPAddressInformation unicastAddress in properties.UnicastAddresses)
+				{
+					if (unicastAddress != null && unicastAddress.Address != null && unicastAddress.Address.AddressFamily == AddressFamily.InterNetwork)
+					{
+						// Yes it does, return this network interface.
+						return adapter;
+					}
+				}
 			}
 			return best;
 		}
