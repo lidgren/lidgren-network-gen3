@@ -614,8 +614,31 @@ namespace Lidgren.Network
 					LogWarning("Received unhandled library message " + tp + " from " + senderEndPoint);
 					return;
 				case NetMessageType.Connect:
-					// proceed
-					break;
+					if (m_configuration.AcceptIncomingConnections == false)
+					{
+						LogWarning("Received Connect, but we're not accepting incoming connections!");
+						return;
+					}
+					// handle connect
+					// It's someone wanting to shake hands with us!
+
+					int reservedSlots = m_handshakes.Count + m_connections.Count;
+					if (reservedSlots >= m_configuration.m_maximumConnections)
+					{
+						// server full
+						NetOutgoingMessage full = CreateMessage("Server full");
+						full.m_messageType = NetMessageType.Disconnect;
+						SendLibrary(full, senderEndPoint);
+						return;
+					}
+
+					// Ok, start handshake!
+					NetConnection conn = new NetConnection(this, senderEndPoint);
+					conn.m_status = NetConnectionStatus.ReceivedInitiation;
+					m_handshakes.Add(senderEndPoint, conn);
+					conn.ReceivedHandshake(now, tp, ptr, payloadByteLength);
+					return;
+
 				case NetMessageType.Disconnect:
 					// this is probably ok
 					LogVerbose("Received Disconnect from unconnected source: " + senderEndPoint);
@@ -624,26 +647,6 @@ namespace Lidgren.Network
 					LogWarning("Received unhandled library message " + tp + " from " + senderEndPoint);
 					return;
 			}
-
-			// It's someone wanting to shake hands with us!
-
-			int reservedSlots = m_handshakes.Count + m_connections.Count;
-			if (reservedSlots >= m_configuration.m_maximumConnections)
-			{
-				// server full
-				NetOutgoingMessage full = CreateMessage("Server full");
-				full.m_messageType = NetMessageType.Disconnect;
-				SendLibrary(full, senderEndPoint);
-				return;
-			}
-
-			// Ok, start handshake!
-			NetConnection conn = new NetConnection(this, senderEndPoint);
-			conn.m_status = NetConnectionStatus.ReceivedInitiation;
-			m_handshakes.Add(senderEndPoint, conn);
-			conn.ReceivedHandshake(now, tp, ptr, payloadByteLength);
-
-			return;
 		}
 
 		internal void AcceptConnection(NetConnection conn)
