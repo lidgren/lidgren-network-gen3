@@ -75,6 +75,7 @@ namespace ChatClient
 						Output("Unhandled type: " + im.MessageType + " " + im.LengthBytes + " bytes");
 						break;
 				}
+				s_client.Recycle(im);
 			}
 		}
 

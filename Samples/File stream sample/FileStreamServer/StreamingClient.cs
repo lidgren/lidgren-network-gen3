@@ -31,8 +31,8 @@ namespace FileStreamServer
 			if (freeWindowSlots > 0)
 			{
 				// send another part of the file!
-				int remaining = (int)(m_inputStream.Length - m_sentOffset);
-				int sendBytes = (remaining > m_chunkLen ? m_chunkLen : remaining);
+				long remaining = m_inputStream.Length - m_sentOffset;
+				int sendBytes = (remaining > m_chunkLen ? m_chunkLen : (int)remaining);
 
 				// just assume we can read the whole thing in one Read()
 				m_inputStream.Read(m_tmpBuffer, 0, sendBytes);

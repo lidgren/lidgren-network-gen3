@@ -86,6 +86,7 @@ namespace FileStreamClient
 							}
 							break;
 					}
+					s_client.Recycle(inc);
 				}
 			}
 		}

@@ -87,6 +87,7 @@ namespace ChatServer
 							Output("Unhandled type: " + im.MessageType + " " + im.LengthBytes + " bytes " + im.DeliveryMethod + "|" + im.SequenceChannel);
 							break;
 					}
+					s_server.Recycle(im);
 				}
 				Thread.Sleep(1);
 			}

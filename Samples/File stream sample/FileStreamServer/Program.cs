@@ -65,6 +65,7 @@ namespace FileStreamServer
 							}
 							break;
 					}
+					s_server.Recycle(inc);
 				}
 
 				// stream to all connections

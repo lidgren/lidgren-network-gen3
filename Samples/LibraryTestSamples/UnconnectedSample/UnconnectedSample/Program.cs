@@ -52,6 +52,7 @@ namespace UnconnectedSample
 							Peer.Recycle(im);
 							break;
 					}
+					Peer.Recycle(im);
 				}
 
 				System.Threading.Thread.Sleep(1);

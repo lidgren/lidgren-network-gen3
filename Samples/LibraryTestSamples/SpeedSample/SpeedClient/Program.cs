@@ -74,6 +74,7 @@ namespace SpeedTestClient
 							Output("Unhandled type: " + im.MessageType);
 							break;
 					}
+					s_client.Recycle(im);
 				}
 
 				float now = (float)NetTime.Now;
