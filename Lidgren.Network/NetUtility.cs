@@ -169,20 +169,16 @@ namespace Lidgren.Network
 			}
 
 			// ok must be a host name
-			IPHostEntry entry;
 			try
 			{
-				entry = Dns.GetHostEntry(ipOrHost);
-				if (entry == null)
+				var addresses = Dns.GetHostAddresses(ipOrHost);
+				if (addresses == null)
 					return null;
-
-				// check each entry for a valid IP address
-				foreach (IPAddress ipCurrent in entry.AddressList)
+				foreach (var address in addresses)
 				{
-					if (ipCurrent.AddressFamily == AddressFamily.InterNetwork)
-						return ipCurrent;
+					if (address.AddressFamily == AddressFamily.InterNetwork)
+						return address;
 				}
-
 				return null;
 			}
 			catch (SocketException ex)
