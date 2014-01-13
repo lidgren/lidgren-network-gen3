@@ -217,6 +217,17 @@ namespace Lidgren.Network
 		}
 #endif
 
+		/// <summary>
+		/// Writes a 32 bit signed integer at a given offset in the buffer
+		/// </summary>
+		public void WriteAt(Int32 offset, Int32 source)
+		{
+			int newBitLength = Math.Max(m_bitLength + 32, offset + 32);
+			EnsureBufferSize(newBitLength);
+			NetBitWriter.WriteUInt32((UInt32)source, 32, m_data, offset);
+			m_bitLength = newBitLength;
+		}
+
 #if UNSAFE
 		/// <summary>
 		/// Writes a 32 bit unsigned integer
@@ -252,6 +263,17 @@ namespace Lidgren.Network
 			m_bitLength += 32;
 		}
 #endif
+
+		/// <summary>
+		/// Writes a 32 bit unsigned integer at a given offset in the buffer
+		/// </summary>
+		public void WriteAt(Int32 offset, UInt32 source)
+		{
+			int newBitLength = Math.Max(m_bitLength + 32, offset + 32);
+			EnsureBufferSize(newBitLength);
+			NetBitWriter.WriteUInt32(source, 32, m_data, offset);
+			m_bitLength = newBitLength;
+		}
 
 		/// <summary>
 		/// Writes a 32 bit signed integer
