@@ -47,13 +47,15 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Call this to register a callback for when a new message arrives
 		/// </summary>
-		public void RegisterReceivedCallback(SendOrPostCallback callback)
+		public void RegisterReceivedCallback(SendOrPostCallback callback, SynchronizationContext syncContext = null)
 		{
-			if (SynchronizationContext.Current == null)
+			if (syncContext == null)
+				syncContext = SynchronizationContext.Current;
+			if (syncContext == null)
 				throw new NetException("Need a SynchronizationContext to register callback on correct thread!");
 			if (m_receiveCallbacks == null)
 				m_receiveCallbacks = new List<NetTuple<SynchronizationContext, SendOrPostCallback>>();
-			m_receiveCallbacks.Add(new NetTuple<SynchronizationContext, SendOrPostCallback>(SynchronizationContext.Current, callback));
+			m_receiveCallbacks.Add(new NetTuple<SynchronizationContext, SendOrPostCallback>(syncContext, callback));
 		}
 
 		/// <summary>
@@ -63,7 +65,17 @@ namespace Lidgren.Network
 		{
 			if (m_receiveCallbacks == null)
 				return;
-			m_receiveCallbacks.Remove(new NetTuple<SynchronizationContext, SendOrPostCallback>(SynchronizationContext.Current, callback));
+
+			// remove all callbacks regardless of sync context
+		RestartRemoveCallbacks:
+			for (int i = 0; i < m_receiveCallbacks.Count; i++)
+			{
+				if (m_receiveCallbacks[i].Item2.Equals(callback))
+				{
+					m_receiveCallbacks.RemoveAt(i);
+					goto RestartRemoveCallbacks;
+				}
+			}
 			if (m_receiveCallbacks.Count < 1)
 				m_receiveCallbacks = null;
 		}
