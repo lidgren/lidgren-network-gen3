@@ -162,6 +162,18 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
+		/// Writes a 16 bit unsigned integer at a given offset in the buffer
+		/// </summary>
+		[CLSCompliant(false)]
+		public void WriteAt(Int32 offset, UInt16 source)
+		{
+			int newBitLength = Math.Max(m_bitLength, offset + 16);
+			EnsureBufferSize(newBitLength);
+			NetBitWriter.WriteUInt16(source, 16, m_data, offset);
+			m_bitLength = newBitLength;
+		}
+
+		/// <summary>
 		/// Writes an unsigned integer using 1 to 16 bits
 		/// </summary>
 		[CLSCompliant(false)]
@@ -181,6 +193,17 @@ namespace Lidgren.Network
 			EnsureBufferSize(m_bitLength + 16);
 			NetBitWriter.WriteUInt16((ushort)source, 16, m_data, m_bitLength);
 			m_bitLength += 16;
+		}
+
+		/// <summary>
+		/// Writes a 16 bit signed integer at a given offset in the buffer
+		/// </summary>
+		public void WriteAt(Int32 offset, Int16 source)
+		{
+			int newBitLength = Math.Max(m_bitLength, offset + 16);
+			EnsureBufferSize(newBitLength);
+			NetBitWriter.WriteUInt16((ushort)source, 16, m_data, offset);
+			m_bitLength = newBitLength;
 		}
 
 #if UNSAFE
@@ -222,7 +245,7 @@ namespace Lidgren.Network
 		/// </summary>
 		public void WriteAt(Int32 offset, Int32 source)
 		{
-			int newBitLength = Math.Max(m_bitLength + 32, offset + 32);
+			int newBitLength = Math.Max(m_bitLength, offset + 32);
 			EnsureBufferSize(newBitLength);
 			NetBitWriter.WriteUInt32((UInt32)source, 32, m_data, offset);
 			m_bitLength = newBitLength;
@@ -267,9 +290,10 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Writes a 32 bit unsigned integer at a given offset in the buffer
 		/// </summary>
+		[CLSCompliant(false)]
 		public void WriteAt(Int32 offset, UInt32 source)
 		{
-			int newBitLength = Math.Max(m_bitLength + 32, offset + 32);
+			int newBitLength = Math.Max(m_bitLength, offset + 32);
 			EnsureBufferSize(newBitLength);
 			NetBitWriter.WriteUInt32(source, 32, m_data, offset);
 			m_bitLength = newBitLength;
@@ -319,6 +343,18 @@ namespace Lidgren.Network
 			EnsureBufferSize(m_bitLength + 64);
 			NetBitWriter.WriteUInt64(source, 64, m_data, m_bitLength);
 			m_bitLength += 64;
+		}
+
+		/// <summary>
+		/// Writes a 64 bit unsigned integer at a given offset in the buffer
+		/// </summary>
+		[CLSCompliant(false)]
+		public void WriteAt(Int32 offset, UInt64 source)
+		{
+			int newBitLength = Math.Max(m_bitLength, offset + 64);
+			EnsureBufferSize(newBitLength);
+			NetBitWriter.WriteUInt64(source, 64, m_data, offset);
+			m_bitLength = newBitLength;
 		}
 
 		/// <summary>
