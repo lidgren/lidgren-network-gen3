@@ -66,6 +66,10 @@ namespace Lidgren.Network
 				// LogVerbose("Sending packet " + numBytes + " bytes");
 				bool wasSent = ActuallySendPacket(m_sendBuffer, numBytes, target, out connectionReset);
 				// TODO: handle wasSent == false?
+
+				if (m_configuration.m_duplicates > 0.0f && NetRandom.Instance.NextSingle() < m_configuration.m_duplicates)
+					ActuallySendPacket(m_sendBuffer, numBytes, target, out connectionReset); // send it again!
+
 				return;
 			}
 
