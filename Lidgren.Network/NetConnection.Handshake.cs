@@ -322,43 +322,9 @@ namespace Lidgren.Network
 					m_peer.LogDebug("Unhandled Connect: " + tp + ", status is " + m_status + " length: " + payloadLength);
 					break;
 				case NetMessageType.ConnectResponse:
-					switch (m_status)
-					{
-						case NetConnectionStatus.InitiatedConnect:
-							// awesome
-							bool ok = ValidateHandshakeData(ptr, payloadLength, out hail);
-							if (ok)
-							{
-								if (hail != null)
-								{
-									m_remoteHailMessage = m_peer.CreateIncomingMessage(NetIncomingMessageType.Data, hail);
-									m_remoteHailMessage.LengthBits = (hail.Length * 8);
-								}
-								else
-								{
-									m_remoteHailMessage = null;
-								}
-
-								m_peer.AcceptConnection(this);
-								SendConnectionEstablished();
-								return;
-							}
-							break;
-						case NetConnectionStatus.RespondedConnect:
-							// hello, wtf?
-							break;
-						case NetConnectionStatus.Disconnecting:
-						case NetConnectionStatus.Disconnected:
-						case NetConnectionStatus.ReceivedInitiation:
-						case NetConnectionStatus.None:
-							// wtf? anyway, bye!
-							break;
-						case NetConnectionStatus.Connected:
-							// my ConnectionEstablished must have been lost, send another one
-							SendConnectionEstablished();
-							return;
-					}
+					HandleConnectResponse(now, tp, ptr, payloadLength);
 					break;
+
 				case NetMessageType.ConnectionEstablished:
 					switch (m_status)
 					{
@@ -418,6 +384,47 @@ namespace Lidgren.Network
 				default:
 					m_peer.LogDebug("Unhandled type during handshake: " + tp + " length: " + payloadLength);
 					break;
+			}
+		}
+
+		private void HandleConnectResponse(double now, NetMessageType tp, int ptr, int payloadLength)
+		{
+			byte[] hail;
+			switch (m_status)
+			{
+				case NetConnectionStatus.InitiatedConnect:
+					// awesome
+					bool ok = ValidateHandshakeData(ptr, payloadLength, out hail);
+					if (ok)
+					{
+						if (hail != null)
+						{
+							m_remoteHailMessage = m_peer.CreateIncomingMessage(NetIncomingMessageType.Data, hail);
+							m_remoteHailMessage.LengthBits = (hail.Length * 8);
+						}
+						else
+						{
+							m_remoteHailMessage = null;
+						}
+
+						m_peer.AcceptConnection(this);
+						SendConnectionEstablished();
+						return;
+					}
+					break;
+				case NetConnectionStatus.RespondedConnect:
+					// hello, wtf?
+					break;
+				case NetConnectionStatus.Disconnecting:
+				case NetConnectionStatus.Disconnected:
+				case NetConnectionStatus.ReceivedInitiation:
+				case NetConnectionStatus.None:
+					// wtf? anyway, bye!
+					break;
+				case NetConnectionStatus.Connected:
+					// my ConnectionEstablished must have been lost, send another one
+					SendConnectionEstablished();
+					return;
 			}
 		}
 

@@ -379,6 +379,26 @@ namespace Lidgren.Network
 
 			switch (tp)
 			{
+				case NetMessageType.Connect:
+					m_peer.LogDebug("Received handshake message (" + tp + ") despite connection being in place");
+					break;
+
+				case NetMessageType.ConnectResponse:
+					// handshake message must have been lost
+					HandleConnectResponse(now, tp, ptr, payloadLength);
+					break;
+
+				case NetMessageType.ConnectionEstablished:
+					// do nothing, all's well
+					break;
+
+				case NetMessageType.LibraryError:
+#if DEBUG
+					throw new NetException("LibraryError received by ReceivedLibraryMessage; this usually indicates a malformed message");
+#else
+					break;
+#endif
+
 				case NetMessageType.Disconnect:
 					NetIncomingMessage msg = m_peer.SetupReadHelperMessage(ptr, payloadLength);
 					ExecuteDisconnect(msg.ReadString(), false);
