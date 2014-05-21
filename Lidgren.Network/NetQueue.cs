@@ -193,6 +193,15 @@ namespace Lidgren.Network
 
 				return true;
 			}
+			catch
+			{
+#if DEBUG
+				throw;
+#else
+				item = default(T);
+				return false;
+#endif
+			}
 			finally
 			{
 				m_lock.ExitWriteLock();
@@ -200,7 +209,7 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
-		/// Gets an item from the head of the queue, or returns default(T) if empty
+		/// Gets all items from the head of the queue, or returns number of items popped
 		/// </summary>
 		public int TryDrain(IList<T> addTo)
 		{

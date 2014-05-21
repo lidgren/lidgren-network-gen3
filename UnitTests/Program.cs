@@ -42,20 +42,17 @@ namespace UnitTests
 			peer.Shutdown("bye");
 
 			// read all message
-			NetIncomingMessage inc;
-			while((inc = peer.ReadMessage()) != null)
+			NetIncomingMessage inc = peer.WaitMessage(5000);
+			switch(inc.MessageType)
 			{
-				switch(inc.MessageType)
-				{
-					case NetIncomingMessageType.DebugMessage:
-					case NetIncomingMessageType.VerboseDebugMessage:
-					case NetIncomingMessageType.WarningMessage:
-					case NetIncomingMessageType.ErrorMessage:
-						Console.WriteLine("Peer message: " + inc.ReadString());
-						break;
-					case NetIncomingMessageType.Error:
-						throw new Exception("Received error message!");
-				}
+				case NetIncomingMessageType.DebugMessage:
+				case NetIncomingMessageType.VerboseDebugMessage:
+				case NetIncomingMessageType.WarningMessage:
+				case NetIncomingMessageType.ErrorMessage:
+					Console.WriteLine("Peer message: " + inc.ReadString());
+					break;
+				case NetIncomingMessageType.Error:
+					throw new Exception("Received error message!");
 			}
 			
 			Console.WriteLine("Done");

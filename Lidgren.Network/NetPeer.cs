@@ -14,6 +14,7 @@ namespace Lidgren.Network
 
 		private int m_listenPort;
 		private object m_tag;
+		private object m_messageReceivedEventCreationLock = new object();
 
 		internal readonly List<NetConnection> m_connections;
 		private readonly Dictionary<IPEndPoint, NetConnection> m_connectionLookup;
@@ -36,7 +37,13 @@ namespace Lidgren.Network
 			get
 			{
 				if (m_messageReceivedEvent == null)
-					m_messageReceivedEvent = new AutoResetEvent(false);
+				{
+					lock (m_messageReceivedEventCreationLock) // make sure we don't create more than one event object
+					{
+						if (m_messageReceivedEvent == null)
+							m_messageReceivedEvent = new AutoResetEvent(false);
+					}
+				}
 				return m_messageReceivedEvent;
 			}
 		}
@@ -174,8 +181,8 @@ namespace Lidgren.Network
 			var msg = ReadMessage();
 			if (msg != null)
 				return msg; // no need to wait; we already have a message to deliver
-			if (m_messageReceivedEvent != null)
-				m_messageReceivedEvent.WaitOne(maxMillis);
+			var msgEvt = MessageReceivedEvent;
+			msgEvt.WaitOne(maxMillis);
 			return ReadMessage();
 		}
 
