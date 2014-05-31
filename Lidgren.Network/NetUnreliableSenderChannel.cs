@@ -45,7 +45,7 @@ namespace Lidgren.Network
 		internal override NetSendResult Enqueue(NetOutgoingMessage message)
 		{
 			int queueLen = m_queuedSends.Count + 1;
-			int left = m_windowSize - ((m_sendStart + NetConstants.NumSequenceNumbers) - m_windowStart) % NetConstants.NumSequenceNumbers;
+			int left = GetAllowedSends();
 			if (queueLen > left)
 				return NetSendResult.Dropped;
 
