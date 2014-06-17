@@ -150,6 +150,7 @@ namespace Lidgren.Network
 					//
 					m_peer.LogVerbose("Connection timed out at " + now + " deadline was " + m_timeoutDeadline);
 					ExecuteDisconnect("Connection timed out", true);
+					return;
 				}
 
 				// send ping?
