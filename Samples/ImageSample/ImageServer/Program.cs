@@ -121,6 +121,10 @@ namespace ImageServer
 								// all messages will be sent before disconnect so we can call it here
 								// inc.SenderConnection.Disconnect("Bye bye now");
 							}
+
+							if (status == NetConnectionStatus.Disconnected)
+								NativeMethods.AppendText(MainForm.richTextBox1, inc.SenderConnection.Statistics.ToString());
+
 							break;
 					}
 
