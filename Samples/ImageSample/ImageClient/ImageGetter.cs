@@ -81,11 +81,11 @@ namespace ImageClient
 							m_startedFetching = NetTime.Now;
 						break;
 					case NetIncomingMessageType.Data:
+
 						// image data, whee!
 						// ineffective but simple data model
 						ushort width = inc.ReadUInt16();
 						ushort height = inc.ReadUInt16();
-						uint segment = inc.ReadVariableUInt32();
 
 						Bitmap bm = pictureBox1.Image as Bitmap;
 						if (bm == null)
@@ -97,36 +97,9 @@ namespace ImageClient
 						}
 						pictureBox1.SuspendLayout();
 
-						int totalBytes = (width * height * 3);
-						if (inc.LengthBytes < totalBytes)
+						for (int y = 0; y < height; y++)
 						{
-							int wholeSegments = totalBytes / 990;
-							int segLen = 990;
-							int remainder = totalBytes - (wholeSegments * inc.LengthBytes);
-							int totalNumberOfSegments = wholeSegments + (remainder > 0 ? 1 : 0);
-							if (segment >= wholeSegments)
-								segLen = remainder; // last segment can be shorter
-
-							if (ReceivedSegments == null)
-								ReceivedSegments = new bool[totalNumberOfSegments];
-							if (ReceivedSegments[segment] == false)
-							{
-								ReceivedSegments[segment] = true;
-								NumReceivedSegments++;
-								if (NumReceivedSegments >= totalNumberOfSegments)
-								{
-									Client.Disconnect("So long and thanks for all the fish!");
-								}
-							}
-
-
-
-							int pixelsAhead = (int)segment * 330;
-
-							int y = pixelsAhead / width;
-							int x = pixelsAhead - (y * width);
-
-							for (int i = 0; i < (segLen / 3); i++)
+							for (int x = 0; x < width; x++)
 							{
 								// set pixel
 								byte r = inc.ReadByte();
@@ -134,37 +107,15 @@ namespace ImageClient
 								byte b = inc.ReadByte();
 								Color col = Color.FromArgb(r, g, b);
 								bm.SetPixel(x, y, col);
-								x++;
-								if (x >= width)
-								{
-									x = 0;
-									y++;
-								}
 							}
 						}
-						else
-						{
 
-							for(int y=0;y<height;y++)
-							{
-								for (int x = 0; x < width; x++)
-								{
-									// set pixel
-									byte r = inc.ReadByte();
-									byte g = inc.ReadByte();
-									byte b = inc.ReadByte();
-									Color col = Color.FromArgb(r, g, b);
-									bm.SetPixel(x, y, col);
-								}
-							}
+						NativeMethods.AppendText(richTextBox1, Client.Statistics.ToString());
 
-							double span = NetTime.Now - m_startedFetching;
-							double bytesPerSecond = (double)totalBytes / span;
-							NativeMethods.AppendText(richTextBox1, "Fetched at " + NetUtility.ToHumanReadable((long)bytesPerSecond) + " per second");
+						NativeMethods.AppendText(richTextBox1, Client.ServerConnection.Statistics.ToString());
 
-							Client.Disconnect("So long and thanks for all the fish!");
-						}
-
+						Client.Disconnect("So long and thanks for all the fish!");
+											
 						pictureBox1.ResumeLayout();
 						pictureBox1.Invalidate();
 						System.Threading.Thread.Sleep(0);

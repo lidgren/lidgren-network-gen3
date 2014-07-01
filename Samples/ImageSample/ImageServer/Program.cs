@@ -114,7 +114,6 @@ namespace ImageServer
 
 								om.Write((ushort)ImageWidth);
 								om.Write((ushort)ImageHeight);
-								om.WriteVariableUInt32(0);
 								om.Write(ImageData);
 
 								Server.SendMessage(om, inc.SenderConnection, NetDeliveryMethod.ReliableOrdered, 0);
