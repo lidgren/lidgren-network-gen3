@@ -27,6 +27,16 @@ namespace Lidgren.Network
 	/// </summary>
 	public sealed class NetPeerConfiguration
 	{
+		// Maximum transmission unit
+		// Ethernet can take 1500 bytes of payload, so lets stay below that.
+		// The aim is for a max full packet to be 1440 bytes (30 x 48 bytes, lower than 1468)
+		// -20 bytes IP header
+		//  -8 bytes UDP header
+		//  -4 bytes to be on the safe side and align to 8-byte boundary
+		// Total 1408 bytes
+		// Note that lidgren headers (5 bytes) are not included here; since it's part of the "mtu payload"
+		public const int kDefaultMTU = 1408;
+		
 		private const string c_isLockedMessage = "You may not modify the NetPeerConfiguration after it has been used to initialize a NetPeer";
 
 		private bool m_isLocked;
@@ -96,15 +106,7 @@ namespace Lidgren.Network
 			m_maximumHandshakeAttempts = 5;
 			m_autoFlushSendQueue = true;
 
-			// Maximum transmission unit
-			// Ethernet can take 1500 bytes of payload, so lets stay below that.
-			// The aim is for a max full packet to be 1440 bytes (30 x 48 bytes, lower than 1468)
-			// -20 bytes IP header
-			//  -8 bytes UDP header
-			//  -4 bytes to be on the safe side and align to 8-byte boundary
-			// Total 1408 bytes
-			// Note that lidgren headers (5 bytes) are not included here; since it's part of the "mtu payload"
-			m_maximumTransmissionUnit = 1408;
+			m_maximumTransmissionUnit = kDefaultMTU;
 			m_autoExpandMTU = false;
 			m_expandMTUFrequency = 2.0f;
 			m_expandMTUFailAttempts = 5;

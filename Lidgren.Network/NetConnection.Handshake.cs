@@ -43,7 +43,8 @@ namespace Lidgren.Network
 						break;
 
 					case NetConnectionStatus.Disconnected:
-						throw new NetException("This connection is Disconnected; spent. A new one should have been created");
+						m_peer.ThrowOrLog("This connection is Disconnected; spent. A new one should have been created");
+						break;
 
 					case NetConnectionStatus.Disconnecting:
 						// let disconnect finish first
@@ -192,7 +193,7 @@ namespace Lidgren.Network
 				if (hi != null && hi.Length >= m_localHailMessage.LengthBytes)
 				{
 					if (om.LengthBytes + m_localHailMessage.LengthBytes > m_peerConfiguration.m_maximumTransmissionUnit - 10)
-						throw new NetException("Hail message too large; can maximally be " + (m_peerConfiguration.m_maximumTransmissionUnit - 10 - om.LengthBytes));
+						m_peer.ThrowOrLog("Hail message too large; can maximally be " + (m_peerConfiguration.m_maximumTransmissionUnit - 10 - om.LengthBytes));
 					om.Write(m_localHailMessage.Data, 0, m_localHailMessage.LengthBytes);
 				}
 			}

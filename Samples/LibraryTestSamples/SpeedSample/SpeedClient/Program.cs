@@ -31,6 +31,7 @@ namespace SpeedTestClient
 			s_form = new Form1();
 
 			NetPeerConfiguration config = new NetPeerConfiguration("speedtest");
+			config.AutoExpandMTU = true;
 			s_client = new NetClient(config);
 
 			Application.Idle += new EventHandler(Application_Idle);

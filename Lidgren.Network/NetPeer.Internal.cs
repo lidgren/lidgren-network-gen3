@@ -270,6 +270,10 @@ namespace Lidgren.Network
 					m_socket = null;
 					m_status = NetPeerStatus.NotRunning;
 					LogDebug("Shutdown complete");
+
+					// wake up any threads waiting for server shutdown
+					if (m_messageReceivedEvent != null)
+						m_messageReceivedEvent.Set();
 				}
 
 				m_receiveBuffer = null;
@@ -467,10 +471,14 @@ namespace Lidgren.Network
 						return;
 					}
 
+					if (tp >= NetMessageType.Unused1 && tp <= NetMessageType.Unused29)
+					{
+						ThrowOrLog("Unexpected NetMessageType: " + tp);
+						return;
+					}
+
 					try
 					{
-						NetException.Assert(tp < NetMessageType.Unused1 || tp > NetMessageType.Unused29);
-
 						if (tp >= NetMessageType.LibraryError)
 						{
 							if (sender != null)

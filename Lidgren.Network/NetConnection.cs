@@ -323,7 +323,7 @@ namespace Lidgren.Network
 				chan = CreateSenderChannel(tp);
 
 			if (msg.GetEncodedSize() > m_currentMTU)
-				throw new NetException("Message too large! Fragmentation failure?");
+				m_peer.ThrowOrLog("Message too large! Fragmentation failure?");
 
 			var retval = chan.Enqueue(msg);
 			if (retval == NetSendResult.Sent && m_peerConfiguration.m_autoFlushSendQueue == false)
@@ -394,11 +394,8 @@ namespace Lidgren.Network
 					break;
 
 				case NetMessageType.LibraryError:
-#if DEBUG
-					throw new NetException("LibraryError received by ReceivedLibraryMessage; this usually indicates a malformed message");
-#else
+					m_peer.ThrowOrLog("LibraryError received by ReceivedLibraryMessage; this usually indicates a malformed message");
 					break;
-#endif
 
 				case NetMessageType.Disconnect:
 					NetIncomingMessage msg = m_peer.SetupReadHelperMessage(ptr, payloadLength);

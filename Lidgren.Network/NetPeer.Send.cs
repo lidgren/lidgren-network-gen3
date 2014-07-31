@@ -65,9 +65,18 @@ namespace Lidgren.Network
 		internal static int GetMTU(IList<NetConnection> recipients)
 		{
 			int count = recipients.Count;
-			NetException.Assert(count > 0);
 
 			int mtu = int.MaxValue;
+			if (count < 1)
+			{
+#if DEBUG
+				throw new NetException("GetMTU called with no recipients");
+#else
+				// we don't have access to the particular peer, so just use default MTU
+				return NetPeerConfiguration.kDefaultMTU;
+#endif
+			}
+
 			for(int i=0;i<count;i++)
 			{
 				var conn = recipients[i];

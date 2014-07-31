@@ -136,10 +136,9 @@ namespace Lidgren.Network
 		{
 			if (m_incomingMessagesPool == null)
 				return;
-#if DEBUG
-			if (m_incomingMessagesPool.Contains(msg))
-				throw new NetException("Recyling already recycled message! Thread race?");
-#endif
+
+			NetException.Assert(m_incomingMessagesPool.Contains(msg) == false, "Recyling already recycled message! Thread race?");
+
 			byte[] storage = msg.m_data;
 			msg.m_data = null;
 			Recycle(storage);
@@ -188,11 +187,9 @@ namespace Lidgren.Network
 		{
 			if (m_outgoingMessagesPool == null)
 				return;
-#if DEBUG
-			if (m_outgoingMessagesPool.Contains(msg))
-				throw new NetException("Recyling already recycled message! Thread race?");
-#endif
 
+			NetException.Assert(m_outgoingMessagesPool.Contains(msg) == false, "Recyling already recycled message! Thread race?");
+			
 			byte[] storage = msg.m_data;
 			msg.m_data = null;
 			
