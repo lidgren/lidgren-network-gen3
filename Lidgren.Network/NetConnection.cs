@@ -75,7 +75,7 @@ namespace Lidgren.Network
 			float avgRtt = m_averageRoundtripTime;
 			if (avgRtt <= 0)
 				avgRtt = 0.1f; // "default" resend is based on 100 ms roundtrip time
-			return 0.02f + (avgRtt * 2.0f); // 20 ms + double rtt
+			return 0.025f + (avgRtt * 2.1f); // 25 ms + double rtt
 		}
 
 		internal NetConnection(NetPeer peer, IPEndPoint remoteEndPoint)
@@ -429,6 +429,11 @@ namespace Lidgren.Network
 					SendMTUSuccess(payloadLength);
 					break;
 				case NetMessageType.ExpandMTUSuccess:
+					if (m_peer.Configuration.AutoExpandMTU == false)
+					{
+						m_peer.LogDebug("Received ExpandMTURequest altho AutoExpandMTU is turned off!");
+						break;
+					}
 					NetIncomingMessage emsg = m_peer.SetupReadHelperMessage(ptr, payloadLength);
 					int size = emsg.ReadInt32();
 					HandleExpandMTUSuccess(now, size);
