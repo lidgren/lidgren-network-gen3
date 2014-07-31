@@ -258,12 +258,6 @@ namespace Lidgren.Network
 						catch { }
 						m_socket.Close(2); // 2 seconds timeout
 					}
-					if (m_messageReceivedEvent != null)
-					{
-						m_messageReceivedEvent.Set();
-						m_messageReceivedEvent.Close();
-						m_messageReceivedEvent = null;
-					}
 				}
 				finally
 				{
