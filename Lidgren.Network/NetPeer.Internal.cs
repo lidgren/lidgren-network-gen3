@@ -499,6 +499,7 @@ namespace Lidgren.Network
 							msg.m_senderConnection = sender;
 							msg.m_senderEndPoint = ipsender;
 							msg.m_bitLength = payloadBitLength;
+
 							Buffer.BlockCopy(m_receiveBuffer, ptr, msg.m_data, 0, payloadByteLength);
 							if (sender != null)
 							{
@@ -594,10 +595,12 @@ namespace Lidgren.Network
 					HandleIncomingDiscoveryResponse(now, senderEndPoint, ptr, payloadByteLength);
 					return;
 				case NetMessageType.NatIntroduction:
-					HandleNatIntroduction(ptr);
+					if (m_configuration.IsMessageTypeEnabled(NetIncomingMessageType.NatIntroductionSuccess))
+						HandleNatIntroduction(ptr);
 					return;
 				case NetMessageType.NatPunchMessage:
-					HandleNatPunch(ptr, senderEndPoint);
+					if (m_configuration.IsMessageTypeEnabled(NetIncomingMessageType.NatIntroductionSuccess))
+						HandleNatPunch(ptr, senderEndPoint);
 					return;
 				case NetMessageType.ConnectResponse:
 

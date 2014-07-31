@@ -318,7 +318,7 @@ namespace Lidgren.Network
 #if DEBUG
 		public void RawSend(byte[] arr, int offset, int length, IPEndPoint destination)
 #else
-		internal void RawSend(byte[] arr, int offset, int length, IPEndPoint destination)
+		public void RawSend(byte[] arr, int offset, int length, IPEndPoint destination)
 #endif
 	{
 			// wrong thread - this miiiight crash with network thread... but what's a boy to do.

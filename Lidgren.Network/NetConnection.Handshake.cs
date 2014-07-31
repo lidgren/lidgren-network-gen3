@@ -76,14 +76,12 @@ namespace Lidgren.Network
 					case NetConnectionStatus.RespondedConnect:
 						SendConnectResponse(now, true);
 						break;
-					case NetConnectionStatus.None:
-					case NetConnectionStatus.ReceivedInitiation:
-						m_peer.LogWarning("Time to resend handshake, but status is " + m_status);
-						break;
 					case NetConnectionStatus.RespondedAwaitingApproval:
 						// awaiting approval
 						m_lastHandshakeSendTime = now; // postpone handshake resend
 						break;
+					case NetConnectionStatus.None:
+					case NetConnectionStatus.ReceivedInitiation:
 					default:
 						m_peer.LogWarning("Time to resend handshake, but status is " + m_status);
 						break;
@@ -94,8 +92,6 @@ namespace Lidgren.Network
 		internal void ExecuteDisconnect(string reason, bool sendByeMessage)
 		{
 			m_peer.VerifyNetworkThread();
-
-			//m_peer.LogDebug("Executing disconnect");
 
 			// clear send queues
 			for (int i = 0; i < m_sendChannels.Length; i++)
@@ -108,7 +104,15 @@ namespace Lidgren.Network
 			if (sendByeMessage)
 				SendDisconnect(reason, true);
 
-			SetStatus(NetConnectionStatus.Disconnected, reason);
+			if (m_status == NetConnectionStatus.ReceivedInitiation)
+			{
+				// nothing much has happened yet; no need to send disconnected status message
+				m_status = NetConnectionStatus.Disconnected;
+			}
+			else
+			{
+				SetStatus(NetConnectionStatus.Disconnected, reason);
+			}
 
 			// in case we're still in handshake
 			lock (m_peer.m_handshakes)
@@ -448,7 +452,6 @@ namespace Lidgren.Network
 
 				if (remoteAppIdentifier != m_peer.m_configuration.AppIdentifier)
 				{
-					// wrong app identifier
 					ExecuteDisconnect("Wrong application identifier!", true);
 					return false;
 				}

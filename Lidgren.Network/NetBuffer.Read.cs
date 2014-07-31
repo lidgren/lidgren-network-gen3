@@ -406,7 +406,7 @@ namespace Lidgren.Network
 		{
 			int num1 = 0;
 			int num2 = 0;
-			while (true)
+			while (m_bitLength - m_readPosition >= 8)
 			{
 				byte num3 = this.ReadByte();
 				num1 |= (num3 & 0x7f) << num2;
@@ -414,6 +414,9 @@ namespace Lidgren.Network
 				if ((num3 & 0x80) == 0)
 					return (uint)num1;
 			}
+
+			// ouch; failed to find enough bytes; malformed variable length number?
+			return (uint)num1;
 		}
 
 		/// <summary>
@@ -424,7 +427,7 @@ namespace Lidgren.Network
 		{
 			int num1 = 0;
 			int num2 = 0;
-			while (true)
+			while (m_bitLength - m_readPosition >= 8)
 			{
 				byte num3;
 				if (ReadByte(out num3) == false)
@@ -440,6 +443,8 @@ namespace Lidgren.Network
 					return true;
 				}
 			}
+			result = (uint)num1;
+			return false;
 		}
 
 		/// <summary>
@@ -468,7 +473,7 @@ namespace Lidgren.Network
 		{
 			UInt64 num1 = 0;
 			int num2 = 0;
-			while (true)
+			while (m_bitLength - m_readPosition >= 8)
 			{
 				//if (num2 == 0x23)
 				//	throw new FormatException("Bad 7-bit encoded integer");
@@ -479,6 +484,9 @@ namespace Lidgren.Network
 				if ((num3 & 0x80) == 0)
 					return num1;
 			}
+
+			// ouch; failed to find enough bytes; malformed variable length number?
+			return num1;
 		}
 
 		/// <summary>
@@ -543,10 +551,19 @@ namespace Lidgren.Network
 		{
 			int byteLen = (int)ReadVariableUInt32();
 
-			if (byteLen == 0)
+			if (byteLen <= 0)
 				return String.Empty;
 
-			NetException.Assert(m_bitLength - m_readPosition >= (byteLen * 8), c_readOverflowError);
+			if ((ulong)(m_bitLength - m_readPosition) < ((ulong)byteLen * 8))
+			{
+				// not enough data
+#if DEBUG
+				throw new NetException(c_readOverflowError);
+#else
+				m_readPosition = m_bitLength;
+				return null; // unfortunate; but we need to protect against DDOS
+#endif
+			}
 
 			if ((m_readPosition & 7) == 0)
 			{
@@ -572,7 +589,7 @@ namespace Lidgren.Network
 				return false;
 			}
 
-			if (byteLen == 0)
+			if (byteLen <= 0)
 			{
 				result = String.Empty;
 				return true;
