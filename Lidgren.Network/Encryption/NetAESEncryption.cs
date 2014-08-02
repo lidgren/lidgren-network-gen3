@@ -19,7 +19,7 @@ namespace Lidgren.Network
 
 		static NetAESEncryption()
 		{
-#if !IOS && !__ANDROID__
+#if !IOS && !__ANDROID__ && !UNITY_4_5
 			AesCryptoServiceProvider aes = new AesCryptoServiceProvider();
 			List<int> temp = new List<int>();
 			foreach (KeySizes keysize in aes.LegalKeySizes)
@@ -103,7 +103,7 @@ namespace Lidgren.Network
 		/// </summary>
 		public bool Encrypt(NetOutgoingMessage msg)
 		{
-#if !IOS && !__ANDROID__
+#if !IOS && !__ANDROID__ && !UNITY_4_5
 			try
 			{
 				// nested usings are fun!
@@ -138,7 +138,7 @@ namespace Lidgren.Network
 		/// </summary>
 		public bool Decrypt(NetIncomingMessage msg)
 		{
-#if !IOS && !__ANDROID__
+#if !IOS && !__ANDROID__ && !UNITY_4_5
 			try
 			{
 				// nested usings are fun!
