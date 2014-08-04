@@ -85,6 +85,7 @@
     <Compile Include="NetDeliveryMethod.cs" />
     <Compile Include="NetException.cs" />
     <Compile Include="NetFragmentationHelper.cs" />
+    <Compile Include="NetHash.cs" />
     <Compile Include="NetIncomingMessage.cs" />
     <Compile Include="NetIncomingMessageType.cs" />
     <Compile Include="NetMessageType.cs" />
