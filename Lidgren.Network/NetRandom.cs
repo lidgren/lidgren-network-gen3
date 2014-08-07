@@ -5,111 +5,125 @@ using System.Threading;
 namespace Lidgren.Network
 {
 	/// <summary>
-	/// Mersenne Twister PRNG
+	/// NetRandom base class
 	/// </summary>
-	public sealed class NetRandom
+	public abstract class NetRandom : Random
 	{
-		/// <summary>
-		/// Gets a global NetRandom instance
-		/// </summary>
-		public static readonly NetRandom Instance = new NetRandom();
+		private const double c_realUnitInt = 1.0 / ((double)int.MaxValue + 1.0);
 
-		private const double c_uniformSingleMultiplier = 1.0 / ((double)uint.MaxValue + 1.0);
-
-		private static int m_seedIncrement = 997;
-
-		private const int N = 624;
-		private const int M = 397;
-		private const uint MATRIX_A = 0x9908b0dfU;
-		private const uint UPPER_MASK = 0x80000000U;
-		private const uint LOWER_MASK = 0x7fffffffU;
-		private const uint TEMPER1 = 0x9d2c5680U;
-		private const uint TEMPER2 = 0xefc60000U;
-		private const int TEMPER3 = 11;
-		private const int TEMPER4 = 7;
-		private const int TEMPER5 = 15;
-		private const int TEMPER6 = 18;
-
-		private UInt32[] mt;
-		private int mti;
-		private UInt32[] mag01;
-
-		/// <summary>
-		/// Constructor
-		/// </summary>
 		public NetRandom()
 		{
-			// make seed from various numbers
-			uint seed = NetHash.Hash(
-				(int)Environment.TickCount,
-				Guid.NewGuid().GetHashCode(),
-				this.GetHashCode(),
-				m_seedIncrement
-				// can't use Environment.WorkingSet or Stopwatch.GetTimestamp here since it's not available or reliable on all platforms
-			);
+			Initialize(NetRandomSeed.GetUInt32());
+		}
 
-			mt = new UInt32[N];
-			mti = N + 1;
-			mag01 = new UInt32[] { 0x0U, MATRIX_A };
-			mt[0] = seed;
-			for (int i = 1; i < N; i++)
-				mt[i] = (UInt32)(1812433253 * (mt[i - 1] ^ (mt[i - 1] >> 30)) + i);
+		public NetRandom(int seed)
+		{
+			Initialize((uint)seed);
+		}
+
+		public abstract void Initialize(uint seed);
+
+		/// <summary>
+		/// Generates a random value from UInt32.MinValue to UInt32.MaxValue, inclusively
+		/// </summary>
+		public abstract uint NextUInt32();
+
+		/// <summary>
+		/// Generates a random value that is >= 0 and < Int32.MaxValue
+		/// </summary>
+		public override int Next()
+		{
+			var retval = (int)(0x7FFFFFFF & NextUInt32());
+			if (retval == 0x7FFFFFFF)
+				return NextInt32();
+			return retval;
 		}
 
 		/// <summary>
-		/// Generates a random value from Int32.MinValue to Int32.MaxValue
+		/// Generates a random value >= 0 and <= Int32.MaxValue (inclusively)
 		/// </summary>
-		[CLSCompliant(false)]
-		public uint NextUInt32()
+		public int NextInt32()
 		{
-			UInt32 y;
-			if (mti >= N)
+			return (int)(0x7FFFFFFF & NextUInt32());
+		}
+
+		/// <summary>
+		/// Returns random value >= 0.0 and < 1.0
+		/// </summary>
+		public override double NextDouble()
+		{
+			return c_realUnitInt * NextInt32();
+		}
+
+		/// <summary>
+		/// Returns random value >= 0.0 and < 1.0
+		/// </summary>
+		protected override double Sample()
+		{
+			return c_realUnitInt * NextInt32();
+		}
+
+		/// <summary>
+		/// Returns random value >= 0.0f and < 1.0f
+		/// </summary>
+		public float NextSingle()
+		{
+			var retval = (float)(c_realUnitInt * NextInt32());
+			if (retval == 1.0f)
+				return NextSingle();
+			return retval;
+		}
+
+		/// <summary>
+		/// Returns a random value >= 0 and < maxValue
+		/// </summary>
+		public override int Next(int maxValue)
+		{
+			return (int)(NextDouble() * maxValue);
+		}
+
+		/// <summary>
+		/// Returns a random value >= minValue and < maxValue
+		/// </summary>
+		public override int Next(int minValue, int maxValue)
+		{
+            return minValue + (int)(NextDouble() * (double)(maxValue - minValue));
+		}
+		
+		/// <summary>
+		/// Generates a random value between UInt64.MinValue to UInt64.MaxValue
+		/// </summary>
+		public ulong NextUInt64()
+		{
+			ulong retval = NextUInt32();
+			retval |= NextUInt32() << 32;
+			return retval;
+		}
+
+		private uint m_boolValues;
+		private int m_nextBoolIndex;
+
+		/// <summary>
+		/// Returns true or false, randomly
+		/// </summary>
+		public bool NextBool()
+		{
+			if (m_nextBoolIndex >= 32)
 			{
-				GenRandAll();
-				mti = 0;
+				m_boolValues = NextUInt32();
+				m_nextBoolIndex = 1;
 			}
-			y = mt[mti++];
-			y ^= (y >> TEMPER3);
-			y ^= (y << TEMPER4) & TEMPER1;
-			y ^= (y << TEMPER5) & TEMPER2;
-			y ^= (y >> TEMPER6);
-			return y;
-		}
 
-		private void GenRandAll()
-		{
-			int kk = 1;
-			UInt32 y;
-			UInt32 p;
-			y = mt[0] & UPPER_MASK;
-			do
-			{
-				p = mt[kk];
-				mt[kk - 1] = mt[kk + (M - 1)] ^ ((y | (p & LOWER_MASK)) >> 1) ^ mag01[p & 1];
-				y = p & UPPER_MASK;
-			} while (++kk < N - M + 1);
-			do
-			{
-				p = mt[kk];
-				mt[kk - 1] = mt[kk + (M - N - 1)] ^ ((y | (p & LOWER_MASK)) >> 1) ^ mag01[p & 1];
-				y = p & UPPER_MASK;
-			} while (++kk < N);
-			p = mt[0];
-			mt[N - 1] = mt[M - 1] ^ ((y | (p & LOWER_MASK)) >> 1) ^ mag01[p & 1];
+			var retval = ((m_boolValues >> m_nextBoolIndex) & 1) == 1;
+			m_nextBoolIndex++;
+			return retval;
 		}
-
-		/// <summary>
-		/// Fills all bytes in the provided buffer with random values
-		/// </summary>
-		public void NextBytes(byte[] buffer)
-		{
-			NextBytes(buffer, 0, buffer.Length);
-		}
+		
 
 		/// <summary>
 		/// Fills all bytes from offset to offset + length in buffer with random values
 		/// </summary>
-		public void NextBytes(byte[] buffer, int offset, int length)
+		public virtual void NextBytes(byte[] buffer, int offset, int length)
 		{
 			int full = length / 4;
 			int ptr = offset;
@@ -127,20 +141,9 @@ namespace Lidgren.Network
 				buffer[ptr++] = (byte)NextUInt32();
 		}
 
-		/// <summary>
-		/// Returns a random value >= 0.0f and < 1.0f
-		/// </summary>
-		public float NextSingle()
+		public override void NextBytes(byte[] buffer)
 		{
-			return (float)((double)NextUInt32() * c_uniformSingleMultiplier);
-		}
-
-		/// <summary>
-		/// Returns random value that is >= 0.0 and < 1.0
-		/// </summary>
-		public double NextDouble()
-		{
-			return (double)NextUInt32() * c_uniformSingleMultiplier;
+			NextBytes(buffer, 0, buffer.Length);
 		}
 	}
 }

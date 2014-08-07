@@ -154,7 +154,7 @@ namespace Lidgren.Network
 				m_readHelperMessage.m_data = m_receiveBuffer;
 
 				byte[] macBytes = new byte[8];
-				NetRandom.Instance.NextBytes(macBytes);
+				MWCRandom.Instance.NextBytes(macBytes);
 
 #if IS_MAC_AVAILABLE
 				try

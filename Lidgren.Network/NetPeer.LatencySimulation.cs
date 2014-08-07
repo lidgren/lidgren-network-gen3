@@ -48,7 +48,7 @@ namespace Lidgren.Network
 			float loss = m_configuration.m_loss;
 			if (loss > 0.0f)
 			{
-				if ((float)NetRandom.Instance.NextDouble() < loss)
+				if ((float)MWCRandom.Instance.NextDouble() < loss)
 				{
 					LogVerbose("Sending packet " + numBytes + " bytes - SIMULATED LOST!");
 					return; // packet "lost"
@@ -67,20 +67,20 @@ namespace Lidgren.Network
 				bool wasSent = ActuallySendPacket(m_sendBuffer, numBytes, target, out connectionReset);
 				// TODO: handle wasSent == false?
 
-				if (m_configuration.m_duplicates > 0.0f && NetRandom.Instance.NextSingle() < m_configuration.m_duplicates)
+				if (m_configuration.m_duplicates > 0.0f && MWCRandom.Instance.NextDouble() < m_configuration.m_duplicates)
 					ActuallySendPacket(m_sendBuffer, numBytes, target, out connectionReset); // send it again!
 
 				return;
 			}
 
 			int num = 1;
-			if (m_configuration.m_duplicates > 0.0f && NetRandom.Instance.NextSingle() < m_configuration.m_duplicates)
+			if (m_configuration.m_duplicates > 0.0f && MWCRandom.Instance.NextSingle() < m_configuration.m_duplicates)
 				num++;
 
 			float delay = 0;
 			for (int i = 0; i < num; i++)
 			{
-				delay = m_configuration.m_minimumOneWayLatency + (NetRandom.Instance.NextSingle() * m_configuration.m_randomOneWayLatency);
+				delay = m_configuration.m_minimumOneWayLatency + (MWCRandom.Instance.NextSingle() * m_configuration.m_randomOneWayLatency);
 
 				// Enqueue delayed packet
 				DelayedPacket p = new DelayedPacket();

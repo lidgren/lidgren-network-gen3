@@ -48,7 +48,7 @@ namespace Lidgren.Network
 		public static byte[] CreateRandomSalt()
 		{
 			byte[] retval = new byte[16];
-			NetRandom.Instance.NextBytes(retval);
+			CryptoRandom.Instance.NextBytes(retval);
 			return retval;
 		}
 
@@ -58,7 +58,7 @@ namespace Lidgren.Network
 		public static byte[] CreateRandomEphemeral()
 		{
 			byte[] retval = new byte[32];
-			NetRandom.Instance.NextBytes(retval);
+			CryptoRandom.Instance.NextBytes(retval);
 			return retval;
 		}
 

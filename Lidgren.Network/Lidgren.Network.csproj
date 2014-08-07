@@ -85,7 +85,6 @@
     <Compile Include="NetDeliveryMethod.cs" />
     <Compile Include="NetException.cs" />
     <Compile Include="NetFragmentationHelper.cs" />
-    <Compile Include="NetHash.cs" />
     <Compile Include="NetIncomingMessage.cs" />
     <Compile Include="NetIncomingMessageType.cs" />
     <Compile Include="NetMessageType.cs" />
@@ -104,6 +103,8 @@
     <Compile Include="NetPeerStatus.cs" />
     <Compile Include="NetQueue.cs" />
     <Compile Include="NetRandom.cs" />
+    <Compile Include="NetRandom.Implementations.cs" />
+    <Compile Include="NetRandomSeed.cs" />
     <Compile Include="NetReceiverChannelBase.cs" />
     <Compile Include="NetReliableOrderedReceiver.cs" />
     <Compile Include="NetReliableSenderChannel.cs" />
