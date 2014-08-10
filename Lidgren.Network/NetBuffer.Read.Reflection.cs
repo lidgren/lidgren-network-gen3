@@ -93,7 +93,7 @@ namespace Lidgren.Network
 					value = readMethod.Invoke(this, null);
 
 					// set the value
-					var setMethod = fi.GetSetMethod((flags & BindingFlags.NonPublic) == BindingFlags.NonPublic);
+					var setMethod = fi.SetMethod;
 					if (setMethod != null)
 						setMethod.Invoke(target, new object[] { value });
 				}

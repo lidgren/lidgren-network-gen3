@@ -10,6 +10,7 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Generates a 32 bit random seed
 		/// </summary>
+		[CLSCompliant(false)]
 		public static uint GetUInt32()
 		{
 			ulong seed = GetUInt64();
@@ -21,6 +22,7 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Generates a 64 bit random seed
 		/// </summary>
+		[CLSCompliant(false)]
 		public static ulong GetUInt64()
 		{
 #if !__ANDROID__ && !IOS && !UNITY_WEBPLAYER

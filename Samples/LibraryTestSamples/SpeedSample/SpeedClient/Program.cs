@@ -104,7 +104,7 @@ namespace SpeedTestClient
 						int size = s_client.Configuration.MaximumTransmissionUnit - 30;
 						NetOutgoingMessage om = s_client.CreateMessage(size);
 						byte[] tmp = new byte[size];
-						NetRandom.Instance.NextBytes(tmp);
+						MWCRandom.Instance.NextBytes(tmp);
 						int slot = (int)s_method + s_sequenceChannel;
 						om.Write(s_nextSendNumber[slot]);
 						s_nextSendNumber[slot]++;

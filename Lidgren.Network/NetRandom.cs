@@ -9,6 +9,8 @@ namespace Lidgren.Network
 	/// </summary>
 	public abstract class NetRandom : Random
 	{
+		public static NetRandom Instance = new MWCRandom();
+
 		private const double c_realUnitInt = 1.0 / ((double)int.MaxValue + 1.0);
 
 		public NetRandom()
@@ -21,12 +23,22 @@ namespace Lidgren.Network
 			Initialize((uint)seed);
 		}
 
-		public abstract void Initialize(uint seed);
+		[CLSCompliant(false)]
+		public virtual void Initialize(uint seed)
+		{
+			// should be abstract, but non-CLS compliant methods can't be abstract!
+			throw new NotImplementedException("Implement this in inherited classes");
+		}
 
 		/// <summary>
 		/// Generates a random value from UInt32.MinValue to UInt32.MaxValue, inclusively
 		/// </summary>
-		public abstract uint NextUInt32();
+		[CLSCompliant(false)]
+		public virtual uint NextUInt32()
+		{
+			// should be abstract, but non-CLS compliant methods can't be abstract!
+			throw new NotImplementedException("Implement this in inherited classes");
+		}
 
 		/// <summary>
 		/// Generates a random value that is >= 0 and < Int32.MaxValue
@@ -93,6 +105,7 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Generates a random value between UInt64.MinValue to UInt64.MaxValue
 		/// </summary>
+		[CLSCompliant(false)]
 		public ulong NextUInt64()
 		{
 			ulong retval = NextUInt32();

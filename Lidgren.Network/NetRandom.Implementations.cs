@@ -17,18 +17,21 @@ namespace Lidgren.Network
 			Initialize(NetRandomSeed.GetUInt64());
 		}
 
+		[CLSCompliant(false)]
 		public override void Initialize(uint seed)
 		{
 			m_w = seed;
 			m_z = seed * 16777619;
 		}
 
+		[CLSCompliant(false)]
 		public void Initialize(ulong seed)
 		{
 			m_w = (uint)seed;
 			m_z = (uint)(seed >> 32);
 		}
 
+		[CLSCompliant(false)]
 		public override uint NextUInt32()
 		{
 			m_z = 36969 * (m_z & 65535) + (m_z >> 16);
@@ -56,11 +59,13 @@ namespace Lidgren.Network
 			Initialize(NetRandomSeed.GetUInt64());
 		}
 
+		[CLSCompliant(false)]
 		public XorShiftRandom(ulong seed)
 		{
 			Initialize(seed);
 		}
 
+		[CLSCompliant(false)]
 		public override void Initialize(uint seed)
 		{
 			m_x = (uint)seed;
@@ -69,6 +74,7 @@ namespace Lidgren.Network
 			m_w = c_w;
 		}
 
+		[CLSCompliant(false)]
 		public void Initialize(ulong seed)
 		{
 			m_x = (uint)seed;
@@ -77,6 +83,7 @@ namespace Lidgren.Network
 			m_w = c_w;
 		}
 
+		[CLSCompliant(false)]
 		public override uint NextUInt32()
 		{
 			uint t = (m_x ^ (m_x << 11));
@@ -115,11 +122,13 @@ namespace Lidgren.Network
 			Initialize(NetRandomSeed.GetUInt32());
 		}
 
+		[CLSCompliant(false)]
 		public MersenneTwisterRandom(uint seed)
 		{
 			Initialize(seed);
 		}
 
+		[CLSCompliant(false)]
 		public override void Initialize(uint seed)
 		{
 			mt = new UInt32[N];
@@ -130,6 +139,7 @@ namespace Lidgren.Network
 				mt[i] = (UInt32)(1812433253 * (mt[i - 1] ^ (mt[i - 1] >> 30)) + i);
 		}
 
+		[CLSCompliant(false)]
 		public override uint NextUInt32()
 		{
 			UInt32 y;
@@ -181,12 +191,14 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Seed in CryptoRandom does not create deterministic sequences
 		/// </summary>
+		[CLSCompliant(false)]
 		public override void Initialize(uint seed)
 		{
 			byte[] tmp = new byte[seed % 16];
 			m_rnd.GetBytes(tmp); // just prime it
 		}
 
+		[CLSCompliant(false)]
 		public override uint NextUInt32()
 		{
 			var bytes = new byte[4];
