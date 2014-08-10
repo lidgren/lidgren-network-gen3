@@ -234,8 +234,11 @@ namespace Lidgren.Network
 				{
 					//m_peer.LogVerbose("Received ack for " + acktp + "#" + seqNr);
 					NetSenderChannelBase chan = m_sendChannels[(int)incAck.Item1 - 1];
+
+					// If we haven't sent a message on this channel there is no reason to ack it
 					if (chan == null)
-						chan = CreateSenderChannel(incAck.Item1);
+						continue;
+
 					chan.ReceiveAcknowledge(now, incAck.Item2);
 				}
 			}

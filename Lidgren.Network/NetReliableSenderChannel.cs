@@ -138,8 +138,7 @@ namespace Lidgren.Network
 			if (storedMessage != null)
 			{
 #endif
-			Interlocked.Decrement(ref storedMessage.m_recyclingCount);
-			if (storedMessage.m_recyclingCount <= 0)
+			if (Interlocked.Decrement(ref storedMessage.m_recyclingCount) <= 0)
 				m_connection.m_peer.Recycle(storedMessage);
 
 #if !DEBUG
