@@ -593,7 +593,6 @@ namespace Lidgren.Network
 		{
 			if (string.IsNullOrEmpty(source))
 			{
-				EnsureBufferSize(m_bitLength + 8);
 				WriteVariableUInt32(0);
 				return;
 			}
