@@ -48,7 +48,7 @@ namespace Lidgren.Network
 			int bitsLeft = msg.LengthBits;
 			for (int i = 0; i < numChunks; i++)
 			{
-				NetOutgoingMessage chunk = CreateMessage(mtu);
+				NetOutgoingMessage chunk = CreateMessage(0);
 
 				chunk.m_bitLength = (bitsLeft > bitsPerChunk ? bitsPerChunk : bitsLeft);
 				chunk.m_data = msg.m_data;

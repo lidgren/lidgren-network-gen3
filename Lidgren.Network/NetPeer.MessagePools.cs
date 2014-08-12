@@ -84,10 +84,8 @@ namespace Lidgren.Network
 		/// </summary>
 		public NetOutgoingMessage CreateMessage(string content)
 		{
-			byte[] bytes = Encoding.UTF8.GetBytes(content);
-			NetOutgoingMessage om = CreateMessage(2 + bytes.Length);
-			om.WriteVariableUInt32((uint)bytes.Length);
-			om.Write(bytes);
+			var om = CreateMessage(2 + content.Length); // fair guess
+			om.Write(content);
 			return om;
 		}
 
@@ -101,8 +99,8 @@ namespace Lidgren.Network
 			if (m_outgoingMessagesPool == null || !m_outgoingMessagesPool.TryDequeue(out retval))
 				retval = new NetOutgoingMessage();
 
-			byte[] storage = GetStorage(initialCapacity);
-			retval.m_data = storage;
+			if (initialCapacity > 0)
+				retval.m_data = GetStorage(initialCapacity);
 
 			return retval;
 		}
