@@ -32,11 +32,11 @@ namespace Lidgren.Network
 			s2 |= (((ulong)Guid.NewGuid().GetHashCode()) << 32);
 			seed ^= s2;
 #else
-			ulong v1 = (ulong)Environment.TickCount;
-			v1 |= (((ulong)(new object().GetHashCode())) << 32);
-			ulong v2 = (ulong)Guid.NewGuid().GetHashCode();
-			v2 |= (((ulong)(Interlocked.Increment(ref m_seedIncrement)) << 32);
-			return v1 ^ v2;
+			ulong seed = (ulong)Environment.TickCount;
+			seed |= (((ulong)(new object().GetHashCode())) << 32);
+			ulong s2 = (ulong)Guid.NewGuid().GetHashCode();
+			s2 |= (((ulong)Interlocked.Increment(ref m_seedIncrement)) << 32);
+			seed ^= s2;
 #endif
 			return seed;
 		}
