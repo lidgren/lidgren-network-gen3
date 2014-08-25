@@ -41,7 +41,7 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
-		/// Generates a random value that is >= 0 and < Int32.MaxValue
+		/// Generates a random value that is greater or equal than 0 and less than Int32.MaxValue
 		/// </summary>
 		public override int Next()
 		{
@@ -52,7 +52,7 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
-		/// Generates a random value >= 0 and <= Int32.MaxValue (inclusively)
+		/// Generates a random value greater or equal than 0 and less or equal than Int32.MaxValue (inclusively)
 		/// </summary>
 		public int NextInt32()
 		{
@@ -60,7 +60,7 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
-		/// Returns random value >= 0.0 and < 1.0
+		/// Returns random value larger or equal to 0.0 and less than 1.0
 		/// </summary>
 		public override double NextDouble()
 		{
@@ -68,7 +68,7 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
-		/// Returns random value >= 0.0 and < 1.0
+		/// Returns random value is greater or equal than 0.0 and less than 1.0
 		/// </summary>
 		protected override double Sample()
 		{
@@ -76,7 +76,7 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
-		/// Returns random value >= 0.0f and < 1.0f
+		/// Returns random value is greater or equal than 0.0f and less than 1.0f
 		/// </summary>
 		public float NextSingle()
 		{
@@ -87,7 +87,7 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
-		/// Returns a random value >= 0 and < maxValue
+		/// Returns a random value is greater or equal than 0 and less than maxValue
 		/// </summary>
 		public override int Next(int maxValue)
 		{
@@ -95,7 +95,7 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
-		/// Returns a random value >= minValue and < maxValue
+		/// Returns a random value is greater or equal than minValue and less than maxValue
 		/// </summary>
 		public override int Next(int minValue, int maxValue)
 		{

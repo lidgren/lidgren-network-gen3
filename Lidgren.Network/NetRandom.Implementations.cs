@@ -8,7 +8,7 @@ namespace Lidgren.Network
 	/// </summary>
 	public class MWCRandom : NetRandom
 	{
-		public static readonly MWCRandom Instance = new MWCRandom();
+		public static new readonly MWCRandom Instance = new MWCRandom();
 
 		private uint m_w, m_z;
 
@@ -45,7 +45,7 @@ namespace Lidgren.Network
 	/// </summary>
 	public sealed class XorShiftRandom : NetRandom
 	{
-		public static readonly XorShiftRandom Instance = new XorShiftRandom();
+		public static new readonly XorShiftRandom Instance = new XorShiftRandom();
 
 		private const uint c_x = 123456789;
 		private const uint c_y = 362436069;
@@ -97,7 +97,7 @@ namespace Lidgren.Network
 	/// </summary>
 	public sealed class MersenneTwisterRandom : NetRandom
 	{
-		public static readonly MersenneTwisterRandom Instance = new MersenneTwisterRandom();
+		public static new readonly MersenneTwisterRandom Instance = new MersenneTwisterRandom();
 
 		private const int N = 624;
 		private const int M = 397;
@@ -184,7 +184,7 @@ namespace Lidgren.Network
 	/// </summary>
 	public class CryptoRandom : NetRandom
 	{
-		public static readonly CryptoRandom Instance = new CryptoRandom();
+		public static new readonly CryptoRandom Instance = new CryptoRandom();
 
 		private RandomNumberGenerator m_rnd = new RNGCryptoServiceProvider();
 
