@@ -9,20 +9,32 @@ namespace Lidgren.Network
 	/// </summary>
 	public abstract class NetRandom : Random
 	{
+		/// <summary>
+		/// Get global instance of NetRandom (uses MWCRandom)
+		/// </summary>
 		public static NetRandom Instance = new MWCRandom();
 
 		private const double c_realUnitInt = 1.0 / ((double)int.MaxValue + 1.0);
 
+		/// <summary>
+		/// Constructor with randomized seed
+		/// </summary>
 		public NetRandom()
 		{
 			Initialize(NetRandomSeed.GetUInt32());
 		}
 
+		/// <summary>
+		/// Constructor with provided 32 bit seed
+		/// </summary>
 		public NetRandom(int seed)
 		{
 			Initialize((uint)seed);
 		}
 
+		/// <summary>
+		/// (Re)initialize this instance with provided 32 bit seed
+		/// </summary>
 		[CLSCompliant(false)]
 		public virtual void Initialize(uint seed)
 		{
@@ -154,6 +166,9 @@ namespace Lidgren.Network
 				buffer[ptr++] = (byte)NextUInt32();
 		}
 
+		/// <summary>
+		/// Fill the specified buffer with random values
+		/// </summary>
 		public override void NextBytes(byte[] buffer)
 		{
 			NextBytes(buffer, 0, buffer.Length);
