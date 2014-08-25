@@ -36,9 +36,12 @@ namespace UnitTests
 
 				// convert to incoming message
 				NetIncomingMessage im = Program.CreateIncomingMessage(om.PeekDataBuffer(), om.LengthBits);
+				if (im.Data == null || im.Data.Length == 0)
+					throw new NetException("bad im!");
+
 				im.Decrypt(algo);
 
-				if (im.LengthBits != trueLen)
+				if (im.Data == null || im.Data.Length == 0 || im.LengthBits != trueLen)
 					throw new NetException("Length fail");
 
 				if (im.ReadString() != "Hallon")

@@ -14,8 +14,8 @@ namespace Lidgren.Network
 		private readonly byte[] m_key;
 		private readonly byte[] m_iv;
 		private readonly int m_bitSize;
-		private static readonly List<int> m_keysizes;
-		private static readonly List<int> m_blocksizes;
+		private static readonly List<int> s_keysizes;
+		private static readonly List<int> s_blocksizes;
 
 		static NetRC2Encryption()
 		{
@@ -32,7 +32,7 @@ namespace Lidgren.Network
 						break;
 				}
 			}
-			m_keysizes = temp;
+			s_keysizes = temp;
 			temp = new List<int>();
 			foreach (KeySizes keysize in rc2.LegalBlockSizes)
 			{
@@ -45,7 +45,7 @@ namespace Lidgren.Network
 						break;
 				}
 			}
-			m_blocksizes = temp;
+			s_blocksizes = temp;
 		}
 
 		/// <summary>
@@ -53,11 +53,11 @@ namespace Lidgren.Network
 		/// </summary>
 		public NetRC2Encryption(byte[] key, byte[] iv)
 		{
-			if (!m_keysizes.Contains(key.Length * 8))
-				throw new NetException(string.Format("Not a valid key size. (Valid values are: {0})", NetUtility.MakeCommaDelimitedList(m_keysizes)));
+			if (!s_keysizes.Contains(key.Length * 8))
+				throw new NetException(string.Format("Not a valid key size. (Valid values are: {0})", NetUtility.MakeCommaDelimitedList(s_keysizes)));
 
-			if (!m_blocksizes.Contains(iv.Length * 8))
-				throw new NetException(string.Format("Not a valid iv size. (Valid values are: {0})", NetUtility.MakeCommaDelimitedList(m_blocksizes)));
+			if (!s_blocksizes.Contains(iv.Length * 8))
+				throw new NetException(string.Format("Not a valid iv size. (Valid values are: {0})", NetUtility.MakeCommaDelimitedList(s_blocksizes)));
 
 			m_key = key;
 			m_iv = iv;
@@ -69,8 +69,8 @@ namespace Lidgren.Network
 		/// </summary>
 		public NetRC2Encryption(string key, int bitsize)
 		{
-			if (!m_keysizes.Contains(bitsize))
-				throw new NetException(string.Format("Not a valid key size. (Valid values are: {0})", NetUtility.MakeCommaDelimitedList(m_keysizes)));
+			if (!s_keysizes.Contains(bitsize))
+				throw new NetException(string.Format("Not a valid key size. (Valid values are: {0})", NetUtility.MakeCommaDelimitedList(s_keysizes)));
 				
 			byte[] entropy = Encoding.UTF32.GetBytes(key);
 			// I know hardcoding salts is bad, but in this case I think it is acceptable.
@@ -83,7 +83,7 @@ namespace Lidgren.Network
 			int keylen = bitsize / 8;
 			m_key = new byte[keylen];
 			Buffer.BlockCopy(entropy, 0, m_key, 0, keylen);
-			m_iv = new byte[m_blocksizes[0] / 8];
+			m_iv = new byte[s_blocksizes[0] / 8];
 
 			Buffer.BlockCopy(entropy, entropy.Length - m_iv.Length - 1, m_iv, 0, m_iv.Length);
 			m_bitSize = bitsize;
@@ -94,7 +94,7 @@ namespace Lidgren.Network
 		/// </summary>
 		/// <param name="key"></param>
 		public NetRC2Encryption(string key)
-			: this(key, m_keysizes[0])
+			: this(key, s_keysizes[0])
 		{
 		}
 
@@ -110,13 +110,11 @@ namespace Lidgren.Network
 				{
 					using (ICryptoTransform cryptoTransform = rc2CryptoServiceProvider.CreateEncryptor(m_key, m_iv))
 					{
-						using (MemoryStream memoryStream = new MemoryStream())
+						var memoryStream = new MemoryStream();
+						using (CryptoStream cryptoStream = new CryptoStream(memoryStream, cryptoTransform, CryptoStreamMode.Write))
 						{
-							using (CryptoStream cryptoStream = new CryptoStream(memoryStream, cryptoTransform,
-																			 CryptoStreamMode.Write))
-							{
-								cryptoStream.Write(msg.m_data, 0, msg.m_data.Length);
-							}
+							cryptoStream.Write(msg.m_data, 0, msg.m_data.Length);
+							cryptoStream.Close();
 							msg.m_data = memoryStream.ToArray();
 						}
 					}
@@ -142,13 +140,11 @@ namespace Lidgren.Network
 				{
 					using (ICryptoTransform cryptoTransform = rc2CryptoServiceProvider.CreateDecryptor(m_key, m_iv))
 					{
-						using (MemoryStream memoryStream = new MemoryStream())
+						var memoryStream = new MemoryStream();
+						using (CryptoStream cryptoStream = new CryptoStream(memoryStream, cryptoTransform, CryptoStreamMode.Write))
 						{
-							using (CryptoStream cryptoStream = new CryptoStream(memoryStream, cryptoTransform,
-																			 CryptoStreamMode.Write))
-							{
-								cryptoStream.Write(msg.m_data, 0, msg.m_data.Length);
-							}
+							cryptoStream.Write(msg.m_data, 0, msg.m_data.Length);
+							cryptoStream.Close();
 							msg.m_data = memoryStream.ToArray();
 						}
 					}

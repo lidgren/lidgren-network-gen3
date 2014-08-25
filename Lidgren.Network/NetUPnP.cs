@@ -168,11 +168,11 @@ namespace Lidgren.Network
 
 			try
 			{
-				XmlDocument xdoc = SOAPRequest(m_serviceUrl,
+				SOAPRequest(m_serviceUrl,
 					"<u:AddPortMapping xmlns:u=\"urn:schemas-upnp-org:service:" + m_serviceName + ":1\">" +
 					"<NewRemoteHost></NewRemoteHost>" +
 					"<NewExternalPort>" + port.ToString() + "</NewExternalPort>" +
-					"<NewProtocol>" + ProtocolType.Udp.ToString().ToUpper() + "</NewProtocol>" +
+					"<NewProtocol>" + ProtocolType.Udp.ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) + "</NewProtocol>" +
 					"<NewInternalPort>" + port.ToString() + "</NewInternalPort>" +
 					"<NewInternalClient>" + client.ToString() + "</NewInternalClient>" +
 					"<NewEnabled>1</NewEnabled>" +
@@ -202,12 +202,12 @@ namespace Lidgren.Network
 
 			try
 			{
-				XmlDocument xdoc = SOAPRequest(m_serviceUrl,
+				SOAPRequest(m_serviceUrl,
 				"<u:DeletePortMapping xmlns:u=\"urn:schemas-upnp-org:service:" + m_serviceName + ":1\">" +
 				"<NewRemoteHost>" +
 				"</NewRemoteHost>" +
 				"<NewExternalPort>" + port + "</NewExternalPort>" +
-				"<NewProtocol>" + ProtocolType.Udp.ToString().ToUpper() + "</NewProtocol>" +
+				"<NewProtocol>" + ProtocolType.Udp.ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) + "</NewProtocol>" +
 				"</u:DeletePortMapping>", "DeletePortMapping");
 				return true;
 			}

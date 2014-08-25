@@ -31,6 +31,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 
 namespace Lidgren.Network
 {
@@ -591,6 +592,24 @@ namespace Lidgren.Network
 					bdr.Append(", ");
 			}
 			return bdr.ToString();
+		}
+
+		/// <summary>
+		/// Create a SHA1 digest from a string
+		/// </summary>
+		public static byte[] CreateSHA1Hash(string key)
+		{
+			using (var sha = SHA1.Create())
+				return sha.ComputeHash(Encoding.UTF8.GetBytes(key));
+		}
+
+		/// <summary>
+		/// Create a SHA1 digest from a byte buffer
+		/// </summary>
+		public static byte[] CreateSHA1Hash(byte[] data)
+		{
+			using (var sha = SHA1.Create())
+				return sha.ComputeHash(data);
 		}
 	}
 }

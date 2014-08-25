@@ -3,6 +3,9 @@ using System.Threading;
 
 namespace Lidgren.Network
 {
+	/// <summary>
+	/// Class for generating random seeds
+	/// </summary>
 	public static class NetRandomSeed
 	{
 		private static int m_seedIncrement = -1640531527;

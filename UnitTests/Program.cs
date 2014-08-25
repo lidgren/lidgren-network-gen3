@@ -36,7 +36,7 @@ namespace UnitTests
 			catch (NetException nex)
 			{
 				if (nex.Message != "This message has already been sent! Use NetPeer.SendMessage() to send to multiple recipients efficiently")
-					throw nex;
+					throw;
 			}
 
 			peer.Shutdown("bye");

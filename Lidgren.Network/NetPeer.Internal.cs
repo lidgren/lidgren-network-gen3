@@ -179,7 +179,7 @@ namespace Lidgren.Network
 				byte[] combined = new byte[epBytes.Length + macBytes.Length];
 				Array.Copy(epBytes, 0, combined, 0, epBytes.Length);
 				Array.Copy(macBytes, 0, combined, epBytes.Length, macBytes.Length);
-				m_uniqueIdentifier = BitConverter.ToInt64(SHA1.Create().ComputeHash(combined), 0);
+				m_uniqueIdentifier = BitConverter.ToInt64(NetUtility.CreateSHA1Hash(combined), 0);
 
 				m_status = NetPeerStatus.Running;
 			}

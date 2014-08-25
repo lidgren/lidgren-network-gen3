@@ -6,7 +6,7 @@ namespace Lidgren.Network
 {
 	internal class ReceivedFragmentGroup
 	{
-		public float LastReceived;
+		//public float LastReceived;
 		public byte[] Data;
 		public NetBitVector ReceivedChunks;
 	}
@@ -126,7 +126,7 @@ namespace Lidgren.Network
 			}
 
 			info.ReceivedChunks[chunkNumber] = true;
-			info.LastReceived = (float)NetTime.Now;
+			//info.LastReceived = (float)NetTime.Now;
 
 			// copy to data
 			int offset = (chunkNumber * chunkByteSize);
