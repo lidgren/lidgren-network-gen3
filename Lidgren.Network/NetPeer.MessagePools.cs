@@ -52,7 +52,7 @@ namespace Lidgren.Network
 
 		internal void Recycle(byte[] storage)
 		{
-			if (m_storagePool == null)
+			if (m_storagePool == null || storage == null)
 				return;
 
 			lock (m_storagePool)
