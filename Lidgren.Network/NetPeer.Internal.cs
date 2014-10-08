@@ -1,4 +1,4 @@
-﻿#if !__ANDROID__ && !IOS && !UNITY_WEBPLAYER
+﻿#if !__ANDROID__ && !IOS && !UNITY_WEBPLAYER && !UNITY_ANDROID && !UNITY_IPHONE
 #define IS_MAC_AVAILABLE
 #endif
 
@@ -24,6 +24,7 @@ namespace Lidgren.Network
 		private object m_initializeLock = new object();
 		private uint m_frameCounter;
 		private double m_lastHeartbeat;
+		private double m_lastSocketBind = float.MinValue;
 		private NetUPnP m_upnp;
 
 		internal readonly NetPeerConfiguration m_configuration;
@@ -102,6 +103,46 @@ namespace Lidgren.Network
 			}
 		}
 
+		private void BindSocket(bool reBind)
+		{
+			double now = NetTime.Now;
+			if (now - m_lastSocketBind < 1.0)
+			{
+				LogDebug("Suppressed socket rebind; last bound " + (now - m_lastSocketBind) + " seconds ago");
+				return; // only allow rebind once every second
+			}
+			m_lastSocketBind = now;
+
+			if (m_socket == null)
+				m_socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+
+			if (reBind)
+				m_socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, (int)1); 
+
+			m_socket.ReceiveBufferSize = m_configuration.ReceiveBufferSize;
+			m_socket.SendBufferSize = m_configuration.SendBufferSize;
+			m_socket.Blocking = false;
+
+			var ep = (EndPoint)new IPEndPoint(m_configuration.LocalAddress, m_configuration.Port);
+			m_socket.Bind(ep);
+
+			try
+			{
+				const uint IOC_IN = 0x80000000;
+				const uint IOC_VENDOR = 0x18000000;
+				uint SIO_UDP_CONNRESET = IOC_IN | IOC_VENDOR | 12;
+				m_socket.IOControl((int)SIO_UDP_CONNRESET, new byte[] { Convert.ToByte(false) }, null);
+			}
+			catch
+			{
+				// ignore; SIO_UDP_CONNRESET not supported on this platform
+			}
+
+			IPEndPoint boundEp = m_socket.LocalEndPoint as IPEndPoint;
+			LogDebug("Socket bound to " + boundEp + ": " + m_socket.IsBound);
+			m_listenPort = boundEp.Port;
+		}
+
 		private void InitializeNetwork()
 		{
 			lock (m_initializeLock)
@@ -121,32 +162,7 @@ namespace Lidgren.Network
 				m_handshakes.Clear();
 
 				// bind to socket
-				IPEndPoint iep = null;
-
-				iep = new IPEndPoint(m_configuration.LocalAddress, m_configuration.Port);
-				EndPoint ep = (EndPoint)iep;
-
-				m_socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-				m_socket.ReceiveBufferSize = m_configuration.ReceiveBufferSize;
-				m_socket.SendBufferSize = m_configuration.SendBufferSize;
-				m_socket.Blocking = false;
-				m_socket.Bind(ep);
-
-				try
-				{
-					const uint IOC_IN = 0x80000000;
-					const uint IOC_VENDOR = 0x18000000;
-					uint SIO_UDP_CONNRESET = IOC_IN | IOC_VENDOR | 12;
-					m_socket.IOControl((int)SIO_UDP_CONNRESET, new byte[] { Convert.ToByte(false) }, null);
-				}
-				catch
-				{
-					// ignore; SIO_UDP_CONNRESET not supported on this platform
-				}
-
-				IPEndPoint boundEp = m_socket.LocalEndPoint as IPEndPoint;
-				LogDebug("Socket bound to " + boundEp + ": " + m_socket.IsBound);
-				m_listenPort = boundEp.Port;
+				BindSocket(false);
 
 				m_receiveBuffer = new byte[m_configuration.ReceiveBufferSize];
 				m_sendBuffer = new byte[m_configuration.SendBufferSize];
@@ -175,6 +191,7 @@ namespace Lidgren.Network
 					// not supported; lets just keep the random bytes set above
 				}
 #endif
+				IPEndPoint boundEp = m_socket.LocalEndPoint as IPEndPoint;
 				byte[] epBytes = BitConverter.GetBytes(boundEp.GetHashCode());
 				byte[] combined = new byte[epBytes.Length + macBytes.Length];
 				Array.Copy(epBytes, 0, combined, 0, epBytes.Length);
@@ -255,8 +272,19 @@ namespace Lidgren.Network
 						{
 							m_socket.Shutdown(SocketShutdown.Receive);
 						}
-						catch { }
-						m_socket.Close(2); // 2 seconds timeout
+						catch(Exception ex)
+						{
+							LogDebug("Socket.Shutdown exception: " + ex.ToString());
+						}
+
+						try
+						{
+							m_socket.Close(2); // 2 seconds timeout
+						}
+						catch (Exception ex)
+						{
+							LogDebug("Socket.Close exception: " + ex.ToString());
+						}
 					}
 				}
 				finally
@@ -270,6 +298,7 @@ namespace Lidgren.Network
 						m_messageReceivedEvent.Set();
 				}
 
+				m_lastSocketBind = float.MinValue;
 				m_receiveBuffer = null;
 				m_sendBuffer = null;
 				m_unsentUnconnectedMessages.Clear();
@@ -393,17 +422,24 @@ namespace Lidgren.Network
 				}
 				catch (SocketException sx)
 				{
-					if (sx.SocketErrorCode == SocketError.ConnectionReset)
+					switch (sx.SocketErrorCode)
 					{
-						// connection reset by peer, aka connection forcibly closed aka "ICMP port unreachable" 
-						// we should shut down the connection; but m_senderRemote seemingly cannot be trusted, so which connection should we shut down?!
-						// So, what to do?
-						LogWarning("ConnectionReset");
-						return;
-					}
+						case SocketError.ConnectionReset:
+							// connection reset by peer, aka connection forcibly closed aka "ICMP port unreachable" 
+							// we should shut down the connection; but m_senderRemote seemingly cannot be trusted, so which connection should we shut down?!
+							// So, what to do?
+							LogWarning("ConnectionReset");
+							return;
 
-					LogWarning(sx.ToString());
-					return;
+						case SocketError.NotConnected:
+							// socket is unbound; try to rebind it (happens on mobile when process goes to sleep)
+							BindSocket(true);
+							return;
+
+						default:
+							LogWarning("Socket exception: " + sx.ToString());
+							return;
+					}
 				}
 
 				if (bytesReceived < NetConstants.HeaderByteSize)

@@ -28,7 +28,7 @@ namespace Lidgren.Network
 		[CLSCompliant(false)]
 		public static ulong GetUInt64()
 		{
-#if !__ANDROID__ && !IOS && !UNITY_WEBPLAYER
+#if !__ANDROID__ && !IOS && !UNITY_WEBPLAYER && !UNITY_ANDROID && !UNITY_IPHONE
 			ulong seed = (ulong)System.Diagnostics.Stopwatch.GetTimestamp();
 			seed ^= (ulong)Environment.WorkingSet;
 			ulong s2 = (ulong)Interlocked.Increment(ref m_seedIncrement);

@@ -16,7 +16,7 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRA
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-#if !__ANDROID__ && !IOS && !UNITY_WEBPLAYER
+#if !__ANDROID__ && !IOS && !UNITY_WEBPLAYER && !UNITY_ANDROID && !UNITY_IPHONE
 #define IS_FULL_NET_AVAILABLE
 #endif
 
@@ -599,7 +599,7 @@ namespace Lidgren.Network
 		/// </summary>
 		public static byte[] CreateSHA1Hash(string key)
 		{
-			using (var sha = SHA1.Create())
+			using (var sha = new SHA1CryptoServiceProvider())
 				return sha.ComputeHash(Encoding.UTF8.GetBytes(key));
 		}
 
@@ -608,7 +608,7 @@ namespace Lidgren.Network
 		/// </summary>
 		public static byte[] CreateSHA1Hash(byte[] data)
 		{
-			using (var sha = SHA1.Create())
+			using (var sha = new SHA1CryptoServiceProvider())
 				return sha.ComputeHash(data);
 		}
 	}
