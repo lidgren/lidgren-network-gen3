@@ -116,7 +116,7 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Encrypt this message using the provided algorithm; no more writing can be done before sending it or the message will be corrupt!
 		/// </summary>
-		public bool Encrypt(INetEncryption encryption)
+		public bool Encrypt(NetEncryption encryption)
 		{
 			return encryption.Encrypt(this);
 		}

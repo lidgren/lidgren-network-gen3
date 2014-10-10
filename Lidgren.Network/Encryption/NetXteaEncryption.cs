@@ -44,7 +44,8 @@ namespace Lidgren.Network
 		/// <summary>
 		/// 16 byte key
 		/// </summary>
-		public NetXtea(byte[] key, int rounds)
+		public NetXtea(NetPeer peer, byte[] key, int rounds)
+			: base(peer)
 		{
 			if (key.Length < c_keySize)
 				throw new NetException("Key too short!");
@@ -73,16 +74,16 @@ namespace Lidgren.Network
 		/// <summary>
 		/// 16 byte key
 		/// </summary>
-		public NetXtea(byte[] key)
-			: this(key, 32)
+		public NetXtea(NetPeer peer, byte[] key)
+			: this(peer, key, 32)
 		{
 		}
 
 		/// <summary>
 		/// String to hash for key
 		/// </summary>
-		public NetXtea(string key)
-			: this(NetUtility.CreateSHA1Hash(key), 32)
+		public NetXtea(NetPeer peer, string key)
+			: this(peer, NetUtility.CreateSHA1Hash(key), 32)
 		{
 		}
 

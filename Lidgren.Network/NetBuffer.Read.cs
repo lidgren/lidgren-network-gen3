@@ -558,6 +558,7 @@ namespace Lidgren.Network
 			{
 				// not enough data
 #if DEBUG
+				
 				throw new NetException(c_readOverflowError);
 #else
 				m_readPosition = m_bitLength;

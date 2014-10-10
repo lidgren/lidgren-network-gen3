@@ -9,7 +9,7 @@ namespace Lidgren.Network
 	/// <summary>
 	/// RC2 encryption
 	/// </summary>
-	public class NetRC2Encryption : INetEncryption
+	public class NetRC2Encryption : NetEncryption
 	{
 		private readonly byte[] m_key;
 		private readonly byte[] m_iv;
@@ -51,7 +51,8 @@ namespace Lidgren.Network
 		/// <summary>
 		/// NetRC2Encryption constructor
 		/// </summary>
-		public NetRC2Encryption(byte[] key, byte[] iv)
+		public NetRC2Encryption(NetPeer peer, byte[] key, byte[] iv)
+			: base(peer)
 		{
 			if (!s_keysizes.Contains(key.Length * 8))
 				throw new NetException(string.Format("Not a valid key size. (Valid values are: {0})", NetUtility.MakeCommaDelimitedList(s_keysizes)));
@@ -67,11 +68,12 @@ namespace Lidgren.Network
 		/// <summary>
 		/// NetRC2Encryption constructor
 		/// </summary>
-		public NetRC2Encryption(string key, int bitsize)
+		public NetRC2Encryption(NetPeer peer, string key, int bitsize)
+			: base(peer)
 		{
 			if (!s_keysizes.Contains(bitsize))
 				throw new NetException(string.Format("Not a valid key size. (Valid values are: {0})", NetUtility.MakeCommaDelimitedList(s_keysizes)));
-				
+
 			byte[] entropy = Encoding.UTF32.GetBytes(key);
 			// I know hardcoding salts is bad, but in this case I think it is acceptable.
 			HMACSHA512 hmacsha512 = new HMACSHA512(Convert.FromBase64String("i88NEiez3c50bHqr3YGasDc4p8jRrxJAaiRiqixpvp4XNAStP5YNoC2fXnWkURtkha6M8yY901Gj07IRVIRyGL=="));
@@ -92,20 +94,20 @@ namespace Lidgren.Network
 		/// <summary>
 		/// NetRC2Encryption constructor
 		/// </summary>
+		/// <param name="peer"></param>
 		/// <param name="key"></param>
-		public NetRC2Encryption(string key)
-			: this(key, s_keysizes[0])
+		public NetRC2Encryption(NetPeer peer, string key)
+			: this(peer, key, s_keysizes[0])
 		{
 		}
 
 		/// <summary>
 		/// Encrypt outgoing message
 		/// </summary>
-		public bool Encrypt(NetOutgoingMessage msg)
+		public override bool Encrypt(NetOutgoingMessage msg)
 		{
 			try
 			{
-				// nested usings are fun!
 				using (RC2CryptoServiceProvider rc2CryptoServiceProvider = new RC2CryptoServiceProvider { KeySize = m_bitSize, Mode = CipherMode.CBC })
 				{
 					using (ICryptoTransform cryptoTransform = rc2CryptoServiceProvider.CreateEncryptor(m_key, m_iv))
@@ -115,14 +117,19 @@ namespace Lidgren.Network
 						{
 							cryptoStream.Write(msg.m_data, 0, msg.m_data.Length);
 							cryptoStream.Close();
-							msg.m_data = memoryStream.ToArray();
+
+							m_peer.Recycle(msg.m_data);
+							var arr = memoryStream.ToArray();
+							msg.m_data = arr;
+							msg.m_bitLength = arr.Length * 8;
 						}
 					}
 				}
 
 			}
-			catch
+			catch (Exception ex)
 			{
+				m_peer.LogWarning("Encryption failed: " + ex);
 				return false;
 			}
 			return true;
@@ -131,7 +138,7 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Decrypt incoming message
 		/// </summary>
-		public bool Decrypt(NetIncomingMessage msg)
+		public override bool Decrypt(NetIncomingMessage msg)
 		{
 			try
 			{
@@ -145,14 +152,19 @@ namespace Lidgren.Network
 						{
 							cryptoStream.Write(msg.m_data, 0, msg.m_data.Length);
 							cryptoStream.Close();
-							msg.m_data = memoryStream.ToArray();
+
+							m_peer.Recycle(msg.m_data);
+							var arr = memoryStream.ToArray();
+							msg.m_data = arr;
+							msg.m_bitLength = arr.Length * 8;
 						}
 					}
 				}
 
 			}
-			catch
+			catch (Exception ex)
 			{
+				m_peer.LogWarning("Decryption failed: " + ex);
 				return false;
 			}
 			return true;

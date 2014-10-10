@@ -90,7 +90,7 @@ namespace Lidgren.Network
 		/// </summary>
 		/// <param name="encryption">The encryption algorithm used to encrypt the message</param>
 		/// <returns>true on success</returns>
-		public bool Decrypt(INetEncryption encryption)
+		public bool Decrypt(NetEncryption encryption)
 		{
 			return encryption.Decrypt(this);
 		}

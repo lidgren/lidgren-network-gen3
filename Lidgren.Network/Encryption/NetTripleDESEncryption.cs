@@ -9,7 +9,7 @@ namespace Lidgren.Network
 	/// <summary>
 	/// Triple DES encryption
 	/// </summary>
-	public class NetTripleDESEncryption : INetEncryption
+	public class NetTripleDESEncryption : NetEncryption
 	{
 		private readonly byte[] m_key;
 		private readonly byte[] m_iv;
@@ -19,7 +19,6 @@ namespace Lidgren.Network
 
 		static NetTripleDESEncryption()
 		{
-
 			TripleDESCryptoServiceProvider tripleDES = new TripleDESCryptoServiceProvider();
 			List<int> temp = new List<int>();
 			foreach (KeySizes keysize in tripleDES.LegalKeySizes)
@@ -51,7 +50,8 @@ namespace Lidgren.Network
 		/// <summary>
 		/// NetTriplsDESEncryption constructor
 		/// </summary>
-		public NetTripleDESEncryption(byte[] key, byte[] iv)
+		public NetTripleDESEncryption(NetPeer peer, byte[] key, byte[] iv)
+			: base(peer)
 		{
 			if (!s_keysizes.Contains(key.Length * 8))
 				throw new NetException(string.Format("Not a valid key size. (Valid values are: {0})", NetUtility.MakeCommaDelimitedList(s_keysizes)));
@@ -67,7 +67,8 @@ namespace Lidgren.Network
 		/// <summary>
 		/// NetTriplsDESEncryption constructor
 		/// </summary>
-		public NetTripleDESEncryption(string key, int bitsize)
+		public NetTripleDESEncryption(NetPeer peer, string key, int bitsize)
+			: base(peer)
 		{
 			if (!s_keysizes.Contains(bitsize))
 				throw new NetException(string.Format("Not a valid key size. (Valid values are: {0})", NetUtility.MakeCommaDelimitedList(s_keysizes)));
@@ -92,19 +93,18 @@ namespace Lidgren.Network
 		/// <summary>
 		/// NetTriplsDESEncryption constructor
 		/// </summary>
-		public NetTripleDESEncryption(string key)
-			: this(key, s_keysizes[0])
+		public NetTripleDESEncryption(NetPeer peer, string key)
+			: this(peer, key, s_keysizes[0])
 		{
 		}
 
 		/// <summary>
 		/// Encrypt outgoing message
 		/// </summary>
-		public bool Encrypt(NetOutgoingMessage msg)
+		public override bool Encrypt(NetOutgoingMessage msg)
 		{
 			try
 			{
-				// nested usings are fun!
 				using (TripleDESCryptoServiceProvider tripleDESCryptoServiceProvider = new TripleDESCryptoServiceProvider { KeySize = m_bitSize, Mode = CipherMode.CBC })
 				{
 					using (ICryptoTransform cryptoTransform = tripleDESCryptoServiceProvider.CreateEncryptor(m_key, m_iv))
@@ -114,14 +114,19 @@ namespace Lidgren.Network
 						{
 							cryptoStream.Write(msg.m_data, 0, msg.m_data.Length);
 							cryptoStream.Close();
-							msg.m_data = memoryStream.ToArray();
+
+							m_peer.Recycle(msg.m_data);
+							var arr = memoryStream.ToArray();
+							msg.m_data = arr;
+							msg.m_bitLength = arr.Length * 8;
 						}
 					}
 				}
 
 			}
-			catch
+			catch (Exception ex)
 			{
+				m_peer.LogWarning("Encryption failed: " + ex);
 				return false;
 			}
 			return true;
@@ -130,7 +135,7 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Decrypt incoming message
 		/// </summary>
-		public bool Decrypt(NetIncomingMessage msg)
+		public override bool Decrypt(NetIncomingMessage msg)
 		{
 			try
 			{
@@ -144,14 +149,19 @@ namespace Lidgren.Network
 						{
 							cryptoStream.Write(msg.m_data, 0, msg.m_data.Length);
 							cryptoStream.Close();
-							msg.m_data = memoryStream.ToArray();
+
+							m_peer.Recycle(msg.m_data);
+							var arr = memoryStream.ToArray();
+							msg.m_data = arr;
+							msg.m_bitLength = arr.Length * 8;
 						}
 					}
 				}
 
 			}
-			catch
+			catch (Exception ex)
 			{
+				m_peer.LogWarning("Decryption failed: " + ex);
 				return false;
 			}
 			return true;
