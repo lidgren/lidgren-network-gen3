@@ -46,8 +46,11 @@ namespace Lidgren.Network
 		{
 			int queueLen = m_queuedSends.Count + 1;
 			int left = GetAllowedSends();
-			if (queueLen > left)
+			if (queueLen > left || (message.LengthBytes > m_connection.m_currentMTU && m_connection.m_peerConfiguration.UnreliableSizeBehaviour == NetUnreliableSizeBehaviour.DropAboveMTU))
+			{
+				m_connection.Peer.Recycle(message);
 				return NetSendResult.Dropped;
+			}
 
 			m_queuedSends.Enqueue(message);
 			return NetSendResult.Sent;

@@ -46,8 +46,10 @@ namespace Lidgren.Network
 				throw new NetException("This message has already been sent! Use NetPeer.SendMessage() to send to multiple recipients efficiently");
 			msg.m_isSent = true;
 
+			bool suppressFragmentation = (method == NetDeliveryMethod.Unreliable || method == NetDeliveryMethod.UnreliableSequenced) && m_configuration.UnreliableSizeBehaviour != NetUnreliableSizeBehaviour.NormalFragmentation;
+
 			int len = NetConstants.UnfragmentedMessageHeaderSize + msg.LengthBytes; // headers + length, faster than calling msg.GetEncodedSize
-			if (len <= recipient.m_currentMTU)
+			if (len <= recipient.m_currentMTU || suppressFragmentation)
 			{
 				Interlocked.Increment(ref msg.m_recyclingCount);
 				return recipient.EnqueueMessage(msg, method, sequenceChannel);
@@ -57,8 +59,7 @@ namespace Lidgren.Network
 				// message must be fragmented!
 				if (recipient.m_status != NetConnectionStatus.Connected)
 					return NetSendResult.FailedNotConnected;
-				SendFragmentedMessage(msg, new NetConnection[] { recipient }, method, sequenceChannel);
-				return NetSendResult.Queued; // could be different for each connection; Queued is "most true"
+				return SendFragmentedMessage(msg, new NetConnection[] { recipient }, method, sequenceChannel);
 			}
 		}
 

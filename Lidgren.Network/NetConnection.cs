@@ -279,24 +279,36 @@ namespace Lidgren.Network
 			m_peer.VerifyNetworkThread();
 
 			int sz = om.GetEncodedSize();
-			if (sz > m_currentMTU)
-				m_peer.LogWarning("Message larger than MTU! Fragmentation must have failed!");
+			//if (sz > m_currentMTU)
+			//	m_peer.LogWarning("Message larger than MTU! Fragmentation must have failed!");
 
+			bool connReset; // TODO: handle connection reset
+
+			// can fit this message together with previously written to buffer?
 			if (m_sendBufferWritePtr + sz > m_currentMTU)
 			{
-				bool connReset; // TODO: handle connection reset
-				NetException.Assert(m_sendBufferWritePtr > 0 && m_sendBufferNumMessages > 0); // or else the message should have been fragmented earlier
+				if (m_sendBufferWritePtr > 0 && m_sendBufferNumMessages > 0)
+				{
+					// previous message in buffer; send these first
+					m_peer.SendPacket(m_sendBufferWritePtr, m_remoteEndPoint, m_sendBufferNumMessages, out connReset);
+					m_statistics.PacketSent(m_sendBufferWritePtr, m_sendBufferNumMessages);
+					m_sendBufferWritePtr = 0;
+					m_sendBufferNumMessages = 0;
+				}
+			}
+
+			// encode it into buffer regardless if it (now) fits within MTU or not
+			m_sendBufferWritePtr = om.Encode(m_peer.m_sendBuffer, m_sendBufferWritePtr, seqNr);
+			m_sendBufferNumMessages++;
+
+			if (m_sendBufferWritePtr > m_currentMTU)
+			{
+				// send immediately; we're already over MTU
 				m_peer.SendPacket(m_sendBufferWritePtr, m_remoteEndPoint, m_sendBufferNumMessages, out connReset);
 				m_statistics.PacketSent(m_sendBufferWritePtr, m_sendBufferNumMessages);
 				m_sendBufferWritePtr = 0;
 				m_sendBufferNumMessages = 0;
 			}
-
-			m_sendBufferWritePtr = om.Encode(m_peer.m_sendBuffer, m_sendBufferWritePtr, seqNr);
-			m_sendBufferNumMessages++;
-
-			NetException.Assert(m_sendBufferWritePtr > 0, "Encoded zero size message?");
-			NetException.Assert(m_sendBufferNumMessages > 0);
 		}
 
 		/// <summary>
@@ -325,12 +337,12 @@ namespace Lidgren.Network
 			if (chan == null)
 				chan = CreateSenderChannel(tp);
 
-			if (msg.GetEncodedSize() > m_currentMTU)
-				m_peer.ThrowOrLog("Message too large! Fragmentation failure?");
+			if ((method != NetDeliveryMethod.Unreliable && method != NetDeliveryMethod.UnreliableSequenced) && msg.GetEncodedSize() > m_currentMTU)
+				m_peer.ThrowOrLog("Reliable message too large! Fragmentation failure?");
 
 			var retval = chan.Enqueue(msg);
-			if (retval == NetSendResult.Sent && m_peerConfiguration.m_autoFlushSendQueue == false)
-				retval = NetSendResult.Queued; // queued since we're not autoflushing
+			//if (retval == NetSendResult.Sent && m_peerConfiguration.m_autoFlushSendQueue == false)
+			//	retval = NetSendResult.Queued; // queued since we're not autoflushing
 			return retval;
 		}
 
@@ -520,6 +532,15 @@ namespace Lidgren.Network
 			windowSize = chan.WindowSize;
 			freeWindowSlots = chan.GetAllowedSends() - chan.m_queuedSends.Count;
 			return;
+		}
+
+		public bool CanSendImmediately(NetDeliveryMethod method, int sequenceChannel)
+		{
+			int channelSlot = (int)method - 1 + sequenceChannel;
+			var chan = m_sendChannels[channelSlot];
+			if (chan == null)
+				return true;
+			return (chan.GetAllowedSends() - chan.m_queuedSends.Count) > 0;
 		}
 
 		internal void Shutdown(string reason)

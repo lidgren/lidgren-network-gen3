@@ -26,9 +26,7 @@ namespace FileStreamServer
 			if (m_inputStream == null)
 				return;
 
-			int windowSize, freeWindowSlots;
-			m_connection.GetSendQueueInfo(NetDeliveryMethod.ReliableOrdered, 1, out windowSize, out freeWindowSlots);
-			if (freeWindowSlots > 0)
+			if (m_connection.CanSendImmediately(NetDeliveryMethod.ReliableOrdered, 1))
 			{
 				// send another part of the file!
 				long remaining = m_inputStream.Length - m_sentOffset;

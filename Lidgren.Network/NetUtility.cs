@@ -263,13 +263,21 @@ namespace Lidgren.Network
 		/// </summary>
 		public static string ToHexString(byte[] data)
 		{
-			char[] c = new char[data.Length * 2];
+			return ToHexString(data, 0, data.Length);
+		}
+
+		/// <summary>
+		/// Create a hex string from an array of bytes
+		/// </summary>
+		public static string ToHexString(byte[] data, int offset, int length)
+		{
+			char[] c = new char[length * 2];
 			byte b;
-			for (int i = 0; i < data.Length; ++i)
+			for (int i = 0; i < length; ++i)
 			{
-				b = ((byte)(data[i] >> 4));
+				b = ((byte)(data[offset + i] >> 4));
 				c[i * 2] = (char)(b > 9 ? b + 0x37 : b + 0x30);
-				b = ((byte)(data[i] & 0xF));
+				b = ((byte)(data[offset + i] & 0xF));
 				c[i * 2 + 1] = (char)(b > 9 ? b + 0x37 : b + 0x30);
 			}
 			return new string(c);
@@ -610,6 +618,15 @@ namespace Lidgren.Network
 		{
 			using (var sha = new SHA1CryptoServiceProvider())
 				return sha.ComputeHash(data);
+		}
+
+		/// <summary>
+		/// Create a SHA1 digest from a byte buffer
+		/// </summary>
+		public static byte[] CreateSHA1Hash(byte[] data, int offset, int count)
+		{
+			using (var sha = new SHA1CryptoServiceProvider())
+				return sha.ComputeHash(data, offset, count);
 		}
 	}
 }

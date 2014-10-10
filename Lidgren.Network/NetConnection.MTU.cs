@@ -24,6 +24,11 @@ namespace Lidgren.Network
 
 		internal int m_currentMTU;
 
+		/// <summary>
+		/// Gets the current MTU in bytes. If PeerConfiguration.AutoExpandMTU is false, this will be PeerConfiguration.MaximumTransmissionUnit.
+		/// </summary>
+		public int CurrentMTU { get { return m_currentMTU; } }
+
 		internal void InitExpandMTU(double now)
 		{
 			m_lastSentMTUAttemptTime = now + m_peerConfiguration.m_expandMTUFrequency + 1.5f + m_averageRoundtripTime; // wait a tiny bit before starting to expand mtu
@@ -150,7 +155,7 @@ namespace Lidgren.Network
 			bool connectionReset;
 			m_peer.SendPacket(len, m_remoteEndPoint, 1, out connectionReset);
 
-			// m_peer.LogDebug("Received MTU expand request for " + size + " bytes");
+			//m_peer.LogDebug("Received MTU expand request for " + size + " bytes");
 
 			m_statistics.PacketSent(len, 1);
 		}

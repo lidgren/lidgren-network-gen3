@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 
 namespace Lidgren.Network
 {
@@ -22,6 +23,14 @@ namespace Lidgren.Network
 				throw new NetException("Peer must not be null");
 			m_peer = peer;
 		}
+
+		public void SetKey(string str)
+		{
+			var bytes = System.Text.Encoding.ASCII.GetBytes(str);
+			SetKey(bytes, 0, bytes.Length);
+		}
+
+		public abstract void SetKey(byte[] data, int offset, int count);
 
 		/// <summary>
 		/// Encrypt an outgoing message in place

@@ -56,6 +56,7 @@ namespace Lidgren.Network
 		internal float m_connectionTimeout;
 		internal bool m_enableUPnP;
 		internal bool m_autoFlushSendQueue;
+		private NetUnreliableSizeBehaviour m_unreliableSizeBehaviour;
 
 		internal NetIncomingMessageType m_disabledTypes;
 		internal int m_port;
@@ -114,6 +115,7 @@ namespace Lidgren.Network
 			m_autoExpandMTU = false;
 			m_expandMTUFrequency = 2.0f;
 			m_expandMTUFailAttempts = 5;
+			m_unreliableSizeBehaviour = NetUnreliableSizeBehaviour.IgnoreMTU;
 
 			m_loss = 0.0f;
 			m_minimumOneWayLatency = 0.0f;
@@ -169,6 +171,15 @@ namespace Lidgren.Network
 		public bool IsMessageTypeEnabled(NetIncomingMessageType type)
 		{
 			return !((m_disabledTypes & type) == type);
+		}
+
+		/// <summary>
+		/// Gets or sets the behaviour of unreliable sends above MTU
+		/// </summary>
+		public NetUnreliableSizeBehaviour UnreliableSizeBehaviour
+		{
+			get { return m_unreliableSizeBehaviour; }
+			set { m_unreliableSizeBehaviour = value; }
 		}
 
 		/// <summary>
@@ -473,5 +484,26 @@ namespace Lidgren.Network
 			retval.m_isLocked = false;
 			return retval;
 		}
+	}
+
+	/// <summary>
+	/// Behaviour of unreliable sends above MTU
+	/// </summary>
+	public enum NetUnreliableSizeBehaviour
+	{
+		/// <summary>
+		/// Sending an unreliable message will ignore MTU and send everything in a single packet; this is the new default
+		/// </summary>
+		IgnoreMTU = 0,
+
+		/// <summary>
+		/// Old behaviour; use normal fragmentation for unreliable messages - if a fragment is dropped, memory for received fragments are never reclaimed!
+		/// </summary>
+		NormalFragmentation = 1,
+
+		/// <summary>
+		/// Alternate behaviour; just drops unreliable messages above MTU
+		/// </summary>
+		DropAboveMTU = 2,
 	}
 }

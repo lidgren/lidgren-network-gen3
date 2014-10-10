@@ -87,6 +87,13 @@ namespace Lidgren.Network
 		{
 		}
 
+		public override void SetKey(byte[] data, int offset, int length)
+		{
+			var key = NetUtility.CreateSHA1Hash(data, offset, length);
+			NetException.Assert(key.Length == 16);
+			SetKey(key, 0, 16);
+		}
+
 		/// <summary>
 		/// Encrypts a block of bytes
 		/// </summary>

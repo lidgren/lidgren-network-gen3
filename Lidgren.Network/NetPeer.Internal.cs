@@ -99,7 +99,16 @@ namespace Lidgren.Network
 			if (m_receiveCallbacks != null)
 			{
 				foreach (var tuple in m_receiveCallbacks)
-					tuple.Item1.Post(tuple.Item2, this);
+				{
+					try
+					{
+						tuple.Item1.Post(tuple.Item2, this);
+					}
+					catch (Exception ex)
+					{
+						LogWarning("Receive callback exception:" + ex);
+					}
+				}
 			}
 		}
 
@@ -473,6 +482,7 @@ namespace Lidgren.Network
 				// parse packet into messages
 				//
 				int numMessages = 0;
+				int numFragments = 0;
 				int ptr = 0;
 				while ((bytesReceived - ptr) >= NetConstants.HeaderByteSize)
 				{
@@ -491,6 +501,8 @@ namespace Lidgren.Network
 
 					bool isFragment = ((low & 1) == 1);
 					ushort sequenceNumber = (ushort)((low >> 1) | (((int)high) << 7));
+
+					numFragments++;
 
 					ushort payloadBitLength = (ushort)(m_receiveBuffer[ptr++] | (m_receiveBuffer[ptr++] << 8));
 					int payloadByteLength = NetUtility.BytesToHoldBits(payloadBitLength);
@@ -561,9 +573,9 @@ namespace Lidgren.Network
 					ptr += payloadByteLength;
 				}
 
-				m_statistics.PacketReceived(bytesReceived, numMessages);
+				m_statistics.PacketReceived(bytesReceived, numMessages, numFragments);
 				if (sender != null)
-					sender.m_statistics.PacketReceived(bytesReceived, numMessages);
+					sender.m_statistics.PacketReceived(bytesReceived, numMessages, numFragments);
 
 			} while (m_socket.Available > 0);
 		}

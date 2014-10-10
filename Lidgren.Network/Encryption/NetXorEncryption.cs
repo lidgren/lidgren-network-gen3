@@ -20,6 +20,12 @@ namespace Lidgren.Network
 			m_key = key;
 		}
 
+		public override void SetKey(byte[] data, int offset, int count)
+		{
+			m_key = new byte[count];
+			Array.Copy(data, offset, m_key, 0, count);
+		}
+
 		/// <summary>
 		/// NetXorEncryption constructor
 		/// </summary>
