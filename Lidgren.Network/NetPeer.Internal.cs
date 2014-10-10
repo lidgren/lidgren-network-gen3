@@ -458,21 +458,27 @@ namespace Lidgren.Network
 
 				IPEndPoint ipsender = (IPEndPoint)m_senderRemote;
 
-				if (m_upnp != null && now < m_upnp.m_discoveryResponseDeadline)
+				if (m_upnp != null && now < m_upnp.m_discoveryResponseDeadline && bytesReceived > 32)
 				{
 					// is this an UPnP response?
-					try
+					string resp = System.Text.Encoding.ASCII.GetString(m_receiveBuffer, 0, bytesReceived);
+					if (resp.Contains("upnp:rootdevice") || resp.Contains("UPnP/1.0"))
 					{
-						string resp = System.Text.Encoding.ASCII.GetString(m_receiveBuffer, 0, bytesReceived);
-						if (resp.Contains("upnp:rootdevice") || resp.Contains("UPnP/1.0"))
+						try
 						{
 							resp = resp.Substring(resp.ToLower().IndexOf("location:") + 9);
 							resp = resp.Substring(0, resp.IndexOf("\r")).Trim();
 							m_upnp.ExtractServiceUrl(resp);
 							return;
 						}
+						catch (Exception ex)
+						{
+							LogDebug("Failed to parse UPnP response: " + ex.ToString());
+
+							// don't try to parse this packet further
+							return;
+						}
 					}
-					catch { }
 				}
 
 				NetConnection sender = null;
