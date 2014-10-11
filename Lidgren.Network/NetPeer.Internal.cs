@@ -132,7 +132,7 @@ namespace Lidgren.Network
 			m_socket.SendBufferSize = m_configuration.SendBufferSize;
 			m_socket.Blocking = false;
 
-			var ep = (EndPoint)new IPEndPoint(m_configuration.LocalAddress, m_configuration.Port);
+			var ep = (EndPoint)new IPEndPoint(m_configuration.LocalAddress, reBind ? m_listenPort : m_configuration.Port);
 			m_socket.Bind(ep);
 
 			try
