@@ -12,6 +12,8 @@ namespace Server
 			NetPeerConfiguration config = new NetPeerConfiguration("garbagethrower");
 			config.MaximumConnections = 1;
 			config.Port = 14242;
+			config.PingInterval = 2.0f;
+			config.ConnectionTimeout = 2.0f;
 			var server = new NetServer(config);
 
 			server.Start();

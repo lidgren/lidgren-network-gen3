@@ -20,6 +20,7 @@ namespace Client
 			var buffer = new byte[1024];
 			var rnd = new Random();
 
+			int batch = 0;
 			// use RawSend to throw poop at server
 			while(true)
 			{
@@ -43,7 +44,12 @@ namespace Client
 				// fling teh poop
 				client.RawSend(buffer, 0, length, target);
 
-				Thread.Sleep(1);
+				batch++;
+				if (batch >= 3)
+				{
+					batch = 0;
+					Thread.Sleep(0);
+				}
 			}
 		}
 	}
