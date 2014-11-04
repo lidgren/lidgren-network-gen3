@@ -64,6 +64,7 @@ namespace Lidgren.Network
 			punch.Write(hostByte);
 			punch.Write(token);
 			m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(remoteInternal, punch));
+			LogDebug("NAT punch sent to " + remoteInternal);
 
 			// send external punch
 			punch = CreateMessage(1);
@@ -71,6 +72,8 @@ namespace Lidgren.Network
 			punch.Write(hostByte);
 			punch.Write(token);
 			m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(remoteExternal, punch));
+			LogDebug("NAT punch sent to " + remoteExternal);
+
 		}
 
 		/// <summary>
