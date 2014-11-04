@@ -14,6 +14,7 @@ namespace MSServer
 			IPEndPoint masterServerEndpoint = NetUtility.Resolve("localhost", CommonConstants.MasterServerPort);
 
 			NetPeerConfiguration config = new NetPeerConfiguration("game");
+			config.SetMessageTypeEnabled(NetIncomingMessageType.NatIntroductionSuccess, true);
 			config.Port = 14242;
 
 			NetServer server = new NetServer(config);
