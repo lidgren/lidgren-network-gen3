@@ -74,6 +74,7 @@ namespace Lidgren.Network
 			m_peer.SendPacket(len, m_remoteEndPoint, 1, out connectionReset);
 
 			m_statistics.PacketSent(len, 1);
+			m_peer.Recycle(om);
 		}
 
 		internal void SendPong(int pingNumber)
@@ -91,6 +92,7 @@ namespace Lidgren.Network
 			m_peer.SendPacket(len, m_remoteEndPoint, 1, out connectionReset);
 
 			m_statistics.PacketSent(len, 1);
+			m_peer.Recycle(om);
 		}
 
 		internal void ReceivedPong(float now, int pongNumber, float remoteSendTime)
