@@ -8,8 +8,9 @@ namespace Lidgren.Network
 	{
 		internal bool m_connectRequested;
 		internal bool m_disconnectRequested;
-		internal bool m_connectionInitiator;
+		internal bool m_disconnectReqSendBye;
 		internal string m_disconnectMessage;
+		internal bool m_connectionInitiator;
 		internal NetIncomingMessage m_remoteHailMessage;
 		internal float m_lastHandshakeSendTime;
 		internal int m_handshakeAttempts;
@@ -486,6 +487,7 @@ namespace Lidgren.Network
 
 			m_handshakeAttempts = 0;
 			m_disconnectRequested = true;
+			m_disconnectReqSendBye = true;
 		}
 	}
 }

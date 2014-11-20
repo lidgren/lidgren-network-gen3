@@ -165,7 +165,7 @@ namespace Lidgren.Network
 
 				if (m_disconnectRequested)
 				{
-					ExecuteDisconnect(m_disconnectMessage, true);
+					ExecuteDisconnect(m_disconnectMessage, m_disconnectReqSendBye);
 					return;
 				}
 			}
@@ -414,7 +414,11 @@ namespace Lidgren.Network
 
 				case NetMessageType.Disconnect:
 					NetIncomingMessage msg = m_peer.SetupReadHelperMessage(ptr, payloadLength);
-					ExecuteDisconnect(msg.ReadString(), false);
+
+					m_disconnectRequested = true;
+					m_disconnectMessage = msg.ReadString();
+					m_disconnectReqSendBye = false;
+					//ExecuteDisconnect(msg.ReadString(), false);
 					break;
 				case NetMessageType.Acknowledge:
 					for (int i = 0; i < payloadLength; i+=3)
