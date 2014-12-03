@@ -297,12 +297,6 @@ namespace Lidgren.Network
 		private void FlushDelayedPackets()
 		{
 		}
-
-		private void SendCallBack(IAsyncResult res)
-		{
-			NetException.Assert(res.IsCompleted == true);
-			m_socket.EndSendTo(res);
-		}
 #endif
 	}
 }
