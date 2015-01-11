@@ -6,14 +6,18 @@ namespace Lidgren.Network
 {
 	public partial class NetPeer
 	{
-		private List<byte[]> m_storagePool; // sorted smallest to largest
+		internal List<byte[]> m_storagePool;
 		private NetQueue<NetOutgoingMessage> m_outgoingMessagesPool;
 		private NetQueue<NetIncomingMessage> m_incomingMessagesPool;
 
 		internal int m_storagePoolBytes;
+		internal int m_storageSlotsUsedCount;
+		private int m_maxCacheCount;
 
 		private void InitializePools()
 		{
+			m_storageSlotsUsedCount = 0;
+
 			if (m_configuration.UseMessageRecycling)
 			{
 				m_storagePool = new List<byte[]>(16);
@@ -26,6 +30,8 @@ namespace Lidgren.Network
 				m_outgoingMessagesPool = null;
 				m_incomingMessagesPool = null;
 			}
+
+			m_maxCacheCount = m_configuration.RecycledCacheMaxCount;
 		}
 
 		internal byte[] GetStorage(int minimumCapacityInBytes)
@@ -41,6 +47,7 @@ namespace Lidgren.Network
 					if (retval != null && retval.Length >= minimumCapacityInBytes)
 					{
 						m_storagePool[i] = null;
+						m_storageSlotsUsedCount--;
 						m_storagePoolBytes -= retval.Length;
 						return retval;
 					}
@@ -57,17 +64,34 @@ namespace Lidgren.Network
 
 			lock (m_storagePool)
 			{
-				m_storagePoolBytes += storage.Length;
 				int cnt = m_storagePool.Count;
 				for (int i = 0; i < cnt; i++)
 				{
 					if (m_storagePool[i] == null)
 					{
+						m_storageSlotsUsedCount++;
+						m_storagePoolBytes += storage.Length;
 						m_storagePool[i] = storage;
 						return;
 					}
 				}
-				m_storagePool.Add(storage);
+
+				if (m_storagePool.Count >= m_maxCacheCount)
+				{
+					// pool is full; replace randomly chosen entry to keep size distribution
+					var idx = NetRandom.Instance.Next(m_storagePool.Count);
+
+					m_storagePoolBytes -= m_storagePool[idx].Length;
+					m_storagePoolBytes += storage.Length;
+					
+					m_storagePool[idx] = storage; // replace
+				}
+				else
+				{
+					m_storageSlotsUsedCount++;
+					m_storagePoolBytes += storage.Length;
+					m_storagePool.Add(storage);
+				}
 			}
 		}
 
@@ -141,7 +165,9 @@ namespace Lidgren.Network
 			msg.m_data = null;
 			Recycle(storage);
 			msg.Reset();
-			m_incomingMessagesPool.Enqueue(msg);
+
+			if (m_incomingMessagesPool.Count < m_maxCacheCount)
+				m_incomingMessagesPool.Enqueue(msg);
 		}
 
 		/// <summary>
@@ -151,34 +177,8 @@ namespace Lidgren.Network
 		{
 			if (m_incomingMessagesPool == null)
 				return;
-
-			// first recycle the storage of each message
-			if (m_storagePool != null)
-			{
-				lock (m_storagePool)
-				{
-					foreach (var msg in toRecycle)
-					{
-						var storage = msg.m_data;
-						msg.m_data = null;
-						m_storagePoolBytes += storage.Length;
-						int cnt = m_storagePool.Count;
-						for (int i = 0; i < cnt; i++)
-						{
-							if (m_storagePool[i] == null)
-							{
-								m_storagePool[i] = storage;
-								return;
-							}
-						}
-						msg.Reset();
-						m_storagePool.Add(storage);
-					}
-				}
-			}
-
-			// then recycle the message objects
-			m_incomingMessagesPool.Enqueue(toRecycle);
+			foreach (var im in toRecycle)
+				Recycle(im);
 		}
 
 		internal void Recycle(NetOutgoingMessage msg)
@@ -187,17 +187,18 @@ namespace Lidgren.Network
 				return;
 
 			NetException.Assert(m_outgoingMessagesPool.Contains(msg) == false, "Recyling already recycled message! Thread race?");
-			
+
 			byte[] storage = msg.m_data;
 			msg.m_data = null;
-			
+
 			// message fragments cannot be recycled
 			// TODO: find a way to recycle large message after all fragments has been acknowledged; or? possibly better just to garbage collect them
 			if (msg.m_fragmentGroup == 0)
 				Recycle(storage);
-	
+
 			msg.Reset();
-			m_outgoingMessagesPool.Enqueue(msg);
+			if (m_outgoingMessagesPool.Count < m_maxCacheCount)
+				m_outgoingMessagesPool.Enqueue(msg);
 		}
 
 		/// <summary>

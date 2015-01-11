@@ -53,6 +53,7 @@ namespace Lidgren.Network
 		internal int m_defaultOutgoingMessageCapacity;
 		internal float m_pingInterval;
 		internal bool m_useMessageRecycling;
+		internal int m_recycledCacheMaxCount;
 		internal float m_connectionTimeout;
 		internal bool m_enableUPnP;
 		internal bool m_autoFlushSendQueue;
@@ -107,6 +108,7 @@ namespace Lidgren.Network
 			m_pingInterval = 4.0f;
 			m_connectionTimeout = 25.0f;
 			m_useMessageRecycling = true;
+			m_recycledCacheMaxCount = 64;
 			m_resendHandshakeInterval = 3.0f;
 			m_maximumHandshakeAttempts = 5;
 			m_autoFlushSendQueue = true;
@@ -255,6 +257,20 @@ namespace Lidgren.Network
 				if (m_isLocked)
 					throw new NetException(c_isLockedMessage);
 				m_useMessageRecycling = value;
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the maximum number of incoming/outgoing messages to keep in the recycle cache.
+		/// </summary>
+		public int RecycledCacheMaxCount
+		{
+			get { return m_recycledCacheMaxCount; }
+			set
+			{
+				if (m_isLocked)
+					throw new NetException(c_isLockedMessage);
+				m_recycledCacheMaxCount = value;
 			}
 		}
 

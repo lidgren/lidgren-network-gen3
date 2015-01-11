@@ -57,8 +57,6 @@ namespace SamplesCommon
 			var minLat = (pc.SimulatedMinimumLatency * 1000.0f).ToString();
 			var maxLat = ((pc.SimulatedMinimumLatency + pc.SimulatedRandomLatency) * 1000.0f).ToString();
 #else
-			var loss = 0;
-			var dupes = 0;
 			var minLat = "";
 			var maxLat = "";
 #endif

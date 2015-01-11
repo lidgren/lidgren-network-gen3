@@ -157,7 +157,8 @@ namespace Lidgren.Network
 			bdr.AppendLine("Received (n/a) bytes in (n/a) messages in (n/a) packets");
 #endif
 			bdr.AppendLine("Storage allocated " + m_bytesAllocated + " bytes");
-			bdr.AppendLine("Recycled pool " + m_peer.m_storagePoolBytes + " bytes");
+			if (m_peer.m_storagePool != null)
+				bdr.AppendLine("Recycled pool " + m_peer.m_storagePoolBytes + " bytes (" + m_peer.m_storageSlotsUsedCount + " entries)");
 			return bdr.ToString();
 		}
 	}
