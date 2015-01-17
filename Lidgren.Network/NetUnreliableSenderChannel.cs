@@ -57,7 +57,7 @@ namespace Lidgren.Network
 		}
 
 		// call this regularely
-		internal override void SendQueuedMessages(float now)
+		internal override void SendQueuedMessages(double now)
 		{
 			int num = GetAllowedSends();
 			if (num < 1)
@@ -91,7 +91,7 @@ namespace Lidgren.Network
 		
 		// remoteWindowStart is remote expected sequence number; everything below this has arrived properly
 		// seqNr is the actual nr received
-		internal override void ReceiveAcknowledge(float now, int seqNr)
+		internal override void ReceiveAcknowledge(double now, int seqNr)
 		{
 			// late (dupe), on time or early ack?
 			int relate = NetUtility.RelativeSequenceNumber(seqNr, m_windowStart);

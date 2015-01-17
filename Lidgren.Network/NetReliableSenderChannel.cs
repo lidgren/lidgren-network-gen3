@@ -16,7 +16,7 @@ namespace Lidgren.Network
 		private NetBitVector m_receivedAcks;
 		internal NetStoredReliableMessage[] m_storedMessages;
 
-		internal float m_resendDelay;
+		internal double m_resendDelay;
 
 		internal override int WindowSize { get { return m_windowSize; } }
 
@@ -58,7 +58,7 @@ namespace Lidgren.Network
 		}
 
 		// call this regularely
-		internal override void SendQueuedMessages(float now)
+		internal override void SendQueuedMessages(double now)
 		{
 			//
 			// resends
@@ -69,7 +69,7 @@ namespace Lidgren.Network
 				if (om == null)
 					continue;
 
-				float t = m_storedMessages[i].LastSent;
+				double t = m_storedMessages[i].LastSent;
 				if (t > 0 && (now - t) > m_resendDelay)
 				{
 					// deduce sequence number
@@ -109,8 +109,8 @@ namespace Lidgren.Network
 				NetException.Assert(num == GetAllowedSends());
 			}
 		}
-			
-		private void ExecuteSend(float now, NetOutgoingMessage message)
+
+		private void ExecuteSend(double now, NetOutgoingMessage message)
 		{
 			int seqNr = m_sendStart;
 			m_sendStart = (m_sendStart + 1) % NetConstants.NumSequenceNumbers;
@@ -149,7 +149,7 @@ namespace Lidgren.Network
 
 		// remoteWindowStart is remote expected sequence number; everything below this has arrived properly
 		// seqNr is the actual nr received
-		internal override void ReceiveAcknowledge(float now, int seqNr)
+		internal override void ReceiveAcknowledge(double now, int seqNr)
 		{
 			// late (dupe), on time or early ack?
 			int relate = NetUtility.RelativeSequenceNumber(seqNr, m_windowStart);
@@ -237,7 +237,7 @@ namespace Lidgren.Network
 						NetOutgoingMessage rmsg = m_storedMessages[slot].Message;
 						//m_connection.m_peer.LogVerbose("Resending #" + rnr + " (" + rmsg + ")");
 
-						if (now - m_storedMessages[slot].LastSent < (m_resendDelay * 0.35f))
+						if (now - m_storedMessages[slot].LastSent < (m_resendDelay * 0.35))
 						{
 							// already resent recently
 						}

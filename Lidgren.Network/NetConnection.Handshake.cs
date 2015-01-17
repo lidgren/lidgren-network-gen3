@@ -12,7 +12,7 @@ namespace Lidgren.Network
 		internal string m_disconnectMessage;
 		internal bool m_connectionInitiator;
 		internal NetIncomingMessage m_remoteHailMessage;
-		internal float m_lastHandshakeSendTime;
+		internal double m_lastHandshakeSendTime;
 		internal int m_handshakeAttempts;
 
 		/// <summary>
@@ -124,7 +124,7 @@ namespace Lidgren.Network
 			m_handshakeAttempts = 0;
 		}
 
-		internal void SendConnect(float now)
+		internal void SendConnect(double now)
 		{
 			m_peer.VerifyNetworkThread();
 
@@ -135,7 +135,7 @@ namespace Lidgren.Network
 			om.m_messageType = NetMessageType.Connect;
 			om.Write(m_peerConfiguration.AppIdentifier);
 			om.Write(m_peer.m_uniqueIdentifier);
-			om.Write(now);
+			om.Write((float)now);
 
 			WriteLocalHail(om);
 			
@@ -150,7 +150,7 @@ namespace Lidgren.Network
 			SetStatus(NetConnectionStatus.InitiatedConnect, "Locally requested connect");
 		}
 
-		internal void SendConnectResponse(float now, bool onLibraryThread)
+		internal void SendConnectResponse(double now, bool onLibraryThread)
 		{
 			if (onLibraryThread)
 				m_peer.VerifyNetworkThread();
@@ -159,7 +159,7 @@ namespace Lidgren.Network
 			om.m_messageType = NetMessageType.ConnectResponse;
 			om.Write(m_peerConfiguration.AppIdentifier);
 			om.Write(m_peer.m_uniqueIdentifier);
-			om.Write(now);
+			om.Write((float)now);
 
 			WriteLocalHail(om);
 

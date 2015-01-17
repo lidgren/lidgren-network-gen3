@@ -70,12 +70,12 @@ namespace Lidgren.Network
 		public NetOutgoingMessage LocalHailMessage { get { return m_localHailMessage; } }
 
 		// gets the time before automatically resending an unacked message
-		internal float GetResendDelay()
+		internal double GetResendDelay()
 		{
-			float avgRtt = m_averageRoundtripTime;
+			double avgRtt = m_averageRoundtripTime;
 			if (avgRtt <= 0)
-				avgRtt = 0.1f; // "default" resend is based on 100 ms roundtrip time
-			return 0.025f + (avgRtt * 2.1f); // 25 ms + double rtt
+				avgRtt = 0.1; // "default" resend is based on 100 ms roundtrip time
+			return 0.025 + (avgRtt * 2.1); // 25 ms + double rtt
 		}
 
 		internal NetConnection(NetPeer peer, IPEndPoint remoteEndPoint)
@@ -115,7 +115,7 @@ namespace Lidgren.Network
 
 			if (m_status == NetConnectionStatus.Connected)
 			{
-				m_timeoutDeadline = (float)NetTime.Now + m_peerConfiguration.m_connectionTimeout;
+				m_timeoutDeadline = NetTime.Now + m_peerConfiguration.m_connectionTimeout;
 				m_peer.LogVerbose("Timeout deadline initialized to  " + m_timeoutDeadline);
 			}
 
@@ -391,7 +391,7 @@ namespace Lidgren.Network
 		{
 			m_peer.VerifyNetworkThread();
 
-			float now = (float)NetTime.Now;
+			double now = NetTime.Now;
 
 			switch (tp)
 			{
