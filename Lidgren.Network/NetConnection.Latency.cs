@@ -141,7 +141,7 @@ namespace Lidgren.Network
 				NetIncomingMessage update = m_peer.CreateIncomingMessage(NetIncomingMessageType.ConnectionLatencyUpdated, 4);
 				update.m_senderConnection = this;
 				update.m_senderEndPoint = this.m_remoteEndPoint;
-				update.Write(rtt);
+				update.Write((float)rtt);
 				m_peer.ReleaseMessage(update);
 			}
 		}
