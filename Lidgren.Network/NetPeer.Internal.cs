@@ -26,6 +26,7 @@ namespace Lidgren.Network
 		private double m_lastHeartbeat;
 		private double m_lastSocketBind = float.MinValue;
 		private NetUPnP m_upnp;
+		internal bool m_needFlushSendQueue;
 
 		internal readonly NetPeerConfiguration m_configuration;
 		private readonly NetQueue<NetIncomingMessage> m_releasedIncomingMessages;
@@ -368,8 +369,11 @@ namespace Lidgren.Network
 #endif
 
 				// update m_executeFlushSendQueue
-				if (m_configuration.m_autoFlushSendQueue)
+				if (m_configuration.m_autoFlushSendQueue && m_needFlushSendQueue == true)
+				{
 					m_executeFlushSendQueue = true;
+					m_needFlushSendQueue = false; // a race condition to this variable will simply result in a single superfluous call to FlushSendQueue()
+				}
 
 				// do connection heartbeats
 				lock (m_connections)

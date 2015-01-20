@@ -253,7 +253,11 @@ namespace Lidgren.Network
 					var channel = m_sendChannels[i];
 					NetException.Assert(m_sendBufferWritePtr < 1 || m_sendBufferNumMessages > 0);
 					if (channel != null)
+					{
 						channel.SendQueuedMessages(now);
+						if (channel.QueuedSendsCount > 0)
+							m_peer.m_needFlushSendQueue = true; // failed to send all queued sends; likely a full window - need to try again
+					}
 					NetException.Assert(m_sendBufferWritePtr < 1 || m_sendBufferNumMessages > 0);
 				}
 			}
@@ -534,7 +538,7 @@ namespace Lidgren.Network
 			}
 
 			windowSize = chan.WindowSize;
-			freeWindowSlots = chan.GetAllowedSends() - chan.m_queuedSends.Count;
+			freeWindowSlots = chan.GetFreeWindowSlots();
 			return;
 		}
 
@@ -544,7 +548,7 @@ namespace Lidgren.Network
 			var chan = m_sendChannels[channelSlot];
 			if (chan == null)
 				return true;
-			return (chan.GetAllowedSends() - chan.m_queuedSends.Count) > 0;
+			return chan.GetFreeWindowSlots() > 0;
 		}
 
 		internal void Shutdown(string reason)

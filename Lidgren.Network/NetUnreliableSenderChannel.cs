@@ -53,6 +53,7 @@ namespace Lidgren.Network
 			}
 
 			m_queuedSends.Enqueue(message);
+			m_connection.m_peer.m_needFlushSendQueue = true; // a race condition to this variable will simply result in a single superflous call to FlushSendQueue()
 			return NetSendResult.Sent;
 		}
 
@@ -64,7 +65,7 @@ namespace Lidgren.Network
 				return;
 
 			// queued sends
-			while (m_queuedSends.Count > 0 && num > 0)
+			while (num > 0 && m_queuedSends.Count > 0)
 			{
 				NetOutgoingMessage om;
 				if (m_queuedSends.TryDequeue(out om))

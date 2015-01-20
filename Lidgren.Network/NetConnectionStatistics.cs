@@ -179,7 +179,7 @@ namespace Lidgren.Network
 			{
 				if (sendChan == null)
 					continue;
-				numUnsent += sendChan.m_queuedSends.Count;
+				numUnsent += sendChan.QueuedSendsCount;
 
 				var relSendChan = sendChan as NetReliableSenderChannel;
 				if (relSendChan != null)

@@ -5,11 +5,18 @@ namespace Lidgren.Network
 	internal abstract class NetSenderChannelBase
 	{
 		// access this directly to queue things in this channel
-		internal NetQueue<NetOutgoingMessage> m_queuedSends;
+		protected NetQueue<NetOutgoingMessage> m_queuedSends;
 
 		internal abstract int WindowSize { get; }
 
 		internal abstract int GetAllowedSends();
+
+		internal int QueuedSendsCount { get { return m_queuedSends.Count; } }
+
+		public int GetFreeWindowSlots()
+		{
+			return GetAllowedSends() - m_queuedSends.Count;
+		}
 
 		internal abstract NetSendResult Enqueue(NetOutgoingMessage message);
 		internal abstract void SendQueuedMessages(double now);
