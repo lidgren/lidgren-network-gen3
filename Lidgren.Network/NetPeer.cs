@@ -306,7 +306,8 @@ namespace Lidgren.Network
 				conn.m_connectRequested = true;
 				conn.m_connectionInitiator = true;
 
-				m_handshakes.Add(remoteEndPoint, conn);
+				lock(m_handshakes)
+					m_handshakes.Add(remoteEndPoint, conn);
 
 				return conn;
 			}
