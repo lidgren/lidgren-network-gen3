@@ -340,32 +340,26 @@ namespace Lidgren.Network
 				// do handshake heartbeats
 				if ((m_frameCounter % 3) == 0)
 				{
-					if (m_handshakes.Count > 0)
+					foreach (var kvp in m_handshakes)
 					{
-						lock (m_handshakes)
+						NetConnection conn = kvp.Value as NetConnection;
+#if DEBUG
+						// sanity check
+						if (kvp.Key != kvp.Key)
+							LogWarning("Sanity fail! Connection in handshake list under wrong key!");
+#endif
+						conn.UnconnectedHeartbeat(now);
+						if (conn.m_status == NetConnectionStatus.Connected || conn.m_status == NetConnectionStatus.Disconnected)
 						{
-							foreach (var kvp in m_handshakes)
+#if DEBUG
+							// sanity check
+							if (conn.m_status == NetConnectionStatus.Disconnected && m_handshakes.ContainsKey(conn.RemoteEndPoint))
 							{
-								NetConnection conn = kvp.Value as NetConnection;
-#if DEBUG
-								// sanity check
-								if (kvp.Key != kvp.Key)
-									LogWarning("Sanity fail! Connection in handshake list under wrong key!");
-#endif
-								conn.UnconnectedHeartbeat(now);
-								if (conn.m_status == NetConnectionStatus.Connected || conn.m_status == NetConnectionStatus.Disconnected)
-								{
-#if DEBUG
-									// sanity check
-									if (conn.m_status == NetConnectionStatus.Disconnected && m_handshakes.ContainsKey(conn.RemoteEndPoint))
-									{
-										LogWarning("Sanity fail! Handshakes list contained disconnected connection!");
-										m_handshakes.Remove(conn.RemoteEndPoint);
-									}
-#endif
-									break; // collection has been modified
-								}
+								LogWarning("Sanity fail! Handshakes list contained disconnected connection!");
+								m_handshakes.Remove(conn.RemoteEndPoint);
 							}
+#endif
+							break; // collection has been modified
 						}
 					}
 				}
@@ -384,17 +378,17 @@ namespace Lidgren.Network
 				// do connection heartbeats
 				lock (m_connections)
 				{
-					foreach (NetConnection conn in m_connections)
+					for (int i = m_connections.Count - 1; i >= 0; i--)
 					{
+						var conn = m_connections[i];
 						conn.Heartbeat(now, m_frameCounter);
 						if (conn.m_status == NetConnectionStatus.Disconnected)
 						{
 							//
 							// remove connection
 							//
-							m_connections.Remove(conn);
+							m_connections.RemoveAt(i);
 							m_connectionLookup.Remove(conn.RemoteEndPoint);
-							break; // can't continue iteration here
 						}
 					}
 				}
@@ -406,13 +400,14 @@ namespace Lidgren.Network
 				{
 					NetOutgoingMessage om = unsent.Item2;
 
-					bool connReset;
 					int len = om.Encode(m_sendBuffer, 0, 0);
-					SendPacket(len, unsent.Item1, 1, out connReset);
 
 					Interlocked.Decrement(ref om.m_recyclingCount);
 					if (om.m_recyclingCount <= 0)
 						Recycle(om);
+
+					bool connReset;
+					SendPacket(len, unsent.Item1, 1, out connReset);
 				}
 			}
 
@@ -716,8 +711,7 @@ namespace Lidgren.Network
 					// Ok, start handshake!
 					NetConnection conn = new NetConnection(this, senderEndPoint);
 					conn.m_status = NetConnectionStatus.ReceivedInitiation;
-					lock(m_handshakes)
-						m_handshakes.Add(senderEndPoint, conn);
+					m_handshakes.Add(senderEndPoint, conn);
 					conn.ReceivedHandshake(now, tp, ptr, payloadByteLength);
 					return;
 
@@ -736,11 +730,8 @@ namespace Lidgren.Network
 			// LogDebug("Accepted connection " + conn);
 			conn.InitExpandMTU(NetTime.Now);
 
-			lock (m_handshakes)
-			{
-				if (m_handshakes.Remove(conn.m_remoteEndPoint) == false)
-					LogWarning("AcceptConnection called but m_handshakes did not contain it!");
-			}
+			if (m_handshakes.Remove(conn.m_remoteEndPoint) == false)
+				LogWarning("AcceptConnection called but m_handshakes did not contain it!");
 
 			lock (m_connections)
 			{

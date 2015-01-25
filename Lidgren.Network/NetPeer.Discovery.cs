@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net;
+using System.Threading;
 
 namespace Lidgren.Network
 {
@@ -12,6 +13,7 @@ namespace Lidgren.Network
 		{
 			NetOutgoingMessage om = CreateMessage(0);
 			om.m_messageType = NetMessageType.Discovery;
+			Interlocked.Increment(ref om.m_recyclingCount);
 			m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(new IPEndPoint(IPAddress.Broadcast, serverPort), om));
 		}
 
@@ -34,6 +36,7 @@ namespace Lidgren.Network
 		{
 			NetOutgoingMessage om = CreateMessage(0);
 			om.m_messageType = NetMessageType.Discovery;
+			om.m_recyclingCount = 1;
 			m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(endPoint, om));
 		}
 
@@ -54,6 +57,7 @@ namespace Lidgren.Network
 				throw new NetException("Cannot send discovery message larger than MTU (currently " + m_configuration.MaximumTransmissionUnit + " bytes)");
 
 			msg.m_messageType = NetMessageType.DiscoveryResponse;
+			Interlocked.Increment(ref msg.m_recyclingCount);
 			m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(recipient, msg));
 		}
 	}

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Threading;
 
 namespace Lidgren.Network
 {
@@ -23,6 +24,7 @@ namespace Lidgren.Network
 			msg.Write(hostInternal);
 			msg.Write(hostExternal);
 			msg.Write(token);
+			Interlocked.Increment(ref msg.m_recyclingCount);
 			m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(clientExternal, msg));
 
 			// send message to host
@@ -32,6 +34,7 @@ namespace Lidgren.Network
 			msg.Write(clientInternal);
 			msg.Write(clientExternal);
 			msg.Write(token);
+			Interlocked.Increment(ref msg.m_recyclingCount);
 			m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(hostExternal, msg));
 		}
 
@@ -63,6 +66,7 @@ namespace Lidgren.Network
 			punch.m_messageType = NetMessageType.NatPunchMessage;
 			punch.Write(hostByte);
 			punch.Write(token);
+			Interlocked.Increment(ref punch.m_recyclingCount);
 			m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(remoteInternal, punch));
 			LogDebug("NAT punch sent to " + remoteInternal);
 
@@ -71,6 +75,7 @@ namespace Lidgren.Network
 			punch.m_messageType = NetMessageType.NatPunchMessage;
 			punch.Write(hostByte);
 			punch.Write(token);
+			Interlocked.Increment(ref punch.m_recyclingCount);
 			m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(remoteExternal, punch));
 			LogDebug("NAT punch sent to " + remoteExternal);
 
@@ -107,6 +112,7 @@ namespace Lidgren.Network
 			punch.m_messageType = NetMessageType.NatPunchMessage;
 			punch.Write((byte)0);
 			punch.Write(token);
+			Interlocked.Increment(ref punch.m_recyclingCount);
 			m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(senderEndPoint, punch));
 		}
 	}

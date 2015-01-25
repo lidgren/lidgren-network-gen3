@@ -48,7 +48,7 @@ namespace Lidgren.Network
 			int left = GetAllowedSends();
 			if (queueLen > left || (message.LengthBytes > m_connection.m_currentMTU && m_connection.m_peerConfiguration.UnreliableSizeBehaviour == NetUnreliableSizeBehaviour.DropAboveMTU))
 			{
-				m_connection.Peer.Recycle(message);
+				// drop message
 				return NetSendResult.Dropped;
 			}
 
@@ -83,7 +83,6 @@ namespace Lidgren.Network
 
 			m_connection.QueueSendMessage(message, seqNr);
 
-			Interlocked.Decrement(ref message.m_recyclingCount);
 			if (message.m_recyclingCount <= 0)
 				m_connection.m_peer.Recycle(message);
 

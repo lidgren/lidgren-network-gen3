@@ -107,10 +107,9 @@ namespace Lidgren.Network
 				NetException.Assert(sequenceChannel == 0, "Delivery method " + method + " cannot use sequence channels other than 0!");
 			if (msg.m_isSent)
 				throw new NetException("This message has already been sent! Use NetPeer.SendMessage() to send to multiple recipients efficiently");
+			msg.m_isSent = true;
 
 			int mtu = GetMTU(recipients);
-
-			msg.m_isSent = true;
 
 			int len = msg.GetEncodedSize();
 			if (len <= mtu)
@@ -124,7 +123,7 @@ namespace Lidgren.Network
 						continue;
 					}
 					NetSendResult res = conn.EnqueueMessage(msg, method, sequenceChannel);
-					if (res != NetSendResult.Queued && res != NetSendResult.Sent)
+					if (res == NetSendResult.Dropped)
 						Interlocked.Decrement(ref msg.m_recyclingCount);
 				}
 			}
@@ -151,12 +150,12 @@ namespace Lidgren.Network
 			if (msg.LengthBytes > m_configuration.MaximumTransmissionUnit)
 				throw new NetException("Unconnected messages too long! Must be shorter than NetConfiguration.MaximumTransmissionUnit (currently " + m_configuration.MaximumTransmissionUnit + ")");
 
+			msg.m_isSent = true;
+			msg.m_messageType = NetMessageType.Unconnected;
+
 			IPAddress adr = NetUtility.Resolve(host);
 			if (adr == null)
 				throw new NetException("Failed to resolve " + host);
-
-			msg.m_messageType = NetMessageType.Unconnected;
-			msg.m_isSent = true;
 
 			Interlocked.Increment(ref msg.m_recyclingCount);
 			m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(new IPEndPoint(adr, port), msg));

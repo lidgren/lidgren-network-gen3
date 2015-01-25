@@ -30,7 +30,7 @@ namespace Lidgren.Network
 	{
 		internal NetMessageType m_messageType;
 		internal bool m_isSent;
-		internal int m_recyclingCount;
+		internal int m_recyclingCount;            // when this reaches zero the message is ready to be recycled
 
 		internal int m_fragmentGroup;             // which group of fragments ths belongs to
 		internal int m_fragmentGroupTotalBits;    // total number of bits in this group
@@ -46,7 +46,7 @@ namespace Lidgren.Network
 			m_messageType = NetMessageType.LibraryError;
 			m_bitLength = 0;
 			m_isSent = false;
-			m_recyclingCount = 0;
+			NetException.Assert(m_recyclingCount == 0);
 			m_fragmentGroup = 0;
 		}
 
