@@ -1,5 +1,5 @@
 language: csharp
-solution: solution-name.sln
+solution: Lidgren.Network.sln
 install:
   - nuget restore Lidgren.Network.sln
 script:
