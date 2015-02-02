@@ -313,6 +313,8 @@ namespace Lidgren.Network
 				m_sendBufferWritePtr = 0;
 				m_sendBufferNumMessages = 0;
 			}
+
+			Interlocked.Decrement(ref om.m_recyclingCount);
 		}
 
 		/// <summary>
@@ -367,7 +369,6 @@ namespace Lidgren.Network
 				}
 				else
 				{
-
 					switch (method)
 					{
 						case NetDeliveryMethod.Unreliable:

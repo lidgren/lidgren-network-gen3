@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 
 namespace Lidgren.Network
 {
@@ -160,7 +161,7 @@ namespace Lidgren.Network
 			om.Write(m_peerConfiguration.AppIdentifier);
 			om.Write(m_peer.m_uniqueIdentifier);
 			om.Write((float)now);
-
+			Interlocked.Increment(ref om.m_recyclingCount);
 			WriteLocalHail(om);
 
 			if (onLibraryThread)
@@ -184,6 +185,7 @@ namespace Lidgren.Network
 
 			NetOutgoingMessage om = m_peer.CreateMessage(reason);
 			om.m_messageType = NetMessageType.Disconnect;
+			Interlocked.Increment(ref om.m_recyclingCount);
 			if (onLibraryThread)
 				m_peer.SendLibrary(om, m_remoteEndPoint);
 			else
