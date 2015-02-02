@@ -61,7 +61,6 @@ namespace UnitTests
 			}
 
 			Console.WriteLine("Done");
-			Console.ReadKey();
 		}
 
 		/// <summary>
