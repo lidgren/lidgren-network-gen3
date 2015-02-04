@@ -1,0 +1,7 @@
+language: csharp
+solution: Lidgren.Network.sln
+install:
+  - nuget restore Lidgren.Network.sln
+script:
+  - xbuild /p:Configuration=Release Lidgren.Network.sln
+  - mono ./UnitTests/bin/Release/UnitTests.exe
