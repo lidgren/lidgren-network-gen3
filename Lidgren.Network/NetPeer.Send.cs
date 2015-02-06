@@ -220,7 +220,10 @@ namespace Lidgren.Network
 			msg.m_isSent = true;
 
 			if (m_configuration.IsMessageTypeEnabled(NetIncomingMessageType.UnconnectedData) == false)
+			{
+				Interlocked.Decrement(ref msg.m_recyclingCount);
 				return; // dropping unconnected message since it's not enabled for receiving
+			}
 
 			NetIncomingMessage om = CreateIncomingMessage(NetIncomingMessageType.UnconnectedData, msg.LengthBytes);
 			om.Write(msg);

@@ -187,10 +187,14 @@ namespace Lidgren.Network
 		{
 			if (m_outgoingMessagesPool == null)
 				return;
-
-			NetException.Assert(msg.m_recyclingCount == 0, "Wrong recycling count! Should be zero; found " + msg.m_recyclingCount);
-
+#if DEBUG
 			NetException.Assert(m_outgoingMessagesPool.Contains(msg) == false, "Recyling already recycled message! Thread race?");
+			if (msg.m_recyclingCount != 0)
+				LogWarning("Wrong recycling count! should be zero; found " + msg.m_recyclingCount);
+#endif
+			// setting m_recyclingCount to zero SHOULD be an unnecessary maneuver, if it's not zero something is wrong
+			// however, in RELEASE, we'll just have to accept this and move on with life
+			msg.m_recyclingCount = 0;
 
 			byte[] storage = msg.m_data;
 			msg.m_data = null;
