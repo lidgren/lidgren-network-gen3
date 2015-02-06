@@ -288,7 +288,7 @@ namespace Lidgren.Network
 							break;
 						case NetConnectionStatus.RespondedConnect:
 							// send another response
-							hs.SendConnectResponse((float)NetTime.Now, false);
+							hs.SendConnectResponse(NetTime.Now, false);
 							break;
 						default:
 							// weird

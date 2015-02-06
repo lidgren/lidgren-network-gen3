@@ -324,10 +324,8 @@ namespace Lidgren.Network
 		{
 			VerifyNetworkThread();
 
-			double dnow = NetTime.Now;
-			float now = (float)dnow;
-
-			double delta = dnow - m_lastHeartbeat;
+			double now = NetTime.Now;
+			double delta = now - m_lastHeartbeat;
 
 			int maxCHBpS = 1250 - m_connections.Count;
 			if (maxCHBpS < 250)
@@ -335,7 +333,7 @@ namespace Lidgren.Network
 			if (delta > (1.0 / (double)maxCHBpS) || delta < 0.0) // max connection heartbeats/second max
 			{
 				m_frameCounter++;
-				m_lastHeartbeat = dnow;
+				m_lastHeartbeat = now;
 
 				// do handshake heartbeats
 				if ((m_frameCounter % 3) == 0)
@@ -424,8 +422,7 @@ namespace Lidgren.Network
 			//	return;
 
 			// update now
-			dnow = NetTime.Now;
-			now = (float)dnow;
+			now = NetTime.Now;
 
 			do
 			{
@@ -537,7 +534,7 @@ namespace Lidgren.Network
 							if (sender != null)
 								sender.ReceivedLibraryMessage(tp, ptr, payloadByteLength);
 							else
-								ReceivedUnconnectedLibraryMessage(dnow, ipsender, tp, ptr, payloadByteLength);
+								ReceivedUnconnectedLibraryMessage(now, ipsender, tp, ptr, payloadByteLength);
 						}
 						else
 						{
@@ -546,7 +543,7 @@ namespace Lidgren.Network
 
 							NetIncomingMessage msg = CreateIncomingMessage(NetIncomingMessageType.Data, payloadByteLength);
 							msg.m_isFragment = isFragment;
-							msg.m_receiveTime = dnow;
+							msg.m_receiveTime = now;
 							msg.m_sequenceNumber = sequenceNumber;
 							msg.m_receivedMessageType = tp;
 							msg.m_senderConnection = sender;

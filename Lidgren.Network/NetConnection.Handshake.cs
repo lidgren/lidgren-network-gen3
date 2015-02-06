@@ -22,7 +22,7 @@ namespace Lidgren.Network
 		public NetIncomingMessage RemoteHailMessage { get { return m_remoteHailMessage; } }
 
 		// heartbeat called when connection still is in m_handshakes of NetPeer
-		internal void UnconnectedHeartbeat(float now)
+		internal void UnconnectedHeartbeat(double now)
 		{
 			m_peer.VerifyNetworkThread();
 
@@ -233,7 +233,7 @@ namespace Lidgren.Network
 
 			m_localHailMessage = null;
 			m_handshakeAttempts = 0;
-			SendConnectResponse((float)NetTime.Now, false);
+			SendConnectResponse(NetTime.Now, false);
 		}
 
 		/// <summary>
@@ -250,7 +250,7 @@ namespace Lidgren.Network
 
 			m_localHailMessage = localHail;
 			m_handshakeAttempts = 0;
-			SendConnectResponse((float)NetTime.Now, false);
+			SendConnectResponse(NetTime.Now, false);
 		}
 
 		/// <summary>

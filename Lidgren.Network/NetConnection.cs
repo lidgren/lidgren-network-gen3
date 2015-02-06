@@ -135,7 +135,7 @@ namespace Lidgren.Network
 			}
 		}
 
-		internal void Heartbeat(float now, uint frameCounter)
+		internal void Heartbeat(double now, uint frameCounter)
 		{
 			m_peer.VerifyNetworkThread();
 
