@@ -73,7 +73,13 @@ namespace ManyServer
 							var conns = Server.Connections;
 
 							// resend to ONE random connection
-							Server.SendMessage(outMsg, conns[NetRandom.Instance.Next(0, conns.Count)], NetDeliveryMethod.ReliableOrdered, 0);
+							//Server.SendMessage(outMsg, conns[NetRandom.Instance.Next(0, conns.Count)], NetDeliveryMethod.ReliableOrdered, 0);
+
+							List<NetConnection> rec = new List<NetConnection>();
+							rec.AddRange(conns);
+							rec.Remove(inc.SenderConnection);
+							if (rec.Count > 0)
+								Server.SendMessage(outMsg, rec, NetDeliveryMethod.ReliableOrdered, 0);
 							break;
 					}
 				}

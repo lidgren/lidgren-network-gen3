@@ -209,31 +209,35 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Send a message to this exact same netpeer (loopback)
 		/// </summary>
-		public void SendUnconnectedToSelf(NetOutgoingMessage msg)
+		public void SendUnconnectedToSelf(NetOutgoingMessage om)
 		{
-			if (msg == null)
+			if (om == null)
 				throw new ArgumentNullException("msg");
-			if (msg.m_isSent)
+			if (om.m_isSent)
 				throw new NetException("This message has already been sent! Use NetPeer.SendMessage() to send to multiple recipients efficiently");
 
-			msg.m_messageType = NetMessageType.Unconnected;
-			msg.m_isSent = true;
+			om.m_messageType = NetMessageType.Unconnected;
+			om.m_isSent = true;
 
 			if (m_configuration.IsMessageTypeEnabled(NetIncomingMessageType.UnconnectedData) == false)
 			{
-				Interlocked.Decrement(ref msg.m_recyclingCount);
+				Interlocked.Decrement(ref om.m_recyclingCount);
 				return; // dropping unconnected message since it's not enabled for receiving
 			}
 
-			NetIncomingMessage om = CreateIncomingMessage(NetIncomingMessageType.UnconnectedData, msg.LengthBytes);
-			om.Write(msg);
-			om.m_isFragment = false;
-			om.m_receiveTime = NetTime.Now;
-			om.m_senderConnection = null;
-			om.m_senderEndPoint = m_socket.LocalEndPoint as IPEndPoint;
-			NetException.Assert(om.m_bitLength == msg.LengthBits);
+			// convert outgoing to incoming
+			NetIncomingMessage im = CreateIncomingMessage(NetIncomingMessageType.UnconnectedData, om.LengthBytes);
+			im.Write(om);
+			im.m_isFragment = false;
+			im.m_receiveTime = NetTime.Now;
+			im.m_senderConnection = null;
+			im.m_senderEndPoint = m_socket.LocalEndPoint as IPEndPoint;
+			NetException.Assert(im.m_bitLength == om.LengthBits);
 
-			ReleaseMessage(om);
+			// recycle outgoing message
+			Recycle(om);
+
+			ReleaseMessage(im);
 		}
 	}
 }

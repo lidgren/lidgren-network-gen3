@@ -118,6 +118,10 @@ namespace Lidgren.Network
 			int seqNr = m_sendStart;
 			m_sendStart = (m_sendStart + 1) % NetConstants.NumSequenceNumbers;
 
+			// must increment recycle count here, since it's decremented in QueueSendMessage and we want to keep it for the future in case or resends
+			// we will decrement once more in DestoreMessage for final recycling
+			Interlocked.Increment(ref message.m_recyclingCount);
+
 			m_connection.QueueSendMessage(message, seqNr);
 
 			int storeIndex = seqNr % m_windowSize;
@@ -134,6 +138,9 @@ namespace Lidgren.Network
 		private void DestoreMessage(int storeIndex)
 		{
 			NetOutgoingMessage storedMessage = m_storedMessages[storeIndex].Message;
+
+			// on each destore; reduce recyclingcount so that when all instances are destored, the outgoing message can be recycled
+			Interlocked.Decrement(ref storedMessage.m_recyclingCount);
 #if DEBUG
 			if (storedMessage == null)
 				throw new NetException("m_storedMessages[" + storeIndex + "].Message is null; sent " + m_storedMessages[storeIndex].NumSent + " times, last time " + (NetTime.Now - m_storedMessages[storeIndex].LastSent) + " seconds ago");

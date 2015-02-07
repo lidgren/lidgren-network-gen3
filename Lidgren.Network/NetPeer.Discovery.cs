@@ -11,10 +11,10 @@ namespace Lidgren.Network
 		/// </summary>
 		public void DiscoverLocalPeers(int serverPort)
 		{
-			NetOutgoingMessage om = CreateMessage(0);
-			om.m_messageType = NetMessageType.Discovery;
-			Interlocked.Increment(ref om.m_recyclingCount);
-			m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(new IPEndPoint(IPAddress.Broadcast, serverPort), om));
+			NetOutgoingMessage um = CreateMessage(0);
+			um.m_messageType = NetMessageType.Discovery;
+			Interlocked.Increment(ref um.m_recyclingCount);
+			m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(new IPEndPoint(IPAddress.Broadcast, serverPort), um));
 		}
 
 		/// <summary>

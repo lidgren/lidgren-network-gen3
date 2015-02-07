@@ -49,7 +49,6 @@ namespace UnconnectedSample
 							break;
 						case NetIncomingMessageType.UnconnectedData:
 							MainForm.richTextBox1.AppendText("Received from " + im.SenderEndPoint + ": " + im.ReadString() + Environment.NewLine);
-							Peer.Recycle(im);
 							break;
 					}
 					Peer.Recycle(im);

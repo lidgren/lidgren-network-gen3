@@ -30,7 +30,14 @@ namespace Lidgren.Network
 	{
 		internal NetMessageType m_messageType;
 		internal bool m_isSent;
-		internal int m_recyclingCount;            // when this reaches zero the message is ready to be recycled
+
+		// Recycling count is:
+		// * incremented for each recipient on send
+		// * incremented, when reliable, in SenderChannel.ExecuteSend()
+		// * decremented (both reliable and unreliable) in NetConnection.QueueSendMessage()
+		// * decremented, when reliable, in SenderChannel.DestoreMessage()
+		// ... when it reaches zero it can be recycled
+		internal int m_recyclingCount;
 
 		internal int m_fragmentGroup;             // which group of fragments ths belongs to
 		internal int m_fragmentGroupTotalBits;    // total number of bits in this group

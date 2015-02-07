@@ -18,24 +18,24 @@ namespace Lidgren.Network
 			string token)
 		{
 			// send message to client
-			NetOutgoingMessage msg = CreateMessage(10 + token.Length + 1);
-			msg.m_messageType = NetMessageType.NatIntroduction;
-			msg.Write((byte)0);
-			msg.Write(hostInternal);
-			msg.Write(hostExternal);
-			msg.Write(token);
-			Interlocked.Increment(ref msg.m_recyclingCount);
-			m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(clientExternal, msg));
+			NetOutgoingMessage um = CreateMessage(10 + token.Length + 1);
+			um.m_messageType = NetMessageType.NatIntroduction;
+			um.Write((byte)0);
+			um.Write(hostInternal);
+			um.Write(hostExternal);
+			um.Write(token);
+			Interlocked.Increment(ref um.m_recyclingCount);
+			m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(clientExternal, um));
 
 			// send message to host
-			msg = CreateMessage(10 + token.Length + 1);
-			msg.m_messageType = NetMessageType.NatIntroduction;
-			msg.Write((byte)1);
-			msg.Write(clientInternal);
-			msg.Write(clientExternal);
-			msg.Write(token);
-			Interlocked.Increment(ref msg.m_recyclingCount);
-			m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(hostExternal, msg));
+			um = CreateMessage(10 + token.Length + 1);
+			um.m_messageType = NetMessageType.NatIntroduction;
+			um.Write((byte)1);
+			um.Write(clientInternal);
+			um.Write(clientExternal);
+			um.Write(token);
+			Interlocked.Increment(ref um.m_recyclingCount);
+			m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(hostExternal, um));
 		}
 
 		/// <summary>
