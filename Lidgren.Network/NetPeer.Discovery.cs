@@ -2,6 +2,10 @@
 using System.Net;
 using System.Threading;
 
+#if !__NOIPENDPOINT__
+using NetEndPoint = System.Net.IPEndPoint;
+#endif
+
 namespace Lidgren.Network
 {
 	public partial class NetPeer
@@ -14,7 +18,8 @@ namespace Lidgren.Network
 			NetOutgoingMessage um = CreateMessage(0);
 			um.m_messageType = NetMessageType.Discovery;
 			Interlocked.Increment(ref um.m_recyclingCount);
-			m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(new IPEndPoint(IPAddress.Broadcast, serverPort), um));
+
+			m_unsentUnconnectedMessages.Enqueue(new NetTuple<NetEndPoint, NetOutgoingMessage>(new NetEndPoint(NetUtility.GetBroadcastAddress(), serverPort), um));
 		}
 
 		/// <summary>
@@ -22,28 +27,28 @@ namespace Lidgren.Network
 		/// </summary>
 		public bool DiscoverKnownPeer(string host, int serverPort)
 		{
-			IPAddress address = NetUtility.Resolve(host);
+			var address = NetUtility.Resolve(host);
 			if (address == null)
 				return false;
-			DiscoverKnownPeer(new IPEndPoint(address, serverPort));
+			DiscoverKnownPeer(new NetEndPoint(address, serverPort));
 			return true;
 		}
 
 		/// <summary>
 		/// Emit a discovery signal to a single known host
 		/// </summary>
-		public void DiscoverKnownPeer(IPEndPoint endPoint)
+		public void DiscoverKnownPeer(NetEndPoint endPoint)
 		{
 			NetOutgoingMessage om = CreateMessage(0);
 			om.m_messageType = NetMessageType.Discovery;
 			om.m_recyclingCount = 1;
-			m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(endPoint, om));
+			m_unsentUnconnectedMessages.Enqueue(new NetTuple<NetEndPoint, NetOutgoingMessage>(endPoint, om));
 		}
 
 		/// <summary>
 		/// Send a discovery response message
 		/// </summary>
-		public void SendDiscoveryResponse(NetOutgoingMessage msg, IPEndPoint recipient)
+		public void SendDiscoveryResponse(NetOutgoingMessage msg, NetEndPoint recipient)
 		{
 			if (recipient == null)
 				throw new ArgumentNullException("recipient");
@@ -58,7 +63,7 @@ namespace Lidgren.Network
 
 			msg.m_messageType = NetMessageType.DiscoveryResponse;
 			Interlocked.Increment(ref msg.m_recyclingCount);
-			m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(recipient, msg));
+			m_unsentUnconnectedMessages.Enqueue(new NetTuple<NetEndPoint, NetOutgoingMessage>(recipient, msg));
 		}
 	}
 }

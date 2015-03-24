@@ -3,6 +3,10 @@ using System.Net;
 using System.Threading;
 using System.Diagnostics;
 
+#if !__NOIPENDPOINT__
+using NetEndPoint = System.Net.IPEndPoint;
+#endif
+
 namespace Lidgren.Network
 {
 	/// <summary>
@@ -18,7 +22,7 @@ namespace Lidgren.Network
 		internal NetPeerConfiguration m_peerConfiguration;
 		internal NetConnectionStatus m_status;
 		internal NetConnectionStatus m_visibleStatus;
-		internal IPEndPoint m_remoteEndPoint;
+		internal NetEndPoint m_remoteEndPoint;
 		internal NetSenderChannelBase[] m_sendChannels;
 		internal NetReceiverChannelBase[] m_receiveChannels;
 		internal NetOutgoingMessage m_localHailMessage;
@@ -57,7 +61,7 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Gets the remote endpoint for the connection
 		/// </summary>
-		public IPEndPoint RemoteEndPoint { get { return m_remoteEndPoint; } }
+		public NetEndPoint RemoteEndPoint { get { return m_remoteEndPoint; } }
 
 		/// <summary>
 		/// Gets the unique identifier of the remote NetPeer for this connection
@@ -78,7 +82,7 @@ namespace Lidgren.Network
 			return 0.025 + (avgRtt * 2.1); // 25 ms + double rtt
 		}
 
-		internal NetConnection(NetPeer peer, IPEndPoint remoteEndPoint)
+		internal NetConnection(NetPeer peer, NetEndPoint remoteEndPoint)
 		{
 			m_peer = peer;
 			m_peerConfiguration = m_peer.Configuration;
@@ -97,7 +101,7 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Change the internal endpoint to this new one. Used when, during handshake, a switch in port is detected (due to NAT)
 		/// </summary>
-		internal void MutateEndPoint(IPEndPoint endPoint)
+		internal void MutateEndPoint(NetEndPoint endPoint)
 		{
 			m_remoteEndPoint = endPoint;
 		}

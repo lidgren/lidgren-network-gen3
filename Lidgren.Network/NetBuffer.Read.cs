@@ -4,6 +4,10 @@ using System.Text;
 using System.Reflection;
 using System.Net;
 
+#if !__NOIPENDPOINT__
+using NetEndPoint = System.Net.IPEndPoint;
+#endif
+
 namespace Lidgren.Network
 {
 	/// <summary>
@@ -638,14 +642,14 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Reads a stored IPv4 endpoint description
 		/// </summary>
-		public IPEndPoint ReadIPEndPoint()
+		public NetEndPoint ReadIPEndPoint()
 		{
 			byte len = ReadByte();
 			byte[] addressBytes = ReadBytes(len);
 			int port = (int)ReadUInt16();
 
-			IPAddress address = new IPAddress(addressBytes);
-			return new IPEndPoint(address, port);
+			var address = NetUtility.CreateAddressFromBytes(addressBytes);
+			return new NetEndPoint(address, port);
 		}
 
 		/// <summary>

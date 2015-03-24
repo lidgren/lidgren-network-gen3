@@ -1,14 +1,14 @@
-﻿#if !__ANDROID__ && !IOS && !UNITY_WEBPLAYER && !UNITY_ANDROID && !UNITY_IPHONE
-#define IS_MAC_AVAILABLE
-#endif
-
-using System;
+﻿using System;
 using System.Net;
 using System.Threading;
 using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Net.Sockets;
 using System.Collections.Generic;
+
+#if !__NOIPENDPOINT__
+using NetEndPoint = System.Net.IPEndPoint;
+#endif
 
 namespace Lidgren.Network
 {
@@ -30,9 +30,9 @@ namespace Lidgren.Network
 
 		internal readonly NetPeerConfiguration m_configuration;
 		private readonly NetQueue<NetIncomingMessage> m_releasedIncomingMessages;
-		internal readonly NetQueue<NetTuple<IPEndPoint, NetOutgoingMessage>> m_unsentUnconnectedMessages;
+		internal readonly NetQueue<NetTuple<NetEndPoint, NetOutgoingMessage>> m_unsentUnconnectedMessages;
 
-		internal Dictionary<IPEndPoint, NetConnection> m_handshakes;
+		internal Dictionary<NetEndPoint, NetConnection> m_handshakes;
 
 		internal readonly NetPeerStatistics m_statistics;
 		internal long m_uniqueIdentifier;
@@ -133,7 +133,7 @@ namespace Lidgren.Network
 			m_socket.SendBufferSize = m_configuration.SendBufferSize;
 			m_socket.Blocking = false;
 
-			var ep = (EndPoint)new IPEndPoint(m_configuration.LocalAddress, reBind ? m_listenPort : m_configuration.Port);
+			var ep = (EndPoint)new NetEndPoint(m_configuration.LocalAddress, reBind ? m_listenPort : m_configuration.Port);
 			m_socket.Bind(ep);
 
 			try
@@ -148,7 +148,7 @@ namespace Lidgren.Network
 				// ignore; SIO_UDP_CONNRESET not supported on this platform
 			}
 
-			IPEndPoint boundEp = m_socket.LocalEndPoint as IPEndPoint;
+			var boundEp = m_socket.LocalEndPoint as NetEndPoint;
 			LogDebug("Socket bound to " + boundEp + ": " + m_socket.IsBound);
 			m_listenPort = boundEp.Port;
 		}
@@ -179,34 +179,14 @@ namespace Lidgren.Network
 				m_readHelperMessage = new NetIncomingMessage(NetIncomingMessageType.Error);
 				m_readHelperMessage.m_data = m_receiveBuffer;
 
-				byte[] macBytes = new byte[8];
-				MWCRandom.Instance.NextBytes(macBytes);
+				byte[] macBytes = NetUtility.GetMacAddressBytes();
 
-#if IS_MAC_AVAILABLE
-				try
-				{
-					System.Net.NetworkInformation.PhysicalAddress pa = NetUtility.GetMacAddress();
-					if (pa != null)
-					{
-						macBytes = pa.GetAddressBytes();
-						LogVerbose("Mac address is " + NetUtility.ToHexString(macBytes));
-					}
-					else
-					{
-						LogWarning("Failed to get Mac address");
-					}
-				}
-				catch (NotSupportedException)
-				{
-					// not supported; lets just keep the random bytes set above
-				}
-#endif
-				IPEndPoint boundEp = m_socket.LocalEndPoint as IPEndPoint;
+				var boundEp = m_socket.LocalEndPoint as NetEndPoint;
 				byte[] epBytes = BitConverter.GetBytes(boundEp.GetHashCode());
 				byte[] combined = new byte[epBytes.Length + macBytes.Length];
 				Array.Copy(epBytes, 0, combined, 0, epBytes.Length);
 				Array.Copy(macBytes, 0, combined, epBytes.Length, macBytes.Length);
-				m_uniqueIdentifier = BitConverter.ToInt64(NetUtility.CreateSHA1Hash(combined), 0);
+				m_uniqueIdentifier = BitConverter.ToInt64(NetUtility.ComputeSHAHash(combined), 0);
 
 				m_status = NetPeerStatus.Running;
 			}
@@ -270,8 +250,8 @@ namespace Lidgren.Network
 			// one final heartbeat, will send stuff and do disconnect
 			Heartbeat();
 
-			Thread.Sleep(10);
-
+			NetUtility.Sleep(10);
+			
 			lock (m_initializeLock)
 			{
 				try
@@ -393,7 +373,7 @@ namespace Lidgren.Network
 				m_executeFlushSendQueue = false;
 
 				// send unsent unconnected messages
-				NetTuple<IPEndPoint, NetOutgoingMessage> unsent;
+				NetTuple<NetEndPoint, NetOutgoingMessage> unsent;
 				while (m_unsentUnconnectedMessages.TryDequeue(out unsent))
 				{
 					NetOutgoingMessage om = unsent.Item2;
@@ -458,7 +438,7 @@ namespace Lidgren.Network
 
 				//LogVerbose("Received " + bytesReceived + " bytes");
 
-				IPEndPoint ipsender = (IPEndPoint)m_senderRemote;
+				var ipsender = (NetEndPoint)m_senderRemote;
 
 				if (m_upnp != null && now < m_upnp.m_discoveryResponseDeadline && bytesReceived > 32)
 				{
@@ -596,7 +576,7 @@ namespace Lidgren.Network
 			m_executeFlushSendQueue = true;
 		}
 
-		internal void HandleIncomingDiscoveryRequest(double now, IPEndPoint senderEndPoint, int ptr, int payloadByteLength)
+		internal void HandleIncomingDiscoveryRequest(double now, NetEndPoint senderEndPoint, int ptr, int payloadByteLength)
 		{
 			if (m_configuration.IsMessageTypeEnabled(NetIncomingMessageType.DiscoveryRequest))
 			{
@@ -610,7 +590,7 @@ namespace Lidgren.Network
 			}
 		}
 
-		internal void HandleIncomingDiscoveryResponse(double now, IPEndPoint senderEndPoint, int ptr, int payloadByteLength)
+		internal void HandleIncomingDiscoveryResponse(double now, NetEndPoint senderEndPoint, int ptr, int payloadByteLength)
 		{
 			if (m_configuration.IsMessageTypeEnabled(NetIncomingMessageType.DiscoveryResponse))
 			{
@@ -624,7 +604,7 @@ namespace Lidgren.Network
 			}
 		}
 
-		private void ReceivedUnconnectedLibraryMessage(double now, IPEndPoint senderEndPoint, NetMessageType tp, int ptr, int payloadByteLength)
+		private void ReceivedUnconnectedLibraryMessage(double now, NetEndPoint senderEndPoint, NetMessageType tp, int ptr, int payloadByteLength)
 		{
 			NetConnection shake;
 			if (m_handshakes.TryGetValue(senderEndPoint, out shake))

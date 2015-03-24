@@ -5,6 +5,10 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 
+#if !__NOIPENDPOINT__
+using NetEndPoint = System.Net.IPEndPoint;
+#endif
+
 namespace Lidgren.Network
 {
 	/// <summary>
@@ -73,11 +77,11 @@ namespace Lidgren.Network
 
 			m_peer.LogDebug("Attempting UPnP discovery");
 			peer.Socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Broadcast, true);
-			peer.RawSend(arr, 0, arr.Length, new IPEndPoint(IPAddress.Broadcast, 1900));
+			peer.RawSend(arr, 0, arr.Length, new NetEndPoint(NetUtility.GetBroadcastAddress(), 1900));
 			peer.Socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Broadcast, false);
 
 			// allow some extra time for router to respond
-			// System.Threading.Thread.Sleep(50);
+			NetUtility.Sleep(50);
 
 			m_discoveryResponseDeadline = NetTime.Now + 6.0; // arbitrarily chosen number, router gets 6 seconds to respond
 			m_status = UPnPStatus.Discovering;
@@ -182,7 +186,7 @@ namespace Lidgren.Network
 					"AddPortMapping");
 
 				m_peer.LogDebug("Sent UPnP port forward request");
-				System.Threading.Thread.Sleep(50);
+				NetUtility.Sleep(50);
 			}
 			catch (Exception ex)
 			{
