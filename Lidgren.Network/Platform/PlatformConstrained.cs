@@ -1,4 +1,4 @@
-﻿#if __CONSTRAINED__
+﻿#if __CONSTRAINED__ || UNITY_STANDALONE_LINUX
 using System;
 using System.Collections.Generic;
 using System.Net;
