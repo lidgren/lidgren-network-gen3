@@ -12,12 +12,13 @@ namespace Lidgren.Network
 		private int m_windowStart;
 		private int m_windowSize;
 		private int m_sendStart;
+		private bool m_doFlowControl;
 
 		private NetBitVector m_receivedAcks;
 
 		internal override int WindowSize { get { return m_windowSize; } }
 
-		internal NetUnreliableSenderChannel(NetConnection connection, int windowSize)
+		internal NetUnreliableSenderChannel(NetConnection connection, int windowSize, NetDeliveryMethod method)
 		{
 			m_connection = connection;
 			m_windowSize = windowSize;
@@ -25,10 +26,16 @@ namespace Lidgren.Network
 			m_sendStart = 0;
 			m_receivedAcks = new NetBitVector(NetConstants.NumSequenceNumbers);
 			m_queuedSends = new NetQueue<NetOutgoingMessage>(8);
+
+			m_doFlowControl = true;
+			if (method == NetDeliveryMethod.Unreliable && connection.Peer.Configuration.SuppressUnreliableUnorderedAcks == true)
+				m_doFlowControl = false;
 		}
 
 		internal override int GetAllowedSends()
 		{
+			if (!m_doFlowControl)
+				return 2; // always allowed to send without flow control!
 			int retval = m_windowSize - ((m_sendStart + NetConstants.NumSequenceNumbers) - m_windowStart) % m_windowSize;
 			NetException.Assert(retval >= 0 && retval <= m_windowSize);
 			return retval;

@@ -58,6 +58,7 @@ namespace Lidgren.Network
 		internal bool m_enableUPnP;
 		internal bool m_autoFlushSendQueue;
 		private NetUnreliableSizeBehaviour m_unreliableSizeBehaviour;
+		internal bool m_suppressUnreliableUnorderedAcks;
 
 		internal NetIncomingMessageType m_disabledTypes;
 		internal int m_port;
@@ -112,6 +113,7 @@ namespace Lidgren.Network
 			m_resendHandshakeInterval = 3.0f;
 			m_maximumHandshakeAttempts = 5;
 			m_autoFlushSendQueue = true;
+			m_suppressUnreliableUnorderedAcks = true;
 
 			m_maximumTransmissionUnit = kDefaultMTU;
 			m_autoExpandMTU = false;
@@ -309,6 +311,20 @@ namespace Lidgren.Network
 		{
 			get { return m_autoFlushSendQueue; }
 			set { m_autoFlushSendQueue = value; }
+		}
+
+		/// <summary>
+		/// If true, will not send acks for unreliable unordered messages. This will save bandwidth, but disable flow control and duplicate detection for this type of messages.
+		/// </summary>
+		public bool SuppressUnreliableUnorderedAcks
+		{
+			get { return m_suppressUnreliableUnorderedAcks; }
+			set
+			{
+				if (m_isLocked)
+					throw new NetException(c_isLockedMessage);
+				m_suppressUnreliableUnorderedAcks = value;
+			}
 		}
 
 		/// <summary>

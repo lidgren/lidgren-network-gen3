@@ -377,7 +377,7 @@ namespace Lidgren.Network
 					{
 						case NetDeliveryMethod.Unreliable:
 						case NetDeliveryMethod.UnreliableSequenced:
-							chan = new NetUnreliableSenderChannel(this, NetUtility.GetWindowSize(method));
+							chan = new NetUnreliableSenderChannel(this, NetUtility.GetWindowSize(method), method);
 							break;
 						case NetDeliveryMethod.ReliableOrdered:
 							chan = new NetReliableSenderChannel(this, NetUtility.GetWindowSize(method));
