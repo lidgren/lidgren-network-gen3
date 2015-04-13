@@ -138,7 +138,7 @@ namespace Lidgren.Network
 			try
 			{
 				// TODO: refactor this check outta here
-				if (target.Address == NetUtility.GetBroadcastAddress())
+				if (target.Address == NetUtility.GetCachedBroadcastAddress())
 				{
 					// Some networks do not allow 
 					// a global broadcast so we use the BroadcastAddress from the configuration

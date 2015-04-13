@@ -75,6 +75,14 @@ namespace Lidgren.Network
 			return new NetEndPoint(adr, port);
 		}
 
+		private static IPAddress s_broadcastAddress;
+		public static IPAddress GetCachedBroadcastAddress()
+		{
+			if (s_broadcastAddress == null)
+				s_broadcastAddress = GetBroadcastAddress();
+			return s_broadcastAddress;
+		}
+
 		/// <summary>
 		/// Get IPv4 address from notation (xxx.xxx.xxx.xxx) or hostname (asynchronous version)
 		/// </summary>
