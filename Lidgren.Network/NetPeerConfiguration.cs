@@ -113,7 +113,7 @@ namespace Lidgren.Network
 			m_resendHandshakeInterval = 3.0f;
 			m_maximumHandshakeAttempts = 5;
 			m_autoFlushSendQueue = true;
-			m_suppressUnreliableUnorderedAcks = true;
+			m_suppressUnreliableUnorderedAcks = false;
 
 			m_maximumTransmissionUnit = kDefaultMTU;
 			m_autoExpandMTU = false;
