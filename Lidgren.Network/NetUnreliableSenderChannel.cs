@@ -100,6 +100,13 @@ namespace Lidgren.Network
 		// seqNr is the actual nr received
 		internal override void ReceiveAcknowledge(double now, int seqNr)
 		{
+			if (m_doFlowControl == false)
+			{
+				// we have no use for acks on this channel since we don't respect the window anyway
+				m_connection.m_peer.LogWarning("SuppressUnreliableUnorderedAcks sender/receiver mismatch!");
+				return;
+			}
+
 			// late (dupe), on time or early ack?
 			int relate = NetUtility.RelativeSequenceNumber(seqNr, m_windowStart);
 
