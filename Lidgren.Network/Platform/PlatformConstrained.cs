@@ -28,6 +28,18 @@ namespace Lidgren.Network
 		/// </summary>
 		public static IPAddress GetMyAddress(out IPAddress mask)
 		{
+#if UNITY_ANDROID || UNITY_STANDALONE_OSX || UNITY_STANDLONE_WIN || UNITY_STANDLONE_LINX || UNITY_IOS
+			try
+			{
+				if (!(UnityEngine.Application.internetReachability == UnityEngine.NetworkReachability.NotReachable))
+					return null;
+				return IPAddress.Parse(UnityEngine.Network.player.externalIP);
+			}
+			catch // Catch Access Denied errors
+			{
+				return null;
+			}
+#endif
 			mask = null;
 			return null;
 		}
