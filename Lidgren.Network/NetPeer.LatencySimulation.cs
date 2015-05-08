@@ -263,7 +263,7 @@ namespace Lidgren.Network
 			try
 			{
 				// TODO: refactor this check outta here
-				if (target.Address == NetUtility.GetBroadcastAddress())
+				if (target.Address == NetUtility.GetCachedBroadcastAddress())
 					m_socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Broadcast, true);
 
 				int bytesSent = m_socket.SendTo(m_sendBuffer, 0, numBytes, SocketFlags.None, target);
