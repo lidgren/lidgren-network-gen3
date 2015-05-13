@@ -104,9 +104,17 @@ namespace Lidgren.Network
 			if (msg == null)
 				throw new ArgumentNullException("msg");
 			if (recipients == null)
+			{
+				if (msg.m_isSent == false)
+					Recycle(msg);
 				throw new ArgumentNullException("recipients");
+			}
 			if (recipients.Count < 1)
+			{
+				if (msg.m_isSent == false)
+					Recycle(msg);
 				throw new NetException("recipients must contain at least one item");
+			}
 			if (method == NetDeliveryMethod.Unreliable || method == NetDeliveryMethod.ReliableUnordered)
 				NetException.Assert(sequenceChannel == 0, "Delivery method " + method + " cannot use sequence channels other than 0!");
 			if (msg.m_isSent)

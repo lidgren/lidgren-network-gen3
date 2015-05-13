@@ -157,6 +157,7 @@ namespace Lidgren.Network
 			if (serverConnection == null)
 			{
 				LogWarning("Cannot send message, no server connection!");
+				Recycle(msg);
 				return NetSendResult.FailedNotConnected;
 			}
 
