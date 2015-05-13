@@ -135,10 +135,13 @@ namespace Lidgren.Network
 		internal bool ActuallySendPacket(byte[] data, int numBytes, NetEndPoint target, out bool connectionReset)
 		{
 			connectionReset = false;
+			IPAddress ba = default(IPAddress);
 			try
 			{
+				ba = NetUtility.GetCachedBroadcastAddress();
+
 				// TODO: refactor this check outta here
-				if (target.Address == NetUtility.GetCachedBroadcastAddress())
+				if (target.Address == ba)
 				{
 					// Some networks do not allow 
 					// a global broadcast so we use the BroadcastAddress from the configuration
@@ -175,7 +178,7 @@ namespace Lidgren.Network
 			}
 			finally
 			{
-				if (target.Address == IPAddress.Broadcast)
+				if (target.Address == ba)
 					m_socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Broadcast, false);
 			}
 			return true;
@@ -260,10 +263,12 @@ namespace Lidgren.Network
 			m_statistics.PacketSent(numBytes, numMessages);
 #endif
 			connectionReset = false;
+			IPAddress ba = default(IPAddress);
 			try
 			{
 				// TODO: refactor this check outta here
-				if (target.Address == NetUtility.GetCachedBroadcastAddress())
+				ba = NetUtility.GetCachedBroadcastAddress();
+				if (target.Address == ba)
 					m_socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Broadcast, true);
 
 				int bytesSent = m_socket.SendTo(m_sendBuffer, 0, numBytes, SocketFlags.None, target);
@@ -292,7 +297,7 @@ namespace Lidgren.Network
 			}
 			finally
 			{
-				if (target.Address == NetUtility.GetBroadcastAddress())
+				if (target.Address == ba)
 					m_socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Broadcast, false);
 			}
 			return;
