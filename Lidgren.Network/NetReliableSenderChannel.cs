@@ -135,9 +135,14 @@ namespace Lidgren.Network
 			return;
 		}
 
-		private void DestoreMessage(int storeIndex)
+		private void DestoreMessage(double now, int storeIndex, out bool resetTimeout)
 		{
-			NetOutgoingMessage storedMessage = m_storedMessages[storeIndex].Message;
+			// reset timeout if we receive ack within kThreshold of sending it
+			const double kThreshold = 2.0;
+			var srm = m_storedMessages[storeIndex];
+			resetTimeout = (srm.NumSent == 1) && (now - srm.LastSent < kThreshold);
+
+			var storedMessage = srm.Message;
 
 			// on each destore; reduce recyclingcount so that when all instances are destored, the outgoing message can be recycled
 			Interlocked.Decrement(ref storedMessage.m_recyclingCount);
@@ -177,8 +182,9 @@ namespace Lidgren.Network
 				// ack arrived right on time
 				NetException.Assert(seqNr == m_windowStart);
 
+				bool resetTimeout;
 				m_receivedAcks[m_windowStart] = false;
-				DestoreMessage(m_windowStart % m_windowSize);
+				DestoreMessage(now, m_windowStart % m_windowSize, out resetTimeout);
 				m_windowStart = (m_windowStart + 1) % NetConstants.NumSequenceNumbers;
 
 				// advance window if we already have early acks
@@ -186,13 +192,16 @@ namespace Lidgren.Network
 				{
 					//m_connection.m_peer.LogDebug("Using early ack for #" + m_windowStart + "...");
 					m_receivedAcks[m_windowStart] = false;
-					DestoreMessage(m_windowStart % m_windowSize);
+					bool rt;
+					DestoreMessage(now, m_windowStart % m_windowSize, out rt);
+					resetTimeout |= rt;
 
 					NetException.Assert(m_storedMessages[m_windowStart % m_windowSize].Message == null); // should already be destored
 					m_windowStart = (m_windowStart + 1) % NetConstants.NumSequenceNumbers;
 					//m_connection.m_peer.LogDebug("Advancing window to #" + m_windowStart);
 				}
-
+				if (resetTimeout)
+					m_connection.ResetTimeout(now);
 				return;
 			}
 
