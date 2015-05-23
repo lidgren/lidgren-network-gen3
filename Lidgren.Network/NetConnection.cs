@@ -323,6 +323,9 @@ namespace Lidgren.Network
 				m_sendBufferNumMessages = 0;
 			}
 
+			if (m_sendBufferWritePtr > 0)
+				m_peer.m_needFlushSendQueue = true; // flush in heartbeat
+
 			Interlocked.Decrement(ref om.m_recyclingCount);
 		}
 
