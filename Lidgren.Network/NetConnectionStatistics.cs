@@ -45,6 +45,7 @@ namespace Lidgren.Network
 
 		internal long m_sentMessages;
 		internal long m_receivedMessages;
+		internal long m_droppedMessages;
 		internal long m_receivedFragments;
 
 		internal long m_sentBytes;
@@ -99,35 +100,20 @@ namespace Lidgren.Network
 
 		// public double LastSendRespondedTo { get { return m_connection.m_lastSendRespondedTo; } }
 
-#if USE_RELEASE_STATISTICS
-		internal void PacketSent(int numBytes, int numMessages)
-		{
-			NetException.Assert(numBytes > 0 && numMessages > 0);
-			m_sentPackets++;
-			m_sentBytes += numBytes;
-			m_sentMessages += numMessages;
-		}
-#else
+#if !USE_RELEASE_STATISTICS
 		[Conditional("DEBUG")]
-		internal void PacketSent(int numBytes, int numMessages)
-		{
-			NetException.Assert(numBytes > 0 && numMessages > 0);
-			m_sentPackets++;
-			m_sentBytes += numBytes;
-			m_sentMessages += numMessages;
-		}
 #endif
-
-#if USE_RELEASE_STATISTICS
-		internal void PacketReceived(int numBytes, int numMessages)
+		internal void PacketSent(int numBytes, int numMessages)
 		{
 			NetException.Assert(numBytes > 0 && numMessages > 0);
-			m_receivedPackets++;
-			m_receivedBytes += numBytes;
-			m_receivedMessages += numMessages;
+			m_sentPackets++;
+			m_sentBytes += numBytes;
+			m_sentMessages += numMessages;
 		}
-#else
+
+#if !USE_RELEASE_STATISTICS
 		[Conditional("DEBUG")]
+#endif
 		internal void PacketReceived(int numBytes, int numMessages, int numFragments)
 		{
 			NetException.Assert(numBytes > 0 && numMessages > 0);
@@ -136,18 +122,10 @@ namespace Lidgren.Network
 			m_receivedMessages += numMessages;
 			m_receivedFragments += numFragments;
 		}
-#endif
 
-#if USE_RELEASE_STATISTICS
-		internal void MessageResent(MessageResendReason reason)
-		{
-			if (reason == MessageResendReason.Delay)
-				m_resentMessagesDueToDelay++;
-			else
-				m_resentMessagesDueToHole++;
-		}
-#else
+#if !USE_RELEASE_STATISTICS
 		[Conditional("DEBUG")]
+#endif
 		internal void MessageResent(MessageResendReason reason)
 		{
 			if (reason == MessageResendReason.Delay)
@@ -155,7 +133,14 @@ namespace Lidgren.Network
 			else
 				m_resentMessagesDueToHole++;
 		}
+
+#if !USE_RELEASE_STATISTICS
+		[Conditional("DEBUG")]
 #endif
+		internal void MessageDropped()
+		{
+			m_droppedMessages++;
+		}
 
 		/// <summary>
 		/// Returns a string that represents this object
@@ -167,6 +152,7 @@ namespace Lidgren.Network
 			bdr.AppendLine("Current MTU: " + m_connection.m_currentMTU);
 			bdr.AppendLine("Sent " + m_sentBytes + " bytes in " + m_sentMessages + " messages in " + m_sentPackets + " packets");
 			bdr.AppendLine("Received " + m_receivedBytes + " bytes in " + m_receivedMessages + " messages (of which " + m_receivedFragments + " fragments) in " + m_receivedPackets + " packets");
+			bdr.AppendLine("Dropped " + m_droppedMessages + " messages (dupes/late/early)");
 
 			if (m_resentMessagesDueToDelay > 0)
 				bdr.AppendLine("Resent messages (delay): " + m_resentMessagesDueToDelay);

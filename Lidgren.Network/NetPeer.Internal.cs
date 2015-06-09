@@ -490,7 +490,8 @@ namespace Lidgren.Network
 					bool isFragment = ((low & 1) == 1);
 					ushort sequenceNumber = (ushort)((low >> 1) | (((int)high) << 7));
 
-					numFragments++;
+					if (isFragment)
+						numFragments++;
 
 					ushort payloadBitLength = (ushort)(m_receiveBuffer[ptr++] | (m_receiveBuffer[ptr++] << 8));
 					int payloadByteLength = NetUtility.BytesToHoldBits(payloadBitLength);
