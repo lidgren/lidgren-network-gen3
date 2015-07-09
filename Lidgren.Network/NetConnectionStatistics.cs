@@ -93,10 +93,25 @@ namespace Lidgren.Network
 		/// </summary>
 		public long ReceivedBytes { get { return m_receivedBytes; } }
 
+        /// <summary>
+        /// Gets the number of sent messages for this connection
+        /// </summary>
+        public long SentMessages { get { return m_sentMessages; } }
+
+        /// <summary>
+        /// Gets the number of received messages for this connection
+        /// </summary>
+        public long ReceivedMessages { get { return m_receivedMessages; } }
+
 		/// <summary>
 		/// Gets the number of resent reliable messages for this connection
 		/// </summary>
 		public long ResentMessages { get { return m_resentMessagesDueToHole + m_resentMessagesDueToDelay; } }
+
+        /// <summary>
+        /// Gets the number of dropped messages for this connection
+        /// </summary>
+        public long DroppedMessages { get { return m_droppedMessages; } }
 
 		// public double LastSendRespondedTo { get { return m_connection.m_lastSendRespondedTo; } }
 
