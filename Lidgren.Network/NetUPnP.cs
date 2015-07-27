@@ -71,6 +71,7 @@ namespace Lidgren.Network
 "MAN:\"ssdp:discover\"\r\n" +
 "MX:3\r\n\r\n";
 
+			m_discoveryResponseDeadline = NetTime.Now + 6.0; // arbitrarily chosen number, router gets 6 seconds to respond
 			m_status = UPnPStatus.Discovering;
 
 			byte[] arr = System.Text.Encoding.UTF8.GetBytes(str);
@@ -79,13 +80,15 @@ namespace Lidgren.Network
 			peer.Socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Broadcast, true);
 			peer.RawSend(arr, 0, arr.Length, new NetEndPoint(NetUtility.GetBroadcastAddress(), 1900));
 			peer.Socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Broadcast, false);
-
-			// allow some extra time for router to respond
-			NetUtility.Sleep(50);
-
-			m_discoveryResponseDeadline = NetTime.Now + 6.0; // arbitrarily chosen number, router gets 6 seconds to respond
-			m_status = UPnPStatus.Discovering;
 		}
+
+	    internal void CheckForDiscoveryTimeout()
+	    {
+	        if ((m_status != UPnPStatus.Discovering) || (NetTime.Now < m_discoveryResponseDeadline))
+                return;
+	        m_peer.LogDebug("UPnP discovery timed out");
+	        m_status = UPnPStatus.NotAvailable;
+	    }
 
 		internal void ExtractServiceUrl(string resp)
 		{

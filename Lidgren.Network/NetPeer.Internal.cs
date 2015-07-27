@@ -389,6 +389,9 @@ namespace Lidgren.Network
 				}
 			}
 
+            if (m_upnp != null)
+                m_upnp.CheckForDiscoveryTimeout();
+
 			//
 			// read from socket
 			//
