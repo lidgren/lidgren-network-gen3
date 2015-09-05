@@ -263,11 +263,12 @@ namespace Lidgren.Network
 			r.ContentType = "text/xml; charset=\"utf-8\"";
 			r.ContentLength = b.Length;
 			r.GetRequestStream().Write(b, 0, b.Length);
-			XmlDocument resp = new XmlDocument();
-			WebResponse wres = r.GetResponse();
-			Stream ress = wres.GetResponseStream();
-			resp.Load(ress);
-			return resp;
+			using (WebResponse wres = r.GetResponse()) {
+				XmlDocument resp = new XmlDocument();
+				Stream ress = wres.GetResponseStream();
+				resp.Load(ress);
+				return resp;
+			}
 		}
 	}
 }
