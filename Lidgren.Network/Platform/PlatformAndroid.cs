@@ -1,6 +1,7 @@
 ﻿#if __ANDROID__
 using System;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 using System.Net;
 
 namespace Lidgren.Network
