@@ -105,7 +105,14 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Gets the number of bytes in the recycled pool
 		/// </summary>
-		public int BytesInRecyclePool { get { return m_peer.m_storagePoolBytes; } }
+		public int BytesInRecyclePool
+		{
+			get
+			{
+				lock (m_peer.m_storagePool)
+					return m_peer.m_storagePoolBytes;
+			}
+		}
 
 #if !USE_RELEASE_STATISTICS
 		[Conditional("DEBUG")]

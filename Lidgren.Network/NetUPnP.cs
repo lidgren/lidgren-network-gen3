@@ -97,7 +97,9 @@ namespace Lidgren.Network
 			{
 #endif
 			XmlDocument desc = new XmlDocument();
-			desc.Load(WebRequest.Create(resp).GetResponse().GetResponseStream());
+			using (var response = WebRequest.Create(resp).GetResponse())
+				desc.Load(response.GetResponseStream());
+
 			XmlNamespaceManager nsMgr = new XmlNamespaceManager(desc.NameTable);
 			nsMgr.AddNamespace("tns", "urn:schemas-upnp-org:device-1-0");
 			XmlNode typen = desc.SelectSingleNode("//tns:device/tns:deviceType/text()", nsMgr);
@@ -263,11 +265,12 @@ namespace Lidgren.Network
 			r.ContentType = "text/xml; charset=\"utf-8\"";
 			r.ContentLength = b.Length;
 			r.GetRequestStream().Write(b, 0, b.Length);
-			XmlDocument resp = new XmlDocument();
-			WebResponse wres = r.GetResponse();
-			Stream ress = wres.GetResponseStream();
-			resp.Load(ress);
-			return resp;
+			using (WebResponse wres = r.GetResponse()) {
+				XmlDocument resp = new XmlDocument();
+				Stream ress = wres.GetResponseStream();
+				resp.Load(ress);
+				return resp;
+			}
 		}
 	}
 }

@@ -244,12 +244,20 @@ namespace Lidgren.Network
 			Recycle(msg);
 		}
 
+		static NetEndPoint GetNetEndPoint(string host, int port)
+		{
+			IPAddress address = NetUtility.Resolve(host);
+			if (address == null)
+				throw new NetException("Could not resolve host");
+			return new NetEndPoint(address, port);
+		}
+
 		/// <summary>
 		/// Create a connection to a remote endpoint
 		/// </summary>
 		public NetConnection Connect(string host, int port)
 		{
-			return Connect(new NetEndPoint(NetUtility.Resolve(host), port), null);
+			return Connect(GetNetEndPoint(host, port), null);
 		}
 
 		/// <summary>
@@ -257,7 +265,7 @@ namespace Lidgren.Network
 		/// </summary>
 		public NetConnection Connect(string host, int port, NetOutgoingMessage hailMessage)
 		{
-			return Connect(new NetEndPoint(NetUtility.Resolve(host), port), hailMessage);
+			return Connect(GetNetEndPoint(host, port), hailMessage);
 		}
 
 		/// <summary>
