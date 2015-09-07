@@ -232,18 +232,18 @@ namespace Lidgren.Network
 				foreach (var conn in m_connections)
 					if (conn != null)
 						list.Add(conn);
-
-				lock (m_handshakes)
-				{
-					foreach (var hs in m_handshakes.Values)
-						if (hs != null)
-							list.Add(hs);
-
-					// shut down connections
-					foreach (NetConnection conn in list)
-						conn.Shutdown(m_shutdownReason);
-				}
 			}
+
+			lock (m_handshakes)
+			{
+				foreach (var hs in m_handshakes.Values)
+					if (hs != null && list.Contains(hs) == false)
+						list.Add(hs);
+			}
+
+			// shut down connections
+			foreach (NetConnection conn in list)
+				conn.Shutdown(m_shutdownReason);
 
 			FlushDelayedPackets();
 
