@@ -13,6 +13,8 @@ namespace Lidgren.Network
 
 		internal int QueuedSendsCount { get { return m_queuedSends.Count; } }
 
+		internal virtual bool NeedToSendMessages() { return m_queuedSends.Count > 0; }
+
 		public int GetFreeWindowSlots()
 		{
 			return GetAllowedSends() - m_queuedSends.Count;
