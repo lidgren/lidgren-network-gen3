@@ -268,7 +268,7 @@ namespace Lidgren.Network
 					if (channel != null)
 					{
 						channel.SendQueuedMessages(now);
-						if (channel.QueuedSendsCount > 0)
+						if (channel.NeedToSendMessages())
 							m_peer.m_needFlushSendQueue = true; // failed to send all queued sends; likely a full window - need to try again
 					}
 					NetException.Assert(m_sendBufferWritePtr < 1 || m_sendBufferNumMessages > 0);

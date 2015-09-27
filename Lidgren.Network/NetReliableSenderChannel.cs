@@ -13,6 +13,8 @@ namespace Lidgren.Network
 		private int m_windowSize;
 		private int m_sendStart;
 
+		private bool m_anyStoredResends;
+
 		private NetBitVector m_receivedAcks;
 		internal NetStoredReliableMessage[] m_storedMessages;
 
@@ -20,12 +22,18 @@ namespace Lidgren.Network
 
 		internal override int WindowSize { get { return m_windowSize; } }
 
+		internal override bool NeedToSendMessages()
+		{
+			return base.NeedToSendMessages() || m_anyStoredResends;
+		}
+
 		internal NetReliableSenderChannel(NetConnection connection, int windowSize)
 		{
 			m_connection = connection;
 			m_windowSize = windowSize;
 			m_windowStart = 0;
 			m_sendStart = 0;
+			m_anyStoredResends = false;
 			m_receivedAcks = new NetBitVector(NetConstants.NumSequenceNumbers);
 			m_storedMessages = new NetStoredReliableMessage[m_windowSize];
 			m_queuedSends = new NetQueue<NetOutgoingMessage>(8);
@@ -44,6 +52,7 @@ namespace Lidgren.Network
 			m_receivedAcks.Clear();
 			for (int i = 0; i < m_storedMessages.Length; i++)
 				m_storedMessages[i].Reset();
+			m_anyStoredResends = false;
 			m_queuedSends.Clear();
 			m_windowStart = 0;
 			m_sendStart = 0;
@@ -64,12 +73,15 @@ namespace Lidgren.Network
 			//
 			// resends
 			//
+			m_anyStoredResends = false;
 			for (int i = 0; i < m_storedMessages.Length; i++)
 			{
 				var storedMsg = m_storedMessages[i];
 				NetOutgoingMessage om = storedMsg.Message;
 				if (om == null)
 					continue;
+
+				m_anyStoredResends = true;
 
 				double t = storedMsg.LastSent;
 				if (t > 0 && (now - t) > m_resendDelay)
@@ -131,6 +143,7 @@ namespace Lidgren.Network
 			m_storedMessages[storeIndex].Message = message;
 			m_storedMessages[storeIndex].LastSent = now;
 			m_storedMessages[storeIndex].SequenceNumber = seqNr;
+			m_anyStoredResends = true;
 
 			return;
 		}
