@@ -38,6 +38,8 @@ namespace Lidgren.Network
 	/// </summary>
 	public static partial class NetUtility
 	{
+		private static readonly bool IsMono = Type.GetType("Mono.Runtime") != null;
+
 		/// <summary>
 		/// Resolve endpoint callback
 		/// </summary>
