@@ -106,12 +106,23 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Creates a new message for sending and writes the provided string to it
 		/// </summary>
-		public NetOutgoingMessage CreateMessage(string content)
-		{
-			var om = CreateMessage(2 + content.Length); // fair guess
-			om.Write(content);
-			return om;
-		}
+	        public NetOutgoingMessage CreateMessage(string content)
+	        {
+	            NetOutgoingMessage om;
+	
+	            // Since this could be null.
+	            if (string.IsNullOrEmpty(content))
+	            {
+	                om = CreateMessage(1); // One byte for the internal variable-length zero byte.
+	            }
+	            else
+	            {
+	                om = CreateMessage(2 + content.Length); // Fair guess.
+	            }
+	
+	            om.Write(content);
+	            return om;
+	        }
 
 		/// <summary>
 		/// Creates a new message for sending
