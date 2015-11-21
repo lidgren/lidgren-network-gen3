@@ -585,6 +585,23 @@ namespace Lidgren.Network
 
 			return numBits;
 		}
+		
+	        /// <summary>
+	        /// Writes an integer with the least amount of bits need for the specified range
+	        /// Returns number of bits written
+	        /// </summary>
+	        public int WriteRangedInteger(long min, long max, long value)
+	        {
+	            NetException.Assert(value >= min && value <= max, "Value not within min/max range!");
+	
+	            ulong range = (ulong)(max - min);
+	            int numBits = NetUtility.BitsToHoldUInt64(range);
+	
+	            ulong rvalue = (ulong)(value - min);
+	            Write(rvalue, numBits);
+	
+	            return numBits;
+	        }
 
 		/// <summary>
 		/// Write a string
