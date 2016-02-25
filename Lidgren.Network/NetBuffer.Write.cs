@@ -102,6 +102,16 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
+		/// Writes a byte at a given offset in the buffer
+		/// </summary>
+		public void WriteAt(Int32 offset, byte source) {
+			int newBitLength = Math.Max(m_bitLength, offset + 8);
+			EnsureBufferSize(newBitLength);
+			NetBitWriter.WriteByte((byte) source, 8, m_data, offset);
+			m_bitLength = newBitLength;
+		}
+
+		/// <summary>
 		/// Writes a signed byte
 		/// </summary>
 		[CLSCompliant(false)]
