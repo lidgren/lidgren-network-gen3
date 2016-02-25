@@ -12,8 +12,6 @@ namespace Lidgren.Network
 		
 		static NetUtility()
 		{
-			s_randomMacBytes = new byte[8];
-			MWCRandom.Instance.NextBytes(s_randomMacBytes);
 		}
 
 		[CLSCompliant(false)]
@@ -50,6 +48,11 @@ namespace Lidgren.Network
 
 		public static byte[] GetMacAddressBytes()
 		{
+			if (s_randomMacBytes == null)
+			{
+				s_randomMacBytes = new byte[8];
+				MWCRandom.Instance.NextBytes(s_randomMacBytes);
+			}
 			return s_randomMacBytes;
 		}
 
