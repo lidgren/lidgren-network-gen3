@@ -138,6 +138,7 @@
     <Compile Include="NetUtility.cs" />
     <Compile Include="Platform\PlatformAndroid.cs" />
     <Compile Include="Platform\PlatformConstrained.cs" />
+    <Compile Include="Platform\PlatformUnityExtras.cs" />
     <Compile Include="Platform\PlatformWin32.cs" />
     <Compile Include="Platform\PlatformWinRT.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
