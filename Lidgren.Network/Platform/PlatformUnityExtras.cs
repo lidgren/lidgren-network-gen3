@@ -1,4 +1,4 @@
-﻿﻿#if UNITY
+﻿﻿﻿#if UNITY
 using UnityEngine;
 
 namespace Lidgren.Network
@@ -14,7 +14,7 @@ namespace Lidgren.Network
 		public Vector2 ReadVector2()
 		{
 			return new Vector2(
-				x: ReadSingle(), 
+				x: ReadSingle(),
 				y: ReadSingle());
 		}
 
