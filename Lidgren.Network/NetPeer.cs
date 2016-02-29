@@ -215,6 +215,17 @@ namespace Lidgren.Network
 			}
 			return retval;
 		}
+		
+        	/// <summary>
+	        /// Reads a pending message from any connection, if any.
+	        /// Returns true if message was read, otherwise false.
+	        /// </summary>
+	        /// <returns>True, if message was read.</returns>
+	        public bool ReadMessage(out NetIncomingMessage message)
+	        {
+	            message = ReadMessage();
+	            return message != null;
+	        }
 
 		/// <summary>
 		/// Read a pending message from any connection, if any
