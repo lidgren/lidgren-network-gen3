@@ -1,4 +1,4 @@
-﻿#if UNITY
+﻿﻿﻿#if UNITY
 using UnityEngine;
 
 namespace Lidgren.Network
@@ -11,9 +11,11 @@ namespace Lidgren.Network
 			Write(vector.y);
 		}
 
-		public static Vector2 ReadVector2()
+		public Vector2 ReadVector2()
 		{
-			return new Vector2(ReadSingle(), ReadSingle());
+			return new Vector2(
+				x: ReadSingle(),
+				y: ReadSingle());
 		}
 
 		public void Write(Vector3 vector)
