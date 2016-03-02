@@ -27,9 +27,9 @@ namespace Lidgren.Network
 		public static IPAddress GetMyAddress(out IPAddress mask)
 		{
 			mask = null;
+#if UNITY_ANDROID || UNITY_STANDALONE_OSX || UNITY_STANDALONE_WIN || UNITY_STANDALONE_LINUX || UNITY_IOS || UNITY
 			try
 			{
-#if UNITY_ANDROID || UNITY_STANDALONE_OSX || UNITY_STANDALONE_WIN || UNITY_STANDALONE_LINUX || UNITY_IOS || UNITY
 				if (!(UnityEngine.Application.internetReachability == UnityEngine.NetworkReachability.NotReachable))
 				{
 					return null;
