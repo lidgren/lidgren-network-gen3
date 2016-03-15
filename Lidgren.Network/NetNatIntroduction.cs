@@ -9,8 +9,10 @@ using NetEndPoint = System.Net.IPEndPoint;
 
 namespace Lidgren.Network
 {
-	public partial class NetPeer
-	{
+	public partial class NetPeer {
+		private const byte HostByte = 1;
+		private const byte ClientByte = 0;
+
 		/// <summary>
 		/// Send NetIntroduction to hostExternal and clientExternal; introducing client to host
 		/// </summary>
@@ -92,16 +94,61 @@ namespace Lidgren.Network
 		{
 			NetIncomingMessage tmp = SetupReadHelperMessage(ptr, 1000); // never mind length
 
-			byte fromHostByte = tmp.ReadByte();
-			if (fromHostByte == 0)
+			var isFromClient = tmp.ReadByte() == ClientByte;
+			string token = tmp.ReadString();
+			if (isFromClient)
 			{
-				// it's from client
-				LogDebug("NAT punch received from " + senderEndPoint + " we're host, so we ignore this");
-				return; // don't alert hosts about nat punch successes; only clients
+				LogDebug("NAT punch received from " + senderEndPoint + " we're host, so we send a NatIntroductionConfirmed message - token is " + token);
+
+				var confirmResponse = CreateMessage(1);
+				confirmResponse.m_messageType = NetMessageType.NatIntroductionConfirmed;
+				confirmResponse.Write(HostByte);
+				confirmResponse.Write(token);
+				Interlocked.Increment(ref confirmResponse.m_recyclingCount);
+				m_unsentUnconnectedMessages.Enqueue(new NetTuple<NetEndPoint, NetOutgoingMessage>(senderEndPoint, confirmResponse));
 			}
+			else
+			{
+				LogDebug("NAT punch received from " + senderEndPoint + " we're client, so we send a NatIntroductionConfirmRequest - token is " + token);
+
+				var confirmRequest = CreateMessage(1);
+				confirmRequest.m_messageType = NetMessageType.NatIntroductionConfirmRequest;
+				confirmRequest.Write(ClientByte);
+				confirmRequest.Write(token);
+				Interlocked.Increment(ref confirmRequest.m_recyclingCount);
+				m_unsentUnconnectedMessages.Enqueue(new NetTuple<NetEndPoint, NetOutgoingMessage>(senderEndPoint, confirmRequest));
+			}
+		}
+
+		private void HandleNatPunchConfirmRequest(int ptr, NetEndPoint senderEndPoint)
+		{
+			NetIncomingMessage tmp = SetupReadHelperMessage(ptr, 1000); // never mind length
+			var isFromClient = tmp.ReadByte() == ClientByte;
 			string token = tmp.ReadString();
 
-			LogDebug("NAT punch received from " + senderEndPoint + " we're client, so we've succeeded - token is " + token);
+			LogDebug("Received NAT punch confirmation from " + senderEndPoint + " sending NatIntroductionConfirmed - token is " + token);
+
+			var confirmResponse = CreateMessage(1);
+			confirmResponse.m_messageType = NetMessageType.NatIntroductionConfirmed;
+			confirmResponse.Write(isFromClient ? HostByte : ClientByte);
+			confirmResponse.Write(token);
+			Interlocked.Increment(ref confirmResponse.m_recyclingCount);
+			m_unsentUnconnectedMessages.Enqueue(new NetTuple<NetEndPoint, NetOutgoingMessage>(senderEndPoint, confirmResponse));
+		}
+
+		private void HandleNatPunchConfirmed(int ptr, NetEndPoint senderEndPoint)
+		{
+			NetIncomingMessage tmp = SetupReadHelperMessage(ptr, 1000); // never mind length
+			var isFromClient = tmp.ReadByte() == ClientByte;
+			if (isFromClient)
+			{
+				LogDebug("NAT punch confirmation received from " + senderEndPoint + " we're host, so we ignore this");
+				return;
+			}
+
+			string token = tmp.ReadString();
+
+			LogDebug("NAT punch confirmation received from " + senderEndPoint + " we're client so we go ahead and succeed the introduction");
 
 			//
 			// Release punch success to client; enabling him to Connect() to msg.Sender if token is ok
@@ -110,14 +157,6 @@ namespace Lidgren.Network
 			punchSuccess.m_senderEndPoint = senderEndPoint;
 			punchSuccess.Write(token);
 			ReleaseMessage(punchSuccess);
-
-			// send a return punch just for good measure
-			var punch = CreateMessage(1);
-			punch.m_messageType = NetMessageType.NatPunchMessage;
-			punch.Write((byte)0);
-			punch.Write(token);
-			Interlocked.Increment(ref punch.m_recyclingCount);
-			m_unsentUnconnectedMessages.Enqueue(new NetTuple<NetEndPoint, NetOutgoingMessage>(senderEndPoint, punch));
-		}
+	    }
 	}
 }
