@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Reflection;
 using System.Net;
+using System.Threading;
 
 #if !__NOIPENDPOINT__
 using NetEndPoint = System.Net.IPEndPoint;
@@ -16,6 +17,8 @@ namespace Lidgren.Network
 	public partial class NetBuffer
 	{
 		private const string c_readOverflowError = "Trying to read past the buffer size - likely caused by mismatching Write/Reads, different size or order.";
+
+		private static byte[] s_buffer;
 
 		/// <summary>
 		/// Reads a boolean value (stored as a single bit) written using Write(bool)
@@ -352,8 +355,11 @@ namespace Lidgren.Network
 				return retval;
 			}
 
-			byte[] bytes = ReadBytes(4);
-			return BitConverter.ToSingle(bytes, 0);
+			byte[] bytes = Interlocked.Exchange(ref s_buffer, null) ?? new byte[8];
+			ReadBytes(bytes, 0, 4);
+			float res = BitConverter.ToSingle(bytes, 0);
+			s_buffer = bytes;
+			return res;
 		}
 
 		/// <summary>
@@ -374,8 +380,10 @@ namespace Lidgren.Network
 				return true;
 			}
 
-			byte[] bytes = ReadBytes(4);
+			byte[] bytes = Interlocked.Exchange(ref s_buffer, null) ?? new byte[8];
+			ReadBytes(bytes, 0, 4);
 			result = BitConverter.ToSingle(bytes, 0);
+			s_buffer = bytes;
 			return true;
 		}
 
@@ -394,8 +402,11 @@ namespace Lidgren.Network
 				return retval;
 			}
 
-			byte[] bytes = ReadBytes(8);
-			return BitConverter.ToDouble(bytes, 0);
+			byte[] bytes = Interlocked.Exchange(ref s_buffer, null) ?? new byte[8];
+			ReadBytes(bytes, 0, 8);
+			double res = BitConverter.ToDouble(bytes, 0);
+			s_buffer = bytes;
+			return res;
 		}
 
 		//
