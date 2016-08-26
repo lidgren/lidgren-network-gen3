@@ -18,7 +18,7 @@ namespace Lidgren.Network
 	{
 		private const string c_readOverflowError = "Trying to read past the buffer size - likely caused by mismatching Write/Reads, different size or order.";
 		private const int c_bufferSize = 64; // Min 8 to hold anything but strings. Increase it if readed strings usally don't fit inside the buffer
-		private static byte[] s_buffer;
+		private static object s_buffer;
 
 		/// <summary>
 		/// Reads a boolean value (stored as a single bit) written using Write(bool)
@@ -355,7 +355,7 @@ namespace Lidgren.Network
 				return retval;
 			}
 
-			byte[] bytes = Interlocked.Exchange(ref s_buffer, null) ?? new byte[c_bufferSize];
+			byte[] bytes = (byte[]) Interlocked.Exchange(ref s_buffer, null) ?? new byte[c_bufferSize];
 			ReadBytes(bytes, 0, 4);
 			float res = BitConverter.ToSingle(bytes, 0);
 			s_buffer = bytes;
@@ -380,7 +380,7 @@ namespace Lidgren.Network
 				return true;
 			}
 
-			byte[] bytes = Interlocked.Exchange(ref s_buffer, null) ?? new byte[c_bufferSize];
+			byte[] bytes = (byte[]) Interlocked.Exchange(ref s_buffer, null) ?? new byte[c_bufferSize];
 			ReadBytes(bytes, 0, 4);
 			result = BitConverter.ToSingle(bytes, 0);
 			s_buffer = bytes;
@@ -402,7 +402,7 @@ namespace Lidgren.Network
 				return retval;
 			}
 
-			byte[] bytes = Interlocked.Exchange(ref s_buffer, null) ?? new byte[c_bufferSize];
+			byte[] bytes = (byte[]) Interlocked.Exchange(ref s_buffer, null) ?? new byte[c_bufferSize];
 			ReadBytes(bytes, 0, 8);
 			double res = BitConverter.ToDouble(bytes, 0);
 			s_buffer = bytes;
@@ -605,7 +605,7 @@ namespace Lidgren.Network
 			}
 
 			if (byteLen <= c_bufferSize) {
-				byte[] buffer = Interlocked.Exchange(ref s_buffer, null) ?? new byte[c_bufferSize];
+				byte[] buffer = (byte[]) Interlocked.Exchange(ref s_buffer, null) ?? new byte[c_bufferSize];
 				ReadBytes(buffer, 0, byteLen);
 				string retval = Encoding.UTF8.GetString(buffer, 0, byteLen);
 				s_buffer = buffer;
