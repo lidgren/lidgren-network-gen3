@@ -1,24 +1,22 @@
 ﻿<Properties StartupConfiguration="{6691874A-1766-4A08-A72A-B1132FAB8E58}|Default">
-  <MonoDevelop.Ide.Workbench ActiveDocument="Lidgren.Network/NetQueue.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Lidgren.Network/NetPeer.Internal.cs">
     <Files>
-      <File FileName="UnitTests/Program.cs" Line="15" Column="1" />
+      <File FileName="UnitTests/Program.cs" Line="12" Column="1" />
       <File FileName="Lidgren.Network/NetNatIntroduction.cs" Line="12" Column="27" />
-      <File FileName="Lidgren.Network/NetPeer.cs" Line="120" Column="1" />
-      <File FileName="Lidgren.Network/NetPeer.Internal.cs" Line="27" Column="1" />
+      <File FileName="Lidgren.Network/NetPeer.Internal.cs" Line="138" Column="37" />
       <File FileName="Lidgren.Network/NetPeerConfiguration.cs" Line="130" Column="1" />
       <File FileName="Lidgren.Network/NetPeer.LatencySimulation.cs" Line="38" Column="1" />
       <File FileName="Lidgren.Network/NetPeerStatistics.cs" Line="53" Column="1" />
-      <File FileName="Lidgren.Network/NetQueue.cs" Line="86" Column="1" />
+      <File FileName="Lidgren.Network/NetQueue.cs" Line="89" Column="1" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
-    <BreakpointStore>
-      <Breakpoint file="/Users/user/lidgren-network-gen3/UnitTests/Program.cs" relfile="UnitTests/Program.cs" line="12" column="4" />
-      <Breakpoint file="/Users/user/lidgren-network-gen3/Lidgren.Network/NetPeer.Internal.cs" relfile="Lidgren.Network/NetPeer.Internal.cs" line="111" column="1" />
-    </BreakpointStore>
+    <BreakpointStore />
   </MonoDevelop.Ide.DebuggingService.Breakpoints>
-  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches>
+    <Watch file="Lidgren.Network/NetPeer.Internal.cs" line="136" offsetX="581" offsetY="2025" expression="Environment.OSVersion.Platform" liveUpdate="False" />
+  </MonoDevelop.Ide.DebuggingService.PinnedWatches>
   <MultiItemStartupConfigurations />
   <MonoDevelop.Ide.ItemProperties.UnitTests PreferredExecutionTarget="MonoDevelop.Default" />
 </Properties>
