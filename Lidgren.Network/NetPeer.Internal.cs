@@ -140,9 +140,14 @@ namespace Lidgren.Network
 					uint SIO_UDP_CONNRESET = IOC_IN | IOC_VENDOR | 12;
 					m_socket.IOControl((int)SIO_UDP_CONNRESET, new byte[] { Convert.ToByte(false) }, null);
 				}
+                else
+                {
+                    LogDebug("Platform doesn't support SIO_UDP_CONNRESET");
+                }
 			}
 			catch (System.Exception e)
 			{
+                LogDebug("Platform doesn't support SIO_UDP_CONNRESET");
 				// this will be thrown on linux but not mac if it doesn't exist.
 				// ignore; SIO_UDP_CONNRESET not supported on this platform
 			}
