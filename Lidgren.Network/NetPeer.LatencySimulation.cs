@@ -141,7 +141,7 @@ namespace Lidgren.Network
 				ba = NetUtility.GetCachedBroadcastAddress();
 
 				// TODO: refactor this check outta here
-				if (target.Address == ba)
+				if (target.Address.Equals(ba))
 				{
 					// Some networks do not allow 
 					// a global broadcast so we use the BroadcastAddress from the configuration
