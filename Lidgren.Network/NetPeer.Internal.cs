@@ -69,7 +69,7 @@ namespace Lidgren.Network
 				return;
 
 			// remove all callbacks regardless of sync context
-            m_receiveCallbacks.RemoveAll(tuple => tuple.Item2.Equals(callback));
+			m_receiveCallbacks.RemoveAll(tuple => tuple.Item2.Equals(callback));
 
 			if (m_receiveCallbacks.Count < 1)
 				m_receiveCallbacks = null;
@@ -129,15 +129,26 @@ namespace Lidgren.Network
 			var ep = (EndPoint)new NetEndPoint(m_configuration.LocalAddress, reBind ? m_listenPort : m_configuration.Port);
 			m_socket.Bind(ep);
 
+			// try catch only works on linux not osx
 			try
 			{
-				const uint IOC_IN = 0x80000000;
-				const uint IOC_VENDOR = 0x18000000;
-				uint SIO_UDP_CONNRESET = IOC_IN | IOC_VENDOR | 12;
-				m_socket.IOControl((int)SIO_UDP_CONNRESET, new byte[] { Convert.ToByte(false) }, null);
+				// this is not supported in mono / mac or linux yet.
+				if(Environment.OSVersion.Platform != PlatformID.Unix)
+				{
+					const uint IOC_IN = 0x80000000;
+					const uint IOC_VENDOR = 0x18000000;
+					uint SIO_UDP_CONNRESET = IOC_IN | IOC_VENDOR | 12;
+					m_socket.IOControl((int)SIO_UDP_CONNRESET, new byte[] { Convert.ToByte(false) }, null);
+				}
+                else
+                {
+                    LogDebug("Platform doesn't support SIO_UDP_CONNRESET");
+                }
 			}
-			catch
+			catch (System.Exception e)
 			{
+                LogDebug("Platform doesn't support SIO_UDP_CONNRESET");
+				// this will be thrown on linux but not mac if it doesn't exist.
 				// ignore; SIO_UDP_CONNRESET not supported on this platform
 			}
 
