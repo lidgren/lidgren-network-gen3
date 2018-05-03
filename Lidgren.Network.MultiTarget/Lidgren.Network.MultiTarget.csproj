@@ -1,0 +1,85 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net40;net45;net46;net461;net462;netstandard2.0</TargetFrameworks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Lidgren.Network\Encryption\NetAESEncryption.cs" Link="Encryption\NetAESEncryption.cs" />
+    <Compile Include="..\Lidgren.Network\Encryption\NetBlockEncryptionBase.cs" Link="Encryption\NetBlockEncryptionBase.cs" />
+    <Compile Include="..\Lidgren.Network\Encryption\NetCryptoProviderBase.cs" Link="Encryption\NetCryptoProviderBase.cs" />
+    <Compile Include="..\Lidgren.Network\Encryption\NetCryptoProviderEncryption.cs" Link="Encryption\NetCryptoProviderEncryption.cs" />
+    <Compile Include="..\Lidgren.Network\Encryption\NetDESEncryption.cs" Link="Encryption\NetDESEncryption.cs" />
+    <Compile Include="..\Lidgren.Network\Encryption\NetEncryption.cs" Link="Encryption\NetEncryption.cs" />
+    <Compile Include="..\Lidgren.Network\Encryption\NetRC2Encryption.cs" Link="Encryption\NetRC2Encryption.cs" />
+    <Compile Include="..\Lidgren.Network\Encryption\NetTripleDESEncryption.cs" Link="Encryption\NetTripleDESEncryption.cs" />
+    <Compile Include="..\Lidgren.Network\Encryption\NetXorEncryption.cs" Link="Encryption\NetXorEncryption.cs" />
+    <Compile Include="..\Lidgren.Network\Encryption\NetXteaEncryption.cs" Link="Encryption\NetXteaEncryption.cs" />
+    <Compile Include="..\Lidgren.Network\NamespaceDoc.cs" Link="NamespaceDoc.cs" />
+    <Compile Include="..\Lidgren.Network\NetBigInteger.cs" Link="NetBigInteger.cs" />
+    <Compile Include="..\Lidgren.Network\NetBitVector.cs" Link="NetBitVector.cs" />
+    <Compile Include="..\Lidgren.Network\NetBitWriter.cs" Link="NetBitWriter.cs" />
+    <Compile Include="..\Lidgren.Network\NetBuffer.cs" Link="NetBuffer.cs" />
+    <Compile Include="..\Lidgren.Network\NetBuffer.Peek.cs" Link="NetBuffer.Peek.cs" />
+    <Compile Include="..\Lidgren.Network\NetBuffer.Read.cs" Link="NetBuffer.Read.cs" />
+    <Compile Include="..\Lidgren.Network\NetBuffer.Read.Reflection.cs" Link="NetBuffer.Read.Reflection.cs" />
+    <Compile Include="..\Lidgren.Network\NetBuffer.Write.cs" Link="NetBuffer.Write.cs" />
+    <Compile Include="..\Lidgren.Network\NetBuffer.Write.Reflection.cs" Link="NetBuffer.Write.Reflection.cs" />
+    <Compile Include="..\Lidgren.Network\NetClient.cs" Link="NetClient.cs" />
+    <Compile Include="..\Lidgren.Network\NetConnection.cs" Link="NetConnection.cs" />
+    <Compile Include="..\Lidgren.Network\NetConnection.Handshake.cs" Link="NetConnection.Handshake.cs" />
+    <Compile Include="..\Lidgren.Network\NetConnection.Latency.cs" Link="NetConnection.Latency.cs" />
+    <Compile Include="..\Lidgren.Network\NetConnection.MTU.cs" Link="NetConnection.MTU.cs" />
+    <Compile Include="..\Lidgren.Network\NetConnectionStatistics.cs" Link="NetConnectionStatistics.cs" />
+    <Compile Include="..\Lidgren.Network\NetConnectionStatus.cs" Link="NetConnectionStatus.cs" />
+    <Compile Include="..\Lidgren.Network\NetConstants.cs" Link="NetConstants.cs" />
+    <Compile Include="..\Lidgren.Network\NetDeliveryMethod.cs" Link="NetDeliveryMethod.cs" />
+    <Compile Include="..\Lidgren.Network\NetException.cs" Link="NetException.cs" />
+    <Compile Include="..\Lidgren.Network\NetFragmentationHelper.cs" Link="NetFragmentationHelper.cs" />
+    <Compile Include="..\Lidgren.Network\NetFragmentationInfo.cs" Link="NetFragmentationInfo.cs" />
+    <Compile Include="..\Lidgren.Network\NetIncomingMessage.cs" Link="NetIncomingMessage.cs" />
+    <Compile Include="..\Lidgren.Network\NetIncomingMessageType.cs" Link="NetIncomingMessageType.cs" />
+    <Compile Include="..\Lidgren.Network\NetMessageType.cs" Link="NetMessageType.cs" />
+    <Compile Include="..\Lidgren.Network\NetNatIntroduction.cs" Link="NetNatIntroduction.cs" />
+    <Compile Include="..\Lidgren.Network\NetOutgoingMessage.cs" Link="NetOutgoingMessage.cs" />
+    <Compile Include="..\Lidgren.Network\NetPeer.cs" Link="NetPeer.cs" />
+    <Compile Include="..\Lidgren.Network\NetPeer.Discovery.cs" Link="NetPeer.Discovery.cs" />
+    <Compile Include="..\Lidgren.Network\NetPeer.Fragmentation.cs" Link="NetPeer.Fragmentation.cs" />
+    <Compile Include="..\Lidgren.Network\NetPeer.Internal.cs" Link="NetPeer.Internal.cs" />
+    <Compile Include="..\Lidgren.Network\NetPeer.LatencySimulation.cs" Link="NetPeer.LatencySimulation.cs" />
+    <Compile Include="..\Lidgren.Network\NetPeer.Logging.cs" Link="NetPeer.Logging.cs" />
+    <Compile Include="..\Lidgren.Network\NetPeer.MessagePools.cs" Link="NetPeer.MessagePools.cs" />
+    <Compile Include="..\Lidgren.Network\NetPeer.Send.cs" Link="NetPeer.Send.cs" />
+    <Compile Include="..\Lidgren.Network\NetPeerConfiguration.cs" Link="NetPeerConfiguration.cs" />
+    <Compile Include="..\Lidgren.Network\NetPeerStatistics.cs" Link="NetPeerStatistics.cs" />
+    <Compile Include="..\Lidgren.Network\NetPeerStatus.cs" Link="NetPeerStatus.cs" />
+    <Compile Include="..\Lidgren.Network\NetQueue.cs" Link="NetQueue.cs" />
+    <Compile Include="..\Lidgren.Network\NetRandom.cs" Link="NetRandom.cs" />
+    <Compile Include="..\Lidgren.Network\NetRandom.Implementations.cs" Link="NetRandom.Implementations.cs" />
+    <Compile Include="..\Lidgren.Network\NetRandomSeed.cs" Link="NetRandomSeed.cs" />
+    <Compile Include="..\Lidgren.Network\NetReceiverChannelBase.cs" Link="NetReceiverChannelBase.cs" />
+    <Compile Include="..\Lidgren.Network\NetReliableOrderedReceiver.cs" Link="NetReliableOrderedReceiver.cs" />
+    <Compile Include="..\Lidgren.Network\NetReliableSenderChannel.cs" Link="NetReliableSenderChannel.cs" />
+    <Compile Include="..\Lidgren.Network\NetReliableSequencedReceiver.cs" Link="NetReliableSequencedReceiver.cs" />
+    <Compile Include="..\Lidgren.Network\NetReliableUnorderedReceiver.cs" Link="NetReliableUnorderedReceiver.cs" />
+    <Compile Include="..\Lidgren.Network\NetSenderChannelBase.cs" Link="NetSenderChannelBase.cs" />
+    <Compile Include="..\Lidgren.Network\NetSendResult.cs" Link="NetSendResult.cs" />
+    <Compile Include="..\Lidgren.Network\NetServer.cs" Link="NetServer.cs" />
+    <Compile Include="..\Lidgren.Network\NetSRP.cs" Link="NetSRP.cs" />
+    <Compile Include="..\Lidgren.Network\NetStoredReliableMessage.cs" Link="NetStoredReliableMessage.cs" />
+    <Compile Include="..\Lidgren.Network\NetTime.cs" Link="NetTime.cs" />
+    <Compile Include="..\Lidgren.Network\NetTuple.cs" Link="NetTuple.cs" />
+    <Compile Include="..\Lidgren.Network\NetUnreliableSenderChannel.cs" Link="NetUnreliableSenderChannel.cs" />
+    <Compile Include="..\Lidgren.Network\NetUnreliableSequencedReceiver.cs" Link="NetUnreliableSequencedReceiver.cs" />
+    <Compile Include="..\Lidgren.Network\NetUnreliableUnorderedReceiver.cs" Link="NetUnreliableUnorderedReceiver.cs" />
+    <Compile Include="..\Lidgren.Network\NetUPnP.cs" Link="NetUPnP.cs" />
+    <Compile Include="..\Lidgren.Network\NetUtility.cs" Link="NetUtility.cs" />
+    <Compile Include="..\Lidgren.Network\Platform\PlatformWin32.cs" Link="Platform\PlatformWin32.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Encryption\" />
+    <Folder Include="Platform\" />
+  </ItemGroup>
+
+</Project>

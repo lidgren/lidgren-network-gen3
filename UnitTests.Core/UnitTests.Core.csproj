@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\UnitTests\BitVectorTests.cs" Link="BitVectorTests.cs" />
+    <Compile Include="..\UnitTests\EncryptionTests.cs" Link="EncryptionTests.cs" />
+    <Compile Include="..\UnitTests\MiscTests.cs" Link="MiscTests.cs" />
+    <Compile Include="..\UnitTests\NetQueueTests.cs" Link="NetQueueTests.cs" />
+    <Compile Include="..\UnitTests\Program.cs" Link="Program.cs" />
+    <Compile Include="..\UnitTests\ReadWriteTests.cs" Link="ReadWriteTests.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Lidgren.Network.MultiTarget\Lidgren.Network.MultiTarget.csproj" />
+  </ItemGroup>
+
+</Project>
