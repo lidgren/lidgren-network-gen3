@@ -36,6 +36,25 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
+		/// Send a message to all connections
+		/// </summary>
+		/// <param name="msg">The message to send</param>
+		/// <param name="method">How to deliver the message</param>
+		/// <param name="sequenceChannel">Which sequence channel to use for the message</param>
+		public void SendToAll(NetOutgoingMessage msg, NetDeliveryMethod method, int sequenceChannel)
+		{
+			// Modifying m_connections will modify the list of the connections of the NetPeer. Do only reads here
+			var all = m_connections;
+			if (all.Count <= 0) {
+				if (msg.m_isSent == false)
+					Recycle(msg);
+				return;
+			}
+
+			SendMessage(msg, all, method, sequenceChannel);
+		}
+
+		/// <summary>
 		/// Send a message to all connections except one
 		/// </summary>
 		/// <param name="msg">The message to send</param>
