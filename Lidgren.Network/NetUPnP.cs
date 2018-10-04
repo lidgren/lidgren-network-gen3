@@ -160,77 +160,84 @@ namespace Lidgren.Network
 					return false;
 			}
 			return false;
-		}
+        }
 
-		/// <summary>
-		/// Add a forwarding rule to the router using UPnP
-		/// </summary>
-		public bool ForwardPort(int port, string description)
-		{
-			if (!CheckAvailability())
-				return false;
+        /// <summary>
+        /// Add a forwarding rule to the router using UPnP
+        /// </summary>
+        /// <param name="externalPort">The external, WAN facing, port</param>
+        /// <param name="description">A description for the port forwarding rule</param>
+        /// <param name="internalPort">The port on the client machine to send traffic to</param>
+        public bool ForwardPort(int externalPort, string description, int internalPort = 0)
+        {
+            if (!CheckAvailability())
+                return false;
 
-			IPAddress mask;
-			var client = NetUtility.GetMyAddress(out mask);
-			if (client == null)
-				return false;
+            IPAddress mask;
+            var client = NetUtility.GetMyAddress(out mask);
+            if (client == null)
+                return false;
 
-			try
-			{
-				SOAPRequest(m_serviceUrl,
-					"<u:AddPortMapping xmlns:u=\"urn:schemas-upnp-org:service:" + m_serviceName + ":1\">" +
-					"<NewRemoteHost></NewRemoteHost>" +
-					"<NewExternalPort>" + port.ToString() + "</NewExternalPort>" +
-					"<NewProtocol>" + ProtocolType.Udp.ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) + "</NewProtocol>" +
-					"<NewInternalPort>" + port.ToString() + "</NewInternalPort>" +
-					"<NewInternalClient>" + client.ToString() + "</NewInternalClient>" +
-					"<NewEnabled>1</NewEnabled>" +
-					"<NewPortMappingDescription>" + description + "</NewPortMappingDescription>" +
-					"<NewLeaseDuration>0</NewLeaseDuration>" +
-					"</u:AddPortMapping>",
-					"AddPortMapping");
+            if (internalPort == 0)
+                internalPort = externalPort;
 
-				m_peer.LogDebug("Sent UPnP port forward request");
-				NetUtility.Sleep(50);
-			}
-			catch (Exception ex)
-			{
-				m_peer.LogWarning("UPnP port forward failed: " + ex.Message);
-				return false;
-			}
-			return true;
-		}
+            try
+            {
+                SOAPRequest(m_serviceUrl,
+                    "<u:AddPortMapping xmlns:u=\"urn:schemas-upnp-org:service:" + m_serviceName + ":1\">" +
+                    "<NewRemoteHost></NewRemoteHost>" +
+                    "<NewExternalPort>" + externalPort.ToString() + "</NewExternalPort>" +
+                    "<NewProtocol>" + ProtocolType.Udp.ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) + "</NewProtocol>" +
+                    "<NewInternalPort>" + internalPort.ToString() + "</NewInternalPort>" +
+                    "<NewInternalClient>" + client.ToString() + "</NewInternalClient>" +
+                    "<NewEnabled>1</NewEnabled>" +
+                    "<NewPortMappingDescription>" + description + "</NewPortMappingDescription>" +
+                    "<NewLeaseDuration>0</NewLeaseDuration>" +
+                    "</u:AddPortMapping>",
+                    "AddPortMapping");
 
-		/// <summary>
-		/// Delete a forwarding rule from the router using UPnP
-		/// </summary>
-		public bool DeleteForwardingRule(int port)
-		{
-			if (!CheckAvailability())
-				return false;
+                m_peer.LogDebug("Sent UPnP port forward request");
+                NetUtility.Sleep(50);
+            }
+            catch (Exception ex)
+            {
+                m_peer.LogWarning("UPnP port forward failed: " + ex.Message);
+                return false;
+            }
+            return true;
+        }
 
-			try
-			{
-				SOAPRequest(m_serviceUrl,
-				"<u:DeletePortMapping xmlns:u=\"urn:schemas-upnp-org:service:" + m_serviceName + ":1\">" +
-				"<NewRemoteHost>" +
-				"</NewRemoteHost>" +
-				"<NewExternalPort>" + port + "</NewExternalPort>" +
-				"<NewProtocol>" + ProtocolType.Udp.ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) + "</NewProtocol>" +
-				"</u:DeletePortMapping>", "DeletePortMapping");
-				return true;
-			}
-			catch (Exception ex)
-			{
-				m_peer.LogWarning("UPnP delete forwarding rule failed: " + ex.Message);
-				return false;
-			}
-		}
+        /// <summary>
+        /// Delete a forwarding rule from the router using UPnP
+        /// </summary>
+        /// <param name="externalPort">The external, 'internet facing', port</param>
+        public bool DeleteForwardingRule(int externalPort)
+        {
+            if (!CheckAvailability())
+                return false;
 
-		/// <summary>
-		/// Retrieve the extern ip using UPnP
-		/// </summary>
-		public IPAddress GetExternalIP()
+            try
+            {
+                SOAPRequest(m_serviceUrl,
+                "<u:DeletePortMapping xmlns:u=\"urn:schemas-upnp-org:service:" + m_serviceName + ":1\">" +
+                "<NewRemoteHost>" +
+                "</NewRemoteHost>" +
+                "<NewExternalPort>" + externalPort + "</NewExternalPort>" +
+                "<NewProtocol>" + ProtocolType.Udp.ToString().ToUpper(System.Globalization.CultureInfo.InvariantCulture) + "</NewProtocol>" +
+                "</u:DeletePortMapping>", "DeletePortMapping");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                m_peer.LogWarning("UPnP delete forwarding rule failed: " + ex.Message);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Retrieve the extern ip using UPnP
+        /// </summary>
+        public IPAddress GetExternalIP()
 		{
 			if (!CheckAvailability())
 				return null;
