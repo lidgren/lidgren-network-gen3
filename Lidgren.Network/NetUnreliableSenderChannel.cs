@@ -35,7 +35,7 @@ namespace Lidgren.Network
 		internal override int GetAllowedSends()
 		{
 			if (!m_doFlowControl)
-				return 2; // always allowed to send without flow control!
+				return int.MaxValue; // always allowed to send without flow control!
 			int retval = m_windowSize - ((m_sendStart + NetConstants.NumSequenceNumbers) - m_windowStart) % m_windowSize;
 			NetException.Assert(retval >= 0 && retval <= m_windowSize);
 			return retval;
