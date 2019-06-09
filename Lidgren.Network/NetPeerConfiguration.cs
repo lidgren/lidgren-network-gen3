@@ -48,6 +48,8 @@ namespace Lidgren.Network
 		private string m_networkThreadName;
 		private IPAddress m_localAddress;
 		private IPAddress m_broadcastAddress;
+        private bool m_dualStack;
+
 		internal bool m_acceptIncomingConnections;
 		internal int m_maximumConnections;
 		internal int m_defaultOutgoingMessageCapacity;
@@ -341,10 +343,24 @@ namespace Lidgren.Network
 			}
 		}
 
-		/// <summary>
-		/// Gets or sets the local broadcast address to use when broadcasting
-		/// </summary>
-		public IPAddress BroadcastAddress
+        /// <summary>
+        /// Gets or sets a value indicating whether the library should use IPv6 dual stack mode
+        /// </summary>
+        public bool DualStack
+        {
+            get { return m_dualStack;  }
+            set
+            {
+                if (m_isLocked)
+                    throw new NetException(c_isLockedMessage);
+                m_dualStack = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the local broadcast address to use when broadcasting
+        /// </summary>
+        public IPAddress BroadcastAddress
 		{
 			get { return m_broadcastAddress; }
 			set
