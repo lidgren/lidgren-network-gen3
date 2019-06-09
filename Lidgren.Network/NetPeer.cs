@@ -121,7 +121,7 @@ namespace Lidgren.Network
 			m_connections = new List<NetConnection>();
 			m_connectionLookup = new Dictionary<NetEndPoint, NetConnection>();
 			m_handshakes = new Dictionary<NetEndPoint, NetConnection>();
-			m_senderRemote = (EndPoint)new NetEndPoint(IPAddress.Any, 0);
+			m_senderRemote = (EndPoint)new NetEndPoint(IPAddress.IPv6Any, 0);
 			m_status = NetPeerStatus.NotRunning;
 			m_receivedFragmentGroups = new Dictionary<NetConnection, Dictionary<int, ReceivedFragmentGroup>>();	
 		}
@@ -303,6 +303,8 @@ namespace Lidgren.Network
 		{
 			if (remoteEndPoint == null)
 				throw new ArgumentNullException("remoteEndPoint");
+            if(m_configuration.DualStack)
+                remoteEndPoint = NetUtility.MapToIPv6(remoteEndPoint);
 
 			lock (m_connections)
 			{

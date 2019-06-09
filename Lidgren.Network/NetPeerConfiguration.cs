@@ -48,6 +48,8 @@ namespace Lidgren.Network
 		private string m_networkThreadName;
 		private IPAddress m_localAddress;
 		private IPAddress m_broadcastAddress;
+        private bool m_dualStack;
+
 		internal bool m_acceptIncomingConnections;
 		internal int m_maximumConnections;
 		internal int m_defaultOutgoingMessageCapacity;
@@ -93,7 +95,7 @@ namespace Lidgren.Network
 			//
 			m_disabledTypes = NetIncomingMessageType.ConnectionApproval | NetIncomingMessageType.UnconnectedData | NetIncomingMessageType.VerboseDebugMessage | NetIncomingMessageType.ConnectionLatencyUpdated | NetIncomingMessageType.NatIntroductionSuccess;
 			m_networkThreadName = "Lidgren network thread";
-			m_localAddress = IPAddress.Any;
+			m_localAddress = IPAddress.IPv6Any;
 			m_broadcastAddress = IPAddress.Broadcast;
 			var ip = NetUtility.GetBroadcastAddress();
 			if (ip != null)
@@ -328,7 +330,7 @@ namespace Lidgren.Network
 		}
 
 		/// <summary>
-		/// Gets or sets the local ip address to bind to. Defaults to IPAddress.Any. Cannot be changed once NetPeer is initialized.
+		/// Gets or sets the local ip address to bind to. Defaults to IPAddress.IPv6Any. Cannot be changed once NetPeer is initialized.
 		/// </summary>
 		public IPAddress LocalAddress
 		{
@@ -341,10 +343,24 @@ namespace Lidgren.Network
 			}
 		}
 
-		/// <summary>
-		/// Gets or sets the local broadcast address to use when broadcasting
-		/// </summary>
-		public IPAddress BroadcastAddress
+        /// <summary>
+        /// Gets or sets a value indicating whether the library should use IPv6 dual stack mode
+        /// </summary>
+        public bool DualStack
+        {
+            get { return m_dualStack;  }
+            set
+            {
+                if (m_isLocked)
+                    throw new NetException(c_isLockedMessage);
+                m_dualStack = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the local broadcast address to use when broadcasting
+        /// </summary>
+        public IPAddress BroadcastAddress
 		{
 			get { return m_broadcastAddress; }
 			set
