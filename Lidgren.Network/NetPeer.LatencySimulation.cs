@@ -155,6 +155,11 @@ namespace Lidgren.Network
                 }
                 else if(m_configuration.DualStack && m_configuration.LocalAddress.AddressFamily == AddressFamily.InterNetworkV6)
                     NetUtility.CopyEndpoint(target, targetCopy); //Maps to IPv6 for Dual Mode
+                else
+                {
+	                targetCopy.Port = target.Port;
+	                targetCopy.Address = target.Address;
+                }
 
                 int bytesSent = m_socket.SendTo(data, 0, numBytes, SocketFlags.None, targetCopy);
 				if (numBytes != bytesSent)
