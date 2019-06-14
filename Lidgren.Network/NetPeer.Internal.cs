@@ -135,7 +135,11 @@ namespace Lidgren.Network
                     if(m_configuration.DualStack && m_configuration.LocalAddress.AddressFamily == AddressFamily.InterNetworkV6)
                         m_socket.DualMode = true;
 
-					var ep = (EndPoint)new NetEndPoint(m_configuration.LocalAddress.MapToIPv6(), reBind ? m_listenPort : m_configuration.Port);
+                    var localAddress = m_configuration.DualStack
+                        ? m_configuration.LocalAddress.MapToIPv6()
+                        : m_configuration.LocalAddress;
+
+                    var ep = (EndPoint)new NetEndPoint(localAddress, reBind ? m_listenPort : m_configuration.Port);
 					m_socket.Bind(ep);
 
 					try
