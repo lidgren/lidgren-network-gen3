@@ -189,7 +189,7 @@ namespace Lidgren.Network
 					return null;
 				foreach (var address in addresses)
 				{
-					if (address.AddressFamily == AddressFamily.InterNetwork || ipAddress.AddressFamily == AddressFamily.InterNetworkV6)
+					if (address.AddressFamily == AddressFamily.InterNetwork || address.AddressFamily == AddressFamily.InterNetworkV6)
 						return address;
 				}
 				return null;
