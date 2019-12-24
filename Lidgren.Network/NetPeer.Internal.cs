@@ -419,172 +419,175 @@ namespace Lidgren.Network
 			// update now
 			now = NetTime.Now;
 
-			do
+            try
+            {
+		        do
+                {
+                    ReceiveSocketData(now);
+                } while (m_socket.Available > 0);
+            }
+            catch (SocketException sx)
+            {
+                switch (sx.SocketErrorCode)
+                {
+                    case SocketError.ConnectionReset:
+                        // connection reset by peer, aka connection forcibly closed aka "ICMP port unreachable"
+                        // we should shut down the connection; but m_senderRemote seemingly cannot be trusted, so which connection should we shut down?!
+                        // So, what to do?
+                        LogWarning("ConnectionReset");
+                        return;
+
+                    case SocketError.NotConnected:
+                        // socket is unbound; try to rebind it (happens on mobile when process goes to sleep)
+                        BindSocket(true);
+                        return;
+
+                    default:
+                        LogWarning("Socket exception: " + sx.ToString());
+                        return;
+                }
+            }
+		}
+
+        private void ReceiveSocketData(double now)
+        {
+            int bytesReceived = m_socket.ReceiveFrom(m_receiveBuffer, 0, m_receiveBuffer.Length, SocketFlags.None, ref m_senderRemote);
+
+			if (bytesReceived < NetConstants.HeaderByteSize)
+				return;
+
+			//LogVerbose("Received " + bytesReceived + " bytes");
+
+			var ipsender = (NetEndPoint)m_senderRemote;
+
+			if (m_upnp != null && now < m_upnp.m_discoveryResponseDeadline && bytesReceived > 32)
 			{
-				int bytesReceived = 0;
-				try
+				// is this an UPnP response?
+				string resp = System.Text.Encoding.UTF8.GetString(m_receiveBuffer, 0, bytesReceived);
+				if (resp.Contains("upnp:rootdevice") || resp.Contains("UPnP/1.0"))
 				{
-					bytesReceived = m_socket.ReceiveFrom(m_receiveBuffer, 0, m_receiveBuffer.Length, SocketFlags.None, ref m_senderRemote);
-				}
-				catch (SocketException sx)
-				{
-					switch (sx.SocketErrorCode)
-					{
-						case SocketError.ConnectionReset:
-							// connection reset by peer, aka connection forcibly closed aka "ICMP port unreachable"
-							// we should shut down the connection; but m_senderRemote seemingly cannot be trusted, so which connection should we shut down?!
-							// So, what to do?
-							LogWarning("ConnectionReset");
-							return;
-
-						case SocketError.NotConnected:
-							// socket is unbound; try to rebind it (happens on mobile when process goes to sleep)
-							BindSocket(true);
-							return;
-
-						default:
-							LogWarning("Socket exception: " + sx.ToString());
-							return;
-					}
-				}
-
-				if (bytesReceived < NetConstants.HeaderByteSize)
-					return;
-
-				//LogVerbose("Received " + bytesReceived + " bytes");
-
-				var ipsender = (NetEndPoint)m_senderRemote;
-
-				if (m_upnp != null && now < m_upnp.m_discoveryResponseDeadline && bytesReceived > 32)
-				{
-					// is this an UPnP response?
-					string resp = System.Text.Encoding.UTF8.GetString(m_receiveBuffer, 0, bytesReceived);
-					if (resp.Contains("upnp:rootdevice") || resp.Contains("UPnP/1.0"))
-					{
-						try
-						{
-							resp = resp.Substring(resp.ToLower().IndexOf("location:") + 9);
-							resp = resp.Substring(0, resp.IndexOf("\r")).Trim();
-							m_upnp.ExtractServiceUrl(resp);
-							return;
-						}
-						catch (Exception ex)
-						{
-							LogDebug("Failed to parse UPnP response: " + ex.ToString());
-
-							// don't try to parse this packet further
-							return;
-						}
-					}
-				}
-
-				NetConnection sender = null;
-				m_connectionLookup.TryGetValue(ipsender, out sender);
-
-				//
-				// parse packet into messages
-				//
-				int numMessages = 0;
-				int numFragments = 0;
-				int ptr = 0;
-				while ((bytesReceived - ptr) >= NetConstants.HeaderByteSize)
-				{
-					// decode header
-					//  8 bits - NetMessageType
-					//  1 bit  - Fragment?
-					// 15 bits - Sequence number
-					// 16 bits - Payload length in bits
-
-					numMessages++;
-
-					NetMessageType tp = (NetMessageType)m_receiveBuffer[ptr++];
-
-					byte low = m_receiveBuffer[ptr++];
-					byte high = m_receiveBuffer[ptr++];
-
-					bool isFragment = ((low & 1) == 1);
-					ushort sequenceNumber = (ushort)((low >> 1) | (((int)high) << 7));
-
-					if (isFragment)
-						numFragments++;
-
-					ushort payloadBitLength = (ushort)(m_receiveBuffer[ptr++] | (m_receiveBuffer[ptr++] << 8));
-					int payloadByteLength = NetUtility.BytesToHoldBits(payloadBitLength);
-
-					if (bytesReceived - ptr < payloadByteLength)
-					{
-						LogWarning("Malformed packet; stated payload length " + payloadByteLength + ", remaining bytes " + (bytesReceived - ptr));
-						return;
-					}
-
-					if (tp >= NetMessageType.Unused1 && tp <= NetMessageType.Unused29)
-					{
-						ThrowOrLog("Unexpected NetMessageType: " + tp);
-						return;
-					}
-
 					try
 					{
-						if (tp >= NetMessageType.LibraryError)
-						{
-							if (sender != null)
-								sender.ReceivedLibraryMessage(tp, ptr, payloadByteLength);
-							else
-								ReceivedUnconnectedLibraryMessage(now, ipsender, tp, ptr, payloadByteLength);
-						}
-						else
-						{
-							if (sender == null && !m_configuration.IsMessageTypeEnabled(NetIncomingMessageType.UnconnectedData))
-								return; // dropping unconnected message since it's not enabled
-
-							NetIncomingMessage msg = CreateIncomingMessage(NetIncomingMessageType.Data, payloadByteLength);
-							msg.m_isFragment = isFragment;
-							msg.m_receiveTime = now;
-							msg.m_sequenceNumber = sequenceNumber;
-							msg.m_receivedMessageType = tp;
-							msg.m_senderConnection = sender;
-							msg.m_senderEndPoint = ipsender;
-							msg.m_bitLength = payloadBitLength;
-
-							Buffer.BlockCopy(m_receiveBuffer, ptr, msg.m_data, 0, payloadByteLength);
-							if (sender != null)
-							{
-								if (tp == NetMessageType.Unconnected)
-								{
-									// We're connected; but we can still send unconnected messages to this peer
-									msg.m_incomingMessageType = NetIncomingMessageType.UnconnectedData;
-									ReleaseMessage(msg);
-								}
-								else
-								{
-									// connected application (non-library) message
-									sender.ReceivedMessage(msg);
-								}
-							}
-							else
-							{
-								// at this point we know the message type is enabled
-								// unconnected application (non-library) message
-								msg.m_incomingMessageType = NetIncomingMessageType.UnconnectedData;
-								ReleaseMessage(msg);
-							}
-						}
+						resp = resp.Substring(resp.ToLower().IndexOf("location:") + 9);
+						resp = resp.Substring(0, resp.IndexOf("\r")).Trim();
+						m_upnp.ExtractServiceUrl(resp);
+						return;
 					}
 					catch (Exception ex)
 					{
-						LogError("Packet parsing error: " + ex.Message + " from " + ipsender);
+						LogDebug("Failed to parse UPnP response: " + ex.ToString());
+
+						// don't try to parse this packet further
+						return;
 					}
-					ptr += payloadByteLength;
+				}
+			}
+
+			NetConnection sender = null;
+			m_connectionLookup.TryGetValue(ipsender, out sender);
+
+			//
+			// parse packet into messages
+			//
+			int numMessages = 0;
+			int numFragments = 0;
+			int ptr = 0;
+			while ((bytesReceived - ptr) >= NetConstants.HeaderByteSize)
+			{
+				// decode header
+				//  8 bits - NetMessageType
+				//  1 bit  - Fragment?
+				// 15 bits - Sequence number
+				// 16 bits - Payload length in bits
+
+				numMessages++;
+
+				NetMessageType tp = (NetMessageType)m_receiveBuffer[ptr++];
+
+				byte low = m_receiveBuffer[ptr++];
+				byte high = m_receiveBuffer[ptr++];
+
+				bool isFragment = ((low & 1) == 1);
+				ushort sequenceNumber = (ushort)((low >> 1) | (((int)high) << 7));
+
+				if (isFragment)
+					numFragments++;
+
+				ushort payloadBitLength = (ushort)(m_receiveBuffer[ptr++] | (m_receiveBuffer[ptr++] << 8));
+				int payloadByteLength = NetUtility.BytesToHoldBits(payloadBitLength);
+
+				if (bytesReceived - ptr < payloadByteLength)
+				{
+					LogWarning("Malformed packet; stated payload length " + payloadByteLength + ", remaining bytes " + (bytesReceived - ptr));
+					return;
 				}
 
-				m_statistics.PacketReceived(bytesReceived, numMessages, numFragments);
-				if (sender != null)
-					sender.m_statistics.PacketReceived(bytesReceived, numMessages, numFragments);
+				if (tp >= NetMessageType.Unused1 && tp <= NetMessageType.Unused29)
+				{
+					ThrowOrLog("Unexpected NetMessageType: " + tp);
+					return;
+				}
 
-			} while (m_socket.Available > 0);
-		}
+				try
+				{
+					if (tp >= NetMessageType.LibraryError)
+					{
+						if (sender != null)
+							sender.ReceivedLibraryMessage(tp, ptr, payloadByteLength);
+						else
+							ReceivedUnconnectedLibraryMessage(now, ipsender, tp, ptr, payloadByteLength);
+					}
+					else
+					{
+						if (sender == null && !m_configuration.IsMessageTypeEnabled(NetIncomingMessageType.UnconnectedData))
+							return; // dropping unconnected message since it's not enabled
 
-		/// <summary>
+						NetIncomingMessage msg = CreateIncomingMessage(NetIncomingMessageType.Data, payloadByteLength);
+						msg.m_isFragment = isFragment;
+						msg.m_receiveTime = now;
+						msg.m_sequenceNumber = sequenceNumber;
+						msg.m_receivedMessageType = tp;
+						msg.m_senderConnection = sender;
+						msg.m_senderEndPoint = ipsender;
+						msg.m_bitLength = payloadBitLength;
+
+						Buffer.BlockCopy(m_receiveBuffer, ptr, msg.m_data, 0, payloadByteLength);
+						if (sender != null)
+						{
+							if (tp == NetMessageType.Unconnected)
+							{
+								// We're connected; but we can still send unconnected messages to this peer
+								msg.m_incomingMessageType = NetIncomingMessageType.UnconnectedData;
+								ReleaseMessage(msg);
+							}
+							else
+							{
+								// connected application (non-library) message
+								sender.ReceivedMessage(msg);
+							}
+						}
+						else
+						{
+							// at this point we know the message type is enabled
+							// unconnected application (non-library) message
+							msg.m_incomingMessageType = NetIncomingMessageType.UnconnectedData;
+							ReleaseMessage(msg);
+						}
+					}
+				}
+				catch (Exception ex)
+				{
+					LogError("Packet parsing error: " + ex.Message + " from " + ipsender);
+				}
+				ptr += payloadByteLength;
+			}
+
+			m_statistics.PacketReceived(bytesReceived, numMessages, numFragments);
+			if (sender != null)
+				sender.m_statistics.PacketReceived(bytesReceived, numMessages, numFragments);
+        }
+
+        /// <summary>
 		/// If NetPeerConfiguration.AutoFlushSendQueue() is false; you need to call this to send all messages queued using SendMessage()
 		/// </summary>
 		public void FlushSendQueue()
