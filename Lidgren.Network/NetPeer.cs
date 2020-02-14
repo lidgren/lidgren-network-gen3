@@ -2,7 +2,7 @@
 using System.Threading;
 using System.Collections.Generic;
 using System.Net;
-
+using System.Net.Sockets;
 #if !__NOIPENDPOINT__
 using NetEndPoint = System.Net.IPEndPoint;
 #endif
@@ -32,8 +32,8 @@ namespace Lidgren.Network
 
 		/// <summary>
 		/// Signalling event which can be waited on to determine when a message is queued for reading.
-		/// Note that there is no guarantee that after the event is signaled the blocked thread will 
-		/// find the message in the queue. Other user created threads could be preempted and dequeue 
+		/// Note that there is no guarantee that after the event is signaled the blocked thread will
+		/// find the message in the queue. Other user created threads could be preempted and dequeue
 		/// the message before the waiting thread wakes up.
 		/// </summary>
 		public AutoResetEvent MessageReceivedEvent
@@ -121,10 +121,16 @@ namespace Lidgren.Network
 			m_connections = new List<NetConnection>();
 			m_connectionLookup = new Dictionary<NetEndPoint, NetConnection>();
 			m_handshakes = new Dictionary<NetEndPoint, NetConnection>();
-            var address = config.DualStack ? IPAddress.IPv6Any : IPAddress.Any;
-            m_senderRemote = (EndPoint)new NetEndPoint(address, 0);
+            if (m_configuration.LocalAddress.AddressFamily == AddressFamily.InterNetworkV6)
+            {
+                m_senderRemote = (EndPoint)new IPEndPoint(IPAddress.IPv6Any, 0);
+            }
+            else
+            {
+                m_senderRemote = (EndPoint)new IPEndPoint(IPAddress.Any, 0);
+            }
 			m_status = NetPeerStatus.NotRunning;
-			m_receivedFragmentGroups = new Dictionary<NetConnection, Dictionary<int, ReceivedFragmentGroup>>();	
+			m_receivedFragmentGroups = new Dictionary<NetConnection, Dictionary<int, ReceivedFragmentGroup>>();
 		}
 
 		/// <summary>
@@ -149,7 +155,7 @@ namespace Lidgren.Network
 			}
 
 			InitializeNetwork();
-			
+
 			// start network thread
 			m_networkThread = new Thread(new ThreadStart(NetworkLoop));
 			m_networkThread.Name = m_configuration.NetworkThreadName;
@@ -184,7 +190,7 @@ namespace Lidgren.Network
 	        public NetIncomingMessage WaitMessage(int maxMillis)
 	        {
 	            NetIncomingMessage msg = ReadMessage();
-	
+
 	            while (msg == null)
 	            {
 	                // This could return true...
@@ -192,11 +198,11 @@ namespace Lidgren.Network
 	                {
 	                    return null;
 	                }
-	
+
 	                // ... while this will still returns null. That's why we need to cycle.
 	                msg = ReadMessage();
 	            }
-	
+
 	            return msg;
         	}
 
@@ -216,7 +222,7 @@ namespace Lidgren.Network
 			}
 			return retval;
 		}
-		
+
         	/// <summary>
 	        /// Reads a pending message from any connection, if any.
 	        /// Returns true if message was read, otherwise false.

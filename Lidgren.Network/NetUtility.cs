@@ -163,7 +163,7 @@ namespace Lidgren.Network
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Get IPv4 address from notation (xxx.xxx.xxx.xxx) or hostname
 		/// </summary>
 		public static NetAddress Resolve(string ipOrHost)
@@ -240,7 +240,7 @@ namespace Lidgren.Network
 			}
 			return new string(c);
 		}
-	
+
 		/// <summary>
 		/// Returns true if the endpoint supplied is on the same subnet as this host
 		/// </summary>
