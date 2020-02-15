@@ -35,12 +35,12 @@ namespace Lidgren.Network
 		//  -4 bytes to be on the safe side and align to 8-byte boundary
 		// Total 1408 bytes
 		// Note that lidgren headers (5 bytes) are not included here; since it's part of the "mtu payload"
-		
+
 		/// <summary>
 		/// Default MTU value in bytes
 		/// </summary>
 		public const int kDefaultMTU = 1408;
-		
+
 		private const string c_isLockedMessage = "You may not modify the NetPeerConfiguration after it has been used to initialize a NetPeer";
 
 		private bool m_isLocked;
@@ -344,7 +344,9 @@ namespace Lidgren.Network
 		}
 
         /// <summary>
-        /// Gets or sets a value indicating whether the library should use IPv6 dual stack mode
+        /// Gets or sets a value indicating whether the library should use IPv6 dual stack mode.
+        /// If you enable this you should make sure that the <see cref="LocalAddress"/> is an IPv6 address.
+        /// Cannot be changed once NetPeer is initialized.
         /// </summary>
         public bool DualStack
         {
@@ -354,10 +356,6 @@ namespace Lidgren.Network
                 if (m_isLocked)
                     throw new NetException(c_isLockedMessage);
                 m_dualStack = value;
-                if (m_dualStack && m_localAddress.Equals(IPAddress.Any))
-                    m_localAddress = IPAddress.IPv6Any;
-                if (!m_dualStack && m_localAddress.Equals(IPAddress.IPv6Any))
-                    m_localAddress = IPAddress.Any;
             }
         }
 

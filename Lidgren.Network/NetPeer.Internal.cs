@@ -132,14 +132,19 @@ namespace Lidgren.Network
 					m_socket.SendBufferSize = m_configuration.SendBufferSize;
 					m_socket.Blocking = false;
 
-                    if(m_configuration.DualStack && m_configuration.LocalAddress.AddressFamily == AddressFamily.InterNetworkV6)
-                        m_socket.DualMode = true;
+                    if (m_configuration.DualStack)
+                    {
+                        if (m_configuration.LocalAddress.AddressFamily != AddressFamily.InterNetworkV6)
+                        {
+                            LogWarning("Configuration specifies Dual Stack but does not use IPv6 local address; Dual stack will not work.");
+                        }
+                        else
+                        {
+                            m_socket.DualMode = true;
+                        }
+                    }
 
-                    var localAddress = m_configuration.DualStack
-                        ? m_configuration.LocalAddress.MapToIPv6()
-                        : m_configuration.LocalAddress;
-
-                    var ep = (EndPoint)new NetEndPoint(localAddress, reBind ? m_listenPort : m_configuration.Port);
+                    var ep = (EndPoint)new NetEndPoint(m_configuration.LocalAddress, reBind ? m_listenPort : m_configuration.Port);
 					m_socket.Bind(ep);
 
 					try
